@@ -19,7 +19,7 @@ from som_analysis.config import MOISTURE_CONFIGS, setup_plotting
 from som_analysis.helpers import add_map_features, node_label
 
 # ── Output directory ──────────────────────────────────────────────────────────
-OUT_DIR = os.path.join(os.path.dirname(os.path.dirname(__file__)), "output", "fig01")
+OUT_DIR = os.path.join(os.path.dirname(os.path.dirname(__file__)), "figures", "fig01")
 os.makedirs(OUT_DIR, exist_ok=True)
 
 # ── SOM / figure parameters ───────────────────────────────────────────────────

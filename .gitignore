@@ -5,7 +5,7 @@ __pycache__/
 .venv/
 .env
 
-# Output figures (generated — not tracked)
+# Scratch output directory (superseded by figures/)
 output/
 
 # Large data / cache files
