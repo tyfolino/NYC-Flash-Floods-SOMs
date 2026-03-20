@@ -41,8 +41,8 @@ DPI_RASTER = 300
 # Contour levels
 LEVELS_Z_WEIGHTS = np.arange(-1.4, 1.41, 0.2)   # standardized anomaly
 LEVELS_MOIST_WEIGHTS = np.arange(-1.2, 1.21, 0.2)
-LEVELS_Z_RAW  = range(549, 598, 2)                # dam — denser for clarity
-LEVELS_THETAE_RAW = np.arange(300, 341, 5)        # K — tighten lower bound
+LEVELS_Z_RAW  = range(549, 598, 2)                # dam — shared range with Fig. S3
+LEVELS_THETAE_RAW = np.arange(295, 341, 5)        # K — shared range with Fig. S3
 
 # Node traversal order for 4 rows: A1, A2, B1, B2
 NODE_ORDER = [(i, j) for j in range(YDIM) for i in range(XDIM)]
