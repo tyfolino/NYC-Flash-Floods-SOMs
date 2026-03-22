@@ -34,7 +34,7 @@ from som_analysis.node_statistics import (
 OUT_DIR = os.path.join(os.path.dirname(os.path.dirname(__file__)), "figures", "fig03")
 os.makedirs(OUT_DIR, exist_ok=True)
 
-BMU_CSV = os.path.join(DATA_DIR, "som_2x2_bmus_thetae.csv")
+BMU_CSV = os.path.join(DATA_DIR, "som_2x2_evsom_24h_bmus_thetae.csv")
 
 # ── Figure / SOM parameters ───────────────────────────────────────────────────
 XDIM, YDIM = 2, 2
