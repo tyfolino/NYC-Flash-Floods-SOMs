@@ -104,11 +104,8 @@ def main():
         # Axis ticks — label all-days nodes
         ax.set_xticks(np.arange(XALL))
         ax.set_yticks(np.arange(YALL))
-        ax.set_xticklabels(
-            [node_label(bi, 0)[0] for bi in range(XALL)],   # column letter A–E
-            fontsize=5,
-        )
-        ax.set_yticklabels(np.arange(1, YALL + 1), fontsize=5)
+        ax.set_xticklabels([str(bi + 1) for bi in range(XALL)], fontsize=5)
+        ax.set_yticklabels([node_label(0, bj)[0] for bj in range(YALL)], fontsize=5)
         ax.tick_params(length=2)
 
         # Axis labels only on outer edges
@@ -117,10 +114,10 @@ def main():
         if i == 0:
             ax.set_ylabel("All-days SOM row", fontsize=5.5)
 
-        ax.text(0.03, 0.97, lbl, transform=ax.transAxes,
-                fontsize=6.5, fontweight="bold", ha="left", va="top")
-        ax.text(0.97, 0.97, f"$n$={n_events}", transform=ax.transAxes,
-                fontsize=5.5, ha="right", va="top")
+        ax.text(0.0, 1.02, lbl, transform=ax.transAxes,
+                fontsize=6.5, fontweight="bold", ha="left", va="bottom")
+        ax.text(1.0, 1.02, f"$n$={n_events}", transform=ax.transAxes,
+                fontsize=5.5, ha="right", va="bottom")
 
     # ── Shared colorbar ───────────────────────────────────────────────────────
     cbar = fig.colorbar(last_im, ax=axes.ravel().tolist(),
