@@ -1,0 +1,1 @@
+Figure S8. Monthly frequency distribution of flash flood episodes by evSOM node. Each panel shows the fraction of episodes assigned to that node within each calendar month (May–October), normalized by the total number of episodes in that month across all nodes. Node labels follow the convention of Figure 2.

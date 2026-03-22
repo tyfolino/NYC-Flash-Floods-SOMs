@@ -1,0 +1,1 @@
+Movie S2. Animation of evSOM composite mean synoptic fields from T−23h to T=0 (1-hour steps, 24 frames total). Each frame shows composite mean Z500 (contours, interval: 2 dam) and composite mean 850-hPa θe (shading, K) averaged over episodes assigned to each evSOM node at that hour offset. Corresponds to the full temporal evolution of which Figure 3 shows four key snapshots.

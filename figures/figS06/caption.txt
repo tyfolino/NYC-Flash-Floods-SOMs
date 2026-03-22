@@ -1,0 +1,1 @@
+Figure S6. Sammon mapping of the 2×2 evolution SOM (evSOM). As in Figure S2, but for the evSOM trained on 24-hour windows of standardized Z500 and 850-hPa θe anomalies preceding each flash flood episode. Circle size is proportional to the number of episodes assigned to each node (n = 20–41 episodes).
