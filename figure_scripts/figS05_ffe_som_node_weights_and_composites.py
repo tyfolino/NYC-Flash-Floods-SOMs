@@ -7,7 +7,7 @@ Right column : raw mean Z500 in dam (contoured) + theta-e in K (shaded)
                composited over FF days assigned to that node.
 
 Usage:
-    python -m figure_scripts.figS04_ffe_som_node_weights_and_composites
+    python -m figure_scripts.figS05_ffe_som_node_weights_and_composites
 """
 
 import os
@@ -22,7 +22,7 @@ from som_analysis.config import MOISTURE_CONFIGS, setup_plotting
 from som_analysis.helpers import add_map_features, get_node_indices, node_label
 
 # ── Paths ─────────────────────────────────────────────────────────────────────
-OUT_DIR = os.path.join(os.path.dirname(os.path.dirname(__file__)), "figures", "figS04")
+OUT_DIR = os.path.join(os.path.dirname(os.path.dirname(__file__)), "figures", "figS05")
 os.makedirs(OUT_DIR, exist_ok=True)
 
 CACHE_PATH = (
@@ -148,7 +148,7 @@ def main():
     cb_comp.ax.tick_params(labelsize=5)
 
     # ── Save ──────────────────────────────────────────────────────────────────
-    base = os.path.join(OUT_DIR, "figS04_ffe_som")
+    base = os.path.join(OUT_DIR, "figS05_ffe_som")
     fig.savefig(f"{base}.pdf")
     fig.savefig(f"{base}.png", dpi=DPI_RASTER)
     fig.savefig(f"{base}.tiff", dpi=DPI_RASTER)

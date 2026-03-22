@@ -6,7 +6,7 @@ that node within each calendar month (May–October), normalised by the total
 number of FFEs in that month across all nodes. Events are grouped by evSOM node.
 
 Usage:
-    python -m figure_scripts.figS07_evsom_monthly_histograms
+    python -m figure_scripts.figS08_evsom_monthly_histograms
 """
 
 import os
@@ -19,7 +19,7 @@ from som_analysis.config import DATA_DIR, setup_plotting
 from som_analysis.helpers import node_label
 
 # ── Paths ─────────────────────────────────────────────────────────────────────
-OUT_DIR = os.path.join(os.path.dirname(os.path.dirname(__file__)), "figures", "figS07")
+OUT_DIR = os.path.join(os.path.dirname(os.path.dirname(__file__)), "figures", "figS08")
 os.makedirs(OUT_DIR, exist_ok=True)
 
 BMU_CSV = os.path.join(DATA_DIR, "som_2x2_evsom_24h_bmus_thetae.csv")
@@ -82,7 +82,7 @@ def main():
         ax.set_ylabel("Fraction of monthly FFEs", fontsize=6)
 
     # ── Save ─────────────────────────────────────────────────────────────────
-    base = os.path.join(OUT_DIR, "figS07_evsom_monthly_histograms")
+    base = os.path.join(OUT_DIR, "figS08_evsom_monthly_histograms")
     fig.savefig(f"{base}.pdf")
     fig.savefig(f"{base}.png", dpi=DPI_RASTER)
     fig.savefig(f"{base}.tiff", dpi=DPI_RASTER)

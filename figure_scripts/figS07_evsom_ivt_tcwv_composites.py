@@ -9,7 +9,7 @@ FFE events are grouped by evSOM node (T=0 snapshot).
 Separate shared colorbars for each column.
 
 Usage:
-    python -m figure_scripts.figS06_evsom_ivt_tcwv_composites
+    python -m figure_scripts.figS07_evsom_ivt_tcwv_composites
 """
 
 import os
@@ -23,7 +23,7 @@ from som_analysis.config import SOM_INTERMEDIATE_PATH, setup_plotting
 from som_analysis.helpers import add_map_features, get_node_indices, node_label
 
 # ── Paths ─────────────────────────────────────────────────────────────────────
-OUT_DIR = os.path.join(os.path.dirname(os.path.dirname(__file__)), "figures", "figS06")
+OUT_DIR = os.path.join(os.path.dirname(os.path.dirname(__file__)), "figures", "figS07")
 os.makedirs(OUT_DIR, exist_ok=True)
 
 CACHE_PATH  = "/home/janoski/nyc_flash_flood/figs/Z500-and-thetae-evSOM-24h/.cache/som_results.npz"
@@ -141,7 +141,7 @@ def main():
     cbar_tcwv.ax.tick_params(labelsize=5)
 
     # ── Save ─────────────────────────────────────────────────────────────────
-    base = os.path.join(OUT_DIR, "figS06_evsom_ivt_tcwv_composites")
+    base = os.path.join(OUT_DIR, "figS07_evsom_ivt_tcwv_composites")
     fig.savefig(f"{base}.pdf")
     fig.savefig(f"{base}.png", dpi=DPI_RASTER)
     fig.savefig(f"{base}.tiff", dpi=DPI_RASTER)
