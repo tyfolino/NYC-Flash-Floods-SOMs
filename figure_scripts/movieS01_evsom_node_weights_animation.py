@@ -29,9 +29,12 @@ from som_analysis.helpers import add_map_features, node_label
 OUT_DIR = os.path.join(os.path.dirname(os.path.dirname(__file__)), "movies", "movieS01")
 os.makedirs(OUT_DIR, exist_ok=True)
 
-CACHE_PATH = (
-    "/home/janoski/nyc_flash_flood/figs/"
-    "Z500-and-thetae-evSOM-24h/.cache/som_results.npz"
+CACHE_PATH = os.path.join(
+    os.path.dirname(os.path.dirname(__file__)),
+    "figs",
+    "Z500-and-thetae-evSOM-24h",
+    ".cache",
+    "som_results.npz",
 )
 
 # ── Figure / animation parameters ─────────────────────────────────────────────

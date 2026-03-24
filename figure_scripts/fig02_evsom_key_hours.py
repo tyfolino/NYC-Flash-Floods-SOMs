@@ -28,9 +28,12 @@ from som_analysis.helpers import add_map_features, node_label
 OUT_DIR = os.path.join(os.path.dirname(os.path.dirname(__file__)), "figures", "fig02")
 os.makedirs(OUT_DIR, exist_ok=True)
 
-CACHE_PATH = (
-    "/home/janoski/nyc_flash_flood/figs/"
-    "Z500-and-thetae-evSOM-24h/.cache/som_results.npz"
+CACHE_PATH = os.path.join(
+    os.path.dirname(os.path.dirname(__file__)),
+    "figs",
+    "Z500-and-thetae-evSOM-24h",
+    ".cache",
+    "som_results.npz",
 )
 
 # ── Figure / SOM parameters ───────────────────────────────────────────────────
@@ -60,7 +63,7 @@ def main():
     cached = np.load(CACHE_PATH)
     z500_nodes = cached["z500_nodes"]  # (xdim, ydim, n_hours, nlat, nlon)
     moist_nodes = cached["moist_nodes"]
-    bmus = cached["bmus"]  # (121, 2)
+    bmus = cached["bmus"]  # (118, 2)
     lat = cached["lat_z"]
     lon = cached["lon_z"]
 

@@ -231,6 +231,8 @@ event_hours = (
 times_utc = (
     pd.to_datetime(event_hours).tz_localize("EST").tz_convert("UTC").tz_convert(None)
 )
+# Keep only the first episode per UTC day to avoid overlapping training windows
+times_utc = times_utc[~times_utc.normalize().duplicated(keep="first")]
 intersect = pd.Index(times_utc).intersection(data.indexes[time_dim])
 print(f"Found {len(intersect)} matching events out of {len(times_utc)} total.")
 

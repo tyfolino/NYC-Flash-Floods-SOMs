@@ -29,9 +29,12 @@ from som_analysis.helpers import add_map_features, node_label
 OUT_DIR = os.path.join(os.path.dirname(os.path.dirname(__file__)), "figures", "fig03")
 os.makedirs(OUT_DIR, exist_ok=True)
 
-CACHE_PATH = (
-    "/home/janoski/nyc_flash_flood/figs/"
-    "Z500-and-thetae-evSOM-24h/.cache/som_results.npz"
+CACHE_PATH = os.path.join(
+    os.path.dirname(os.path.dirname(__file__)),
+    "figs",
+    "Z500-and-thetae-evSOM-24h",
+    ".cache",
+    "som_results.npz",
 )
 Z500_PATH = "/mnt/drive2/SOM_intermediate_files/era5_Z500_ffe_evsom.nc"
 THETAE_PATH = "/mnt/drive2/SOM_intermediate_files/era5_thetae_ffe_evsom.nc"
@@ -60,7 +63,7 @@ def main():
     # ── Load cache for BMU assignments ────────────────────────────────────────
     print(f"Loading cache from {CACHE_PATH} ...")
     cached = np.load(CACHE_PATH)
-    bmus = cached["bmus"]  # (121, 2)
+    bmus = cached["bmus"]  # (118, 2)
 
     # ── Load raw evSOM fields ─────────────────────────────────────────────────
     print("Loading raw evSOM fields ...")

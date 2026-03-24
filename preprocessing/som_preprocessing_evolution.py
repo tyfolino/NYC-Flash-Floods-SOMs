@@ -115,6 +115,8 @@ event_hours = (
 times_utc = (
     pd.to_datetime(event_hours).tz_localize("EST").tz_convert("UTC").tz_convert(None)
 )
+# Keep only the first episode per UTC day to avoid overlapping 24-h training windows
+times_utc = times_utc[~times_utc.normalize().duplicated(keep="first")]
 print(f"Flash flood events: {len(times_utc)} total")
 
 # ── DOY climatology (rolling-smoothed std) ─────────────────────────────────────

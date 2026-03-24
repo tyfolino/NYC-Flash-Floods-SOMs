@@ -76,7 +76,7 @@ def _plot_pmm(ax, node_fields, i, j, lat2d, lon2d, extent, show_star):
     lon_span = extent[1] - extent[0]
     scale = "10m" if lon_span < 4 else "50m"
 
-    ax.set_extent(extent)
+    ax.set_extent(extent, crs=ccrs.PlateCarree())
     _add_map_features(ax, scale)
     ax.pcolormesh(
         lon2d,

@@ -77,7 +77,7 @@ def main():
     ax_bar = fig.add_subplot(gs[1])
 
     # ── Left: TC track map ────────────────────────────────────────────────────
-    ax_map.set_extent([LON_MIN, LON_MAX, LAT_MIN, LAT_MAX])
+    ax_map.set_extent([LON_MIN, LON_MAX, LAT_MIN, LAT_MAX], crs=ccrs.PlateCarree())
     ax_map.add_feature(cfeature.LAND.with_scale("50m"), facecolor="#ebebeb", zorder=0)
     ax_map.add_feature(cfeature.OCEAN.with_scale("50m"), facecolor="#dde8f2", zorder=0)
     ax_map.add_feature(cfeature.STATES.with_scale("50m"), linewidth=0.25, zorder=2)

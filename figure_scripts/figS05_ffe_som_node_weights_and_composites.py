@@ -25,8 +25,12 @@ from som_analysis.helpers import add_map_features, get_node_indices, node_label
 OUT_DIR = os.path.join(os.path.dirname(os.path.dirname(__file__)), "figures", "figS05")
 os.makedirs(OUT_DIR, exist_ok=True)
 
-CACHE_PATH = (
-    "/home/janoski/nyc_flash_flood/figs/Z500-and-thetae-SOM/.cache/som_results.npz"
+CACHE_PATH = os.path.join(
+    os.path.dirname(os.path.dirname(__file__)),
+    "figs",
+    "Z500-and-thetae-SOM",
+    ".cache",
+    "som_results.npz",
 )
 THETAE_FFE_PATH = "/mnt/drive2/SOM_intermediate_files/era5_thetae_ffe.nc"
 Z500_FFE_PATH = "/mnt/drive2/SOM_intermediate_files/era5_Z500_ffe.nc"

@@ -404,7 +404,7 @@ def plot_stageiv_composite_maps(
             pmm = probability_matched_mean(fields)
             pmm_plot = np.where(pmm >= nws_levels[0], pmm, np.nan)
 
-            ax.set_extent(map_extent)
+            ax.set_extent(map_extent, crs=ccrs.PlateCarree())
             ax.add_feature(
                 cfeature.LAND.with_scale(scale), facecolor="#ebebeb", zorder=0
             )
@@ -785,7 +785,9 @@ def plot_tc_tracks(
     ax.add_feature(cfeature.COASTLINE, linewidth=0.5)
     ax.add_feature(cfeature.STATES.with_scale("50m"), linewidth=0.3)
     ax.add_feature(cfeature.BORDERS, linewidth=0.3)
-    ax.set_extent([lon_min - 5, lon_max + 5, lat_min - 5, lat_max + 5])
+    ax.set_extent(
+        [lon_min - 5, lon_max + 5, lat_min - 5, lat_max + 5], crs=ccrs.PlateCarree()
+    )
 
     legend_elements = [
         plt.Line2D(
@@ -930,7 +932,9 @@ def plot_ida_case_study(
     fig.get_layout_engine().set(rect=(0, 0, 1, 0.88))
 
     for ax in axes:
-        ax.set_extent([map_lon_min, map_lon_max, map_lat_min, map_lat_max])
+        ax.set_extent(
+            [map_lon_min, map_lon_max, map_lat_min, map_lat_max], crs=ccrs.PlateCarree()
+        )
         ax.add_feature(cfeature.LAND.with_scale("10m"), facecolor="#ebebeb", zorder=0)
         ax.add_feature(cfeature.OCEAN.with_scale("10m"), facecolor="#dde8f2", zorder=0)
         ax.add_feature(cfeature.COASTLINE.with_scale("10m"), linewidth=0.5, zorder=4)

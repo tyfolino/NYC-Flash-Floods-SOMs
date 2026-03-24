@@ -21,3 +21,4 @@ output/
 # OS
 .DS_Store
 ruff_results.txt
+run_ff_som_pipeline.sh

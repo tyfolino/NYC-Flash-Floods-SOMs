@@ -27,9 +27,12 @@ XDIM, YDIM = 5, 4
 MOISTURE_VAR = "thetae"
 
 # Cache produced by train_alldays_som.py in the original analysis repo
-CACHE_PATH = (
-    "/home/janoski/nyc_flash_flood/figs/"
-    "Z500-and-thetae-alldays-SOM/.cache/som_results.npz"
+CACHE_PATH = os.path.join(
+    os.path.dirname(os.path.dirname(__file__)),
+    "figs",
+    "Z500-and-thetae-alldays-SOM",
+    ".cache",
+    "som_results.npz",
 )
 
 # GRL double-column width = 7 in; height tuned to 5x4 map grid
