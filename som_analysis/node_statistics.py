@@ -516,7 +516,7 @@ def compute_tc_associations(bmu_df, xdim, ydim, time_window_hours=6):
     ibtracs["ISO_TIME"] = pd.to_datetime(ibtracs["ISO_TIME"])
 
     lat_min, lat_max = 32.0, 54.0
-    lon_min, lon_max = -100.0, -60.0
+    lon_min, lon_max = -100.0, -68.0
 
     ibtracs_domain = ibtracs[
         (ibtracs["LAT"] >= lat_min)
@@ -709,8 +709,8 @@ def plot_tc_tracks(
         (1, 0): "tab:green",
         (1, 1): "tab:red",
     }
-    lat_min, lat_max = 30.0, 54.0
-    lon_min, lon_max = -100.0, -60.0
+    lat_min, lat_max = 32.0, 54.0
+    lon_min, lon_max = -100.0, -68.0
 
     tc_events = tc_df[tc_df["tc_present"]].sort_values("timestamp")
 

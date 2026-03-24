@@ -140,8 +140,8 @@ def main():
             plotted_nodes.add((ni, nj))
 
     # TC-association domain box
-    dom_lon = [-100.0, -60.0]
-    dom_lat = [30.0, 54.0]
+    dom_lon = [-100.0, -68.0]
+    dom_lat = [32.0, 54.0]
     ax_map.plot(
         [dom_lon[0], dom_lon[1], dom_lon[1], dom_lon[0], dom_lon[0]],
         [dom_lat[0], dom_lat[0], dom_lat[1], dom_lat[1], dom_lat[0]],
