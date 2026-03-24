@@ -69,7 +69,9 @@ for year in years:
                                 continue
                             dest = os.path.join(outdir, basename)
                             with open(dest, "wb") as out:
-                                out.write(inner.extractfile(member).read()) # pyright: ignore[reportOptionalMemberAccess]
+                                out.write(
+                                    inner.extractfile(member).read()
+                                )  # pyright: ignore[reportOptionalMemberAccess]
                             count += 1
             print(f"  Extracted {count} hourly files for {year}-{month}.")
         except Exception as e:

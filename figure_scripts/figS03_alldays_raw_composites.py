@@ -30,18 +30,18 @@ CACHE_PATH = (
 
 # ── SOM / figure parameters ───────────────────────────────────────────────────
 XDIM, YDIM = 5, 4
-FIG_WIDTH  = 7.0
+FIG_WIDTH = 7.0
 FIG_HEIGHT = 3.8
 DPI_RASTER = 300
 
-LEVELS_THETAE = np.arange(295, 341, 5)   # K — shared range with Fig. 2
-LEVELS_Z      = range(549, 598, 2)        # dam — shared range with Fig. 2
+LEVELS_THETAE = np.arange(295, 341, 5)  # K — shared range with Fig. 2
+LEVELS_Z = range(549, 598, 2)  # dam — shared range with Fig. 2
 
 
 def _ff_label(counts, totals, risk, i, j):
-    n   = int(counts[i, j])
+    n = int(counts[i, j])
     tot = int(totals[i, j])
-    r   = risk[i, j]
+    r = risk[i, j]
     if np.isnan(r) or n == 0:
         return f"FF=0/{tot}"
     return f"FF={n}/{tot} ({r * 100:.1f}\\%)"
@@ -53,26 +53,30 @@ def main():
     # ── Load cache ────────────────────────────────────────────────────────────
     print(f"Loading cache from {CACHE_PATH} ...")
     cached = np.load(CACHE_PATH)
-    bmus   = cached["bmus"]       # (n_days, 2)
+    bmus = cached["bmus"]  # (n_days, 2)
     counts = cached["counts"]
     totals = cached["totals"]
-    risk   = cached["risk"]
-    lat    = cached["lat"]
-    lon    = cached["lon"]
+    risk = cached["risk"]
+    lat = cached["lat"]
+    lon = cached["lon"]
 
     # ── Load raw daily fields ─────────────────────────────────────────────────
     print("Loading raw daily data ...")
-    z500_daily   = xr.load_dataarray(f"{SOM_INTERMEDIATE_PATH}era5_Z500_daily.nc")
+    z500_daily = xr.load_dataarray(f"{SOM_INTERMEDIATE_PATH}era5_Z500_daily.nc")
     thetae_daily = xr.load_dataarray(f"{SOM_INTERMEDIATE_PATH}era5_thetae_daily.nc")
 
     # Auto-detect time dimension
-    z500_time_dim   = "valid_time" if "valid_time" in z500_daily.dims   else "time"
+    z500_time_dim = "valid_time" if "valid_time" in z500_daily.dims else "time"
     thetae_time_dim = "valid_time" if "valid_time" in thetae_daily.dims else "time"
 
     # ── Compute node composites ───────────────────────────────────────────────
     print("Computing composites ...")
-    z500_comp,   _ = compute_composites(z500_daily,   bmus, XDIM, YDIM, time_dim=z500_time_dim)
-    thetae_comp, _ = compute_composites(thetae_daily, bmus, XDIM, YDIM, time_dim=thetae_time_dim)
+    z500_comp, _ = compute_composites(
+        z500_daily, bmus, XDIM, YDIM, time_dim=z500_time_dim
+    )
+    thetae_comp, _ = compute_composites(
+        thetae_daily, bmus, XDIM, YDIM, time_dim=thetae_time_dim
+    )
 
     # Z500: Pa → dam
     z500_comp = z500_comp / 98.1
@@ -80,7 +84,8 @@ def main():
     # ── Build figure ──────────────────────────────────────────────────────────
     proj = ccrs.PlateCarree()
     fig, axes = plt.subplots(
-        YDIM, XDIM,
+        YDIM,
+        XDIM,
         figsize=(FIG_WIDTH, FIG_HEIGHT),
         subplot_kw={"projection": proj},
         constrained_layout=True,
@@ -94,7 +99,9 @@ def main():
 
             # θe shaded
             im = ax.contourf(
-                lon, lat, thetae_comp[i, j],
+                lon,
+                lat,
+                thetae_comp[i, j],
                 cmap="BuPu",
                 levels=LEVELS_THETAE,
                 transform=proj,
@@ -103,7 +110,9 @@ def main():
 
             # Z500 contoured
             cn = ax.contour(
-                lon, lat, z500_comp[i, j],
+                lon,
+                lat,
+                z500_comp[i, j],
                 colors="black",
                 linewidths=0.4,
                 levels=LEVELS_Z,
@@ -115,18 +124,25 @@ def main():
 
             # Node ID — bold, outside upper-left
             ax.text(
-                0.0, 1.01, node_label(i, j),
+                0.0,
+                1.01,
+                node_label(i, j),
                 transform=ax.transAxes,
-                fontsize=5.5, fontweight="bold",
-                ha="left", va="bottom",
+                fontsize=5.5,
+                fontweight="bold",
+                ha="left",
+                va="bottom",
             )
 
             # FF stats — outside upper-right
             ax.text(
-                1.0, 1.01, _ff_label(counts, totals, risk, i, j),
+                1.0,
+                1.01,
+                _ff_label(counts, totals, risk, i, j),
                 transform=ax.transAxes,
                 fontsize=5.0,
-                ha="right", va="bottom",
+                ha="right",
+                va="bottom",
             )
 
     # ── Shared colorbar ───────────────────────────────────────────────────────

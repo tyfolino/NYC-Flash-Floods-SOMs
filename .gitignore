@@ -20,3 +20,4 @@ output/
 
 # OS
 .DS_Store
+ruff_results.txt

@@ -310,25 +310,36 @@ def plot_single_events(
 
                 if contour:
                     im = ax.contour(
-                        lon, lat, field.values * scale,
-                        levels=levels, colors="black",
-                        transform=proj, linewidths=0.6,
+                        lon,
+                        lat,
+                        field.values * scale,
+                        levels=levels,
+                        colors="black",
+                        transform=proj,
+                        linewidths=0.6,
                     )
                     ax.clabel(im, im.levels, fontsize=5)
                 else:
                     im = ax.contourf(
-                        lon, lat, field.values * scale,
-                        levels=levels, cmap=cmap,
-                        transform=proj, extend="max",
+                        lon,
+                        lat,
+                        field.values * scale,
+                        levels=levels,
+                        cmap=cmap,
+                        transform=proj,
+                        extend="max",
                     )
 
                     if z500_data is not None and z500_levels is not None:
                         z500_field = z500_data.isel({z500_time_dim: k})
                         cn = ax.contour(
-                            lon, lat,
+                            lon,
+                            lat,
                             z500_field.values * z500_scale,
-                            levels=z500_levels, colors="black",
-                            linewidths=0.5, transform=proj,
+                            levels=z500_levels,
+                            colors="black",
+                            linewidths=0.5,
+                            transform=proj,
                         )
                         ax.clabel(cn, inline=True, fontsize=5, fmt="%.0f")
 

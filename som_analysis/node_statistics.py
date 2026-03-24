@@ -226,7 +226,9 @@ def compute_stageiv_max_precip(bmu_df, window_hours=6, agg="max"):
     for idxs in event_windows:
         if idxs:
             sub = [idx_to_sub[i] for i in idxs]
-            cell_maxes = np.nanmax(precip_nyc[sub, :], axis=0)  # max over time, per cell
+            cell_maxes = np.nanmax(
+                precip_nyc[sub, :], axis=0
+            )  # max over time, per cell
             if agg == "spatial-median":
                 agg_mm = np.nanmedian(cell_maxes)
             else:
@@ -338,9 +340,7 @@ def compute_stageiv_node_composites(bmu_df, xdim, ydim, window_hours=6):
     node_fields = {}
     for i in range(xdim):
         for j in range(ydim):
-            positions = np.where(
-                (bmu_df["node_i"] == i) & (bmu_df["node_j"] == j)
-            )[0]
+            positions = np.where((bmu_df["node_i"] == i) & (bmu_df["node_j"] == j))[0]
             event_list = []
             for pos in positions:
                 idxs = event_windows[pos]
@@ -575,8 +575,6 @@ def compute_tc_associations(bmu_df, xdim, ydim, time_window_hours=6):
 def plot_tc_association(tc_df, xdim, ydim, fig_dir, _lbl):
     """Plot TC association bar charts."""
     node_labels = [node_label(i, j) for i in range(xdim) for j in range(ydim)]
-    n_nodes = xdim * ydim
-
     tc_counts = np.zeros((xdim, ydim))
     non_tc_counts = np.zeros((xdim, ydim))
     for i in range(xdim):
@@ -614,7 +612,7 @@ def plot_tc_association(tc_df, xdim, ydim, fig_dir, _lbl):
 
     ax = axes[1]
     bars = ax.bar(x, tc_pct, 0.6, color="coral", alpha=0.9, edgecolor="white")
-    for bar, pct, tc, total in zip(bars, tc_pct, tc_flat, totals):
+    for bar, _pct, tc, total in zip(bars, tc_pct, tc_flat, totals, strict=False):
         ax.text(
             bar.get_x() + bar.get_width() / 2,
             bar.get_height() + 1,
@@ -644,7 +642,7 @@ def plot_tc_association(tc_df, xdim, ydim, fig_dir, _lbl):
         f"{fig_dir}/Z500_and_{_lbl}_som_tc_association.png", bbox_inches="tight"
     )
     plt.close()
-    print(f"Saved TC association figure.")
+    print("Saved TC association figure.")
 
     return tc_flat, non_tc_flat
 
@@ -662,7 +660,7 @@ def print_tc_stats(tc_df, tc_flat, non_tc_flat, xdim, ydim):
     contingency_df = pd.DataFrame(
         {
             lbl: [int(tc), int(ntc)]
-            for lbl, tc, ntc in zip(node_labels, tc_flat, non_tc_flat)
+            for lbl, tc, ntc in zip(node_labels, tc_flat, non_tc_flat, strict=False)
         },
         index=["TC", "Non-TC"],
     )
@@ -813,7 +811,7 @@ def plot_tc_tracks(
     )
     plt.savefig(f"{fig_dir}/Z500_and_{_lbl}_som_tc_tracks.png", bbox_inches="tight")
     plt.close()
-    print(f"Saved TC tracks figure.")
+    print("Saved TC tracks figure.")
 
 
 # ── Ida Case Study ───────────────────────────────────────────────────────────
@@ -954,6 +952,7 @@ def plot_ida_case_study(
             "(b) Stage IV (4-km)",
             r"(c) ERA5 ($0.25^{\circ}$)",
         ],
+        strict=False,
     ):
         ax.set_title(title, fontsize=7)
 
@@ -1037,7 +1036,7 @@ def plot_ida_case_study(
     )
     plt.savefig(f"{fig_dir}/ida_precip_three_sources.png", bbox_inches="tight")
     plt.close()
-    print(f"Saved Ida case study figure.")
+    print("Saved Ida case study figure.")
 
 
 # ── Main ──────────────────────────────────────────────────────────────────────
@@ -1047,12 +1046,10 @@ def main():
     args = parse_args()
     setup_plotting()
 
-    cfg = MOISTURE_CONFIGS[args.moisture_var]
     paths = get_paths(args.moisture_var, args.moisture_weight, daily=args.daily)
     fig_dir = paths["fig_dir"]
     _lbl = paths["file_label"]
     xdim, ydim = 2, 2
-    n_nodes = xdim * ydim
 
     os.makedirs(fig_dir, exist_ok=True)
 
@@ -1148,13 +1145,25 @@ def main():
     )
     # Regional domain
     plot_stageiv_composite_maps(
-        node_fields, xdim, ydim, lat2d_reg, lon2d_reg, fig_dir, _lbl,
+        node_fields,
+        xdim,
+        ydim,
+        lat2d_reg,
+        lon2d_reg,
+        fig_dir,
+        _lbl,
         map_extent=[-78.0, -70.0, 38.5, 44.0],
         fname_suffix="_regional",
     )
     # NYC zoom (matches Ida case study domain)
     plot_stageiv_composite_maps(
-        node_fields, xdim, ydim, lat2d_reg, lon2d_reg, fig_dir, _lbl,
+        node_fields,
+        xdim,
+        ydim,
+        lat2d_reg,
+        lon2d_reg,
+        fig_dir,
+        _lbl,
         map_extent=[-74.8, -73.4, 40.3, 41.2],
         fname_suffix="_nyc",
     )
@@ -1204,7 +1213,9 @@ def main():
         for j in range(ydim):
             nd = tc_df[(tc_df["node_i"] == i) & (tc_df["node_j"] == j)]
             tc_c = nd["tc_present"].sum()
-            print(f"  Node {node_label(i, j)}: {tc_c}/{len(nd)} ({100 * tc_c / len(nd):.1f}%)")
+            print(
+                f"  Node {node_label(i, j)}: {tc_c}/{len(nd)} ({100 * tc_c / len(nd):.1f}%)"
+            )
 
     tc_events = tc_df[tc_df["tc_present"]].sort_values("timestamp")
     print("\nTC-Associated Flash Flood Events:")

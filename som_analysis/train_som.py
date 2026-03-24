@@ -108,9 +108,7 @@ def main():
     moist_norm_ffe = load_moist_var(
         f"{SOM_INTERMEDIATE_PATH}{pfx}_norm{ffe_suffix}.nc", var_name
     )
-    moist_ffe = load_moist_var(
-        f"{SOM_INTERMEDIATE_PATH}{pfx}{ffe_suffix}.nc", var_name
-    )
+    moist_ffe = load_moist_var(f"{SOM_INTERMEDIATE_PATH}{pfx}{ffe_suffix}.nc", var_name)
 
     z500_norm_weighted_ffe = xr.load_dataarray(
         f"{SOM_INTERMEDIATE_PATH}era5_Z500_norm_weighted{ffe_suffix}.nc"

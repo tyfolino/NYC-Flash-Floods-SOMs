@@ -15,7 +15,7 @@ import cmweather  # noqa: F401 — registers 'balance' and other cmweather color
 import matplotlib.pyplot as plt
 import numpy as np
 
-from som_analysis.config import MOISTURE_CONFIGS, setup_plotting
+from som_analysis.config import setup_plotting
 from som_analysis.helpers import add_map_features, node_label
 
 # ── Output directory ──────────────────────────────────────────────────────────
@@ -33,13 +33,15 @@ CACHE_PATH = (
 )
 
 # GRL double-column width = 7 in; height tuned to 5x4 map grid
-FIG_WIDTH = 7.0   # inches
+FIG_WIDTH = 7.0  # inches
 FIG_HEIGHT = 3.8  # inches
 DPI_RASTER = 300
 
 # Z500 contour levels (standardized anomaly weights)
 LEVELS_Z = np.arange(-1.4, 1.41, 0.2)
-LEVELS_MOIST = np.arange(-1.2, 1.21, 0.2)  # tighter range; extend="both" handles outliers
+LEVELS_MOIST = np.arange(
+    -1.2, 1.21, 0.2
+)  # tighter range; extend="both" handles outliers
 
 
 def _ff_label(counts, totals, risk, i, j):
@@ -58,11 +60,11 @@ def main():
     # ── Load cached SOM results ───────────────────────────────────────────────
     print(f"Loading cache from {CACHE_PATH} ...")
     cached = np.load(CACHE_PATH)
-    z500_nodes = cached["z500_nodes"]   # (xdim, ydim, nlat, nlon)
-    moist_nodes = cached["moist_nodes"] # (xdim, ydim, nlat, nlon)
-    counts = cached["counts"]           # (xdim, ydim) — FF days per node
-    totals = cached["totals"]           # (xdim, ydim) — all days per node
-    risk = cached["risk"]               # (xdim, ydim)
+    z500_nodes = cached["z500_nodes"]  # (xdim, ydim, nlat, nlon)
+    moist_nodes = cached["moist_nodes"]  # (xdim, ydim, nlat, nlon)
+    counts = cached["counts"]  # (xdim, ydim) — FF days per node
+    totals = cached["totals"]  # (xdim, ydim) — all days per node
+    risk = cached["risk"]  # (xdim, ydim)
     lat = cached["lat"]
     lon = cached["lon"]
 
@@ -84,7 +86,9 @@ def main():
 
             # Shaded: theta-e standardized anomaly
             im = ax.contourf(
-                lon, lat, moist_nodes[i, j],
+                lon,
+                lat,
+                moist_nodes[i, j],
                 cmap="balance",
                 levels=LEVELS_MOIST,
                 transform=proj,
@@ -93,7 +97,9 @@ def main():
 
             # Contoured: Z500 standardized anomaly
             cn = ax.contour(
-                lon, lat, z500_nodes[i, j],
+                lon,
+                lat,
+                z500_nodes[i, j],
                 colors="black",
                 linewidths=0.4,
                 levels=LEVELS_Z,
@@ -105,7 +111,8 @@ def main():
 
             # Node ID — bold, just outside upper-left
             ax.text(
-                0.0, 1.01,
+                0.0,
+                1.01,
                 node_label(i, j),
                 transform=ax.transAxes,
                 fontsize=5.5,
@@ -116,7 +123,8 @@ def main():
 
             # FF risk stats — just outside upper-right
             ax.text(
-                1.0, 1.01,
+                1.0,
+                1.01,
                 _ff_label(counts, totals, risk, i, j),
                 transform=ax.transAxes,
                 fontsize=5.0,

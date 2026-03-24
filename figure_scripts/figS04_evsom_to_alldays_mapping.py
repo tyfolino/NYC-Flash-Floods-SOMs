@@ -23,14 +23,14 @@ from som_analysis.helpers import node_label
 OUT_DIR = os.path.join(os.path.dirname(os.path.dirname(__file__)), "figures", "figS04")
 os.makedirs(OUT_DIR, exist_ok=True)
 
-EVSOM_CSV   = os.path.join(DATA_DIR, "som_2x2_evsom_24h_bmus_thetae.csv")
+EVSOM_CSV = os.path.join(DATA_DIR, "som_2x2_evsom_24h_bmus_thetae.csv")
 ALLDAYS_CSV = os.path.join(DATA_DIR, "som_5x4_alldays_ffe_bmus_thetae.csv")
 
 # ── Figure / SOM parameters ───────────────────────────────────────────────────
-XFFE, YFFE = 2, 2        # evSOM dimensions
-XALL, YALL = 5, 4        # all-days SOM dimensions
+XFFE, YFFE = 2, 2  # evSOM dimensions
+XALL, YALL = 5, 4  # all-days SOM dimensions
 
-FIG_WIDTH  = 6.0
+FIG_WIDTH = 6.0
 FIG_HEIGHT = 5.0
 DPI_RASTER = 300
 
@@ -61,15 +61,16 @@ def main():
 
     # ── Build figure: 2 rows × 2 cols ────────────────────────────────────────
     fig, axes = plt.subplots(
-        YFFE, XFFE,
+        YFFE,
+        XFFE,
         figsize=(FIG_WIDTH, FIG_HEIGHT),
         constrained_layout=True,
         dpi=DPI_RASTER,
     )
 
     last_im = None
-    for row_ax, (i, j) in zip(range(YFFE * XFFE), NODE_ORDER):
-        ax  = axes[j, i]
+    for _row_ax, (i, j) in zip(range(YFFE * XFFE), NODE_ORDER, strict=False):
+        ax = axes[j, i]
         lbl = node_label(i, j)
         subset = merged[(merged["node_ev_i"] == i) & (merged["node_ev_j"] == j)]
         n_events = len(subset)
@@ -86,7 +87,8 @@ def main():
             pcts.T,
             cmap="YlOrRd",
             origin="upper",
-            vmin=0, vmax=50,
+            vmin=0,
+            vmax=50,
             aspect="auto",
         )
 
@@ -96,9 +98,13 @@ def main():
                 if counts[bi, bj] > 0:
                     text_color = "white" if pcts[bi, bj] > 28 else "black"
                     ax.text(
-                        bi, bj, str(counts[bi, bj]),
-                        ha="center", va="center",
-                        fontsize=5.5, color=text_color,
+                        bi,
+                        bj,
+                        str(counts[bi, bj]),
+                        ha="center",
+                        va="center",
+                        fontsize=5.5,
+                        color=text_color,
                     )
 
         # Axis ticks — label all-days nodes
@@ -114,14 +120,30 @@ def main():
         if i == 0:
             ax.set_ylabel("All-days SOM row", fontsize=5.5)
 
-        ax.text(0.0, 1.02, lbl, transform=ax.transAxes,
-                fontsize=6.5, fontweight="bold", ha="left", va="bottom")
-        ax.text(1.0, 1.02, f"$n$={n_events}", transform=ax.transAxes,
-                fontsize=5.5, ha="right", va="bottom")
+        ax.text(
+            0.0,
+            1.02,
+            lbl,
+            transform=ax.transAxes,
+            fontsize=6.5,
+            fontweight="bold",
+            ha="left",
+            va="bottom",
+        )
+        ax.text(
+            1.0,
+            1.02,
+            f"$n$={n_events}",
+            transform=ax.transAxes,
+            fontsize=5.5,
+            ha="right",
+            va="bottom",
+        )
 
     # ── Shared colorbar ───────────────────────────────────────────────────────
-    cbar = fig.colorbar(last_im, ax=axes.ravel().tolist(),
-                        shrink=0.6, pad=0.02, aspect=25)
+    cbar = fig.colorbar(
+        last_im, ax=axes.ravel().tolist(), shrink=0.6, pad=0.02, aspect=25
+    )
     cbar.set_label(r"Fraction of node events (\%)", fontsize=6)
     cbar.ax.tick_params(labelsize=5)
 

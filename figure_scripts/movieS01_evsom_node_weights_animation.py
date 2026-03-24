@@ -35,25 +35,28 @@ CACHE_PATH = (
 )
 
 # ── Figure / animation parameters ─────────────────────────────────────────────
-XDIM, YDIM   = 2, 2
-FIG_WIDTH    = 5.5
-FIG_HEIGHT   = 3.2
-DPI_GIF      = 300
-DPI_MP4      = 200
-FRAME_MS     = 250   # milliseconds per frame
+XDIM, YDIM = 2, 2
+FIG_WIDTH = 5.5
+FIG_HEIGHT = 3.2
+DPI_GIF = 300
+DPI_MP4 = 200
+FRAME_MS = 250  # milliseconds per frame
 
 LEVELS_MOIST = np.arange(-1.2, 1.21, 0.2)
-LEVELS_Z     = np.arange(-1.4, 1.41, 0.2)
+LEVELS_Z = np.arange(-1.4, 1.41, 0.2)
 
 # Node layout: rows = j, cols = i  →  A1 B1 / A2 B2
 NODE_LAYOUT = [[(i, j) for i in range(XDIM)] for j in range(YDIM)]
 
 
-def _make_frame(z500_nodes, moist_nodes, lat, lon, bmus, hr_idx, hr_offset, im_ref, dpi):
+def _make_frame(
+    z500_nodes, moist_nodes, lat, lon, bmus, hr_idx, hr_offset, im_ref, dpi
+):
     """Render one frame and return a PIL Image."""
     proj = ccrs.PlateCarree()
     fig, axes = plt.subplots(
-        YDIM, XDIM,
+        YDIM,
+        XDIM,
         figsize=(FIG_WIDTH, FIG_HEIGHT),
         subplot_kw={"projection": proj},
         constrained_layout=True,
@@ -64,19 +67,23 @@ def _make_frame(z500_nodes, moist_nodes, lat, lon, bmus, hr_idx, hr_offset, im_r
     im = None
     for row, node_row in enumerate(NODE_LAYOUT):
         for col, (i, j) in enumerate(node_row):
-            ax  = axes[row, col]
+            ax = axes[row, col]
             lbl = node_label(i, j)
-            n   = int(np.sum((bmus[:, 0] == i) & (bmus[:, 1] == j)))
+            n = int(np.sum((bmus[:, 0] == i) & (bmus[:, 1] == j)))
 
             im = ax.contourf(
-                lon, lat, moist_nodes[i, j, hr_idx],
+                lon,
+                lat,
+                moist_nodes[i, j, hr_idx],
                 cmap="balance",
                 levels=LEVELS_MOIST,
                 transform=proj,
                 extend="both",
             )
             cn = ax.contour(
-                lon, lat, z500_nodes[i, j, hr_idx],
+                lon,
+                lat,
+                z500_nodes[i, j, hr_idx],
                 colors="black",
                 linewidths=0.4,
                 levels=LEVELS_Z,
@@ -85,13 +92,20 @@ def _make_frame(z500_nodes, moist_nodes, lat, lon, bmus, hr_idx, hr_offset, im_r
             ax.clabel(cn, inline=True, fontsize=3.0, fmt="%.1f")
             add_map_features(ax)
 
-            ax.text(0.0, 1.01, f"{lbl}  ($n$={n})",
-                    transform=ax.transAxes,
-                    fontsize=5.5, fontweight="bold", ha="left", va="bottom")
+            ax.text(
+                0.0,
+                1.01,
+                f"{lbl}  ($n$={n})",
+                transform=ax.transAxes,
+                fontsize=5.5,
+                fontweight="bold",
+                ha="left",
+                va="bottom",
+            )
 
     # Time label centred above figure
-    sign  = "−" if hr_offset < 0 else "="
-    hrs   = abs(hr_offset)
+    sign = "−" if hr_offset < 0 else "="
+    hrs = abs(hr_offset)
     tlabel = f"T {sign} {hrs}h" if hrs > 0 else "T = 0"
     fig.suptitle(tlabel, fontsize=8)
 
@@ -113,13 +127,13 @@ def main():
     setup_plotting()
 
     print(f"Loading cache from {CACHE_PATH} ...")
-    cached      = np.load(CACHE_PATH)
-    z500_nodes  = cached["z500_nodes"]   # (2, 2, 24, nlat, nlon)
+    cached = np.load(CACHE_PATH)
+    z500_nodes = cached["z500_nodes"]  # (2, 2, 24, nlat, nlon)
     moist_nodes = cached["moist_nodes"]
-    bmus        = cached["bmus"]
-    lat         = cached["lat_z"]
-    lon         = cached["lon_z"]
-    n_hours     = z500_nodes.shape[2]
+    bmus = cached["bmus"]
+    lat = cached["lat_z"]
+    lon = cached["lon_z"]
+    n_hours = z500_nodes.shape[2]
 
     # hour_offsets: −23, −22, … 0
     hour_offsets = list(range(-(n_hours - 1), 1))
@@ -130,7 +144,17 @@ def main():
         if (hr_idx + 1) % 6 == 0 or hr_idx == 0:
             print(f"  Frame {hr_idx + 1}/{n_hours}  (T{hr_offset:+d}h)")
         gif_frames.append(
-            _make_frame(z500_nodes, moist_nodes, lat, lon, bmus, hr_idx, hr_offset, None, DPI_GIF)
+            _make_frame(
+                z500_nodes,
+                moist_nodes,
+                lat,
+                lon,
+                bmus,
+                hr_idx,
+                hr_offset,
+                None,
+                DPI_GIF,
+            )
         )
 
     gif_path = os.path.join(OUT_DIR, "movieS01_evsom_node_weights.gif")
@@ -146,7 +170,9 @@ def main():
 
     print(f"Rendering {n_hours} frames (MP4 @ {DPI_MP4} dpi) ...")
     mp4_frames = [
-        _make_frame(z500_nodes, moist_nodes, lat, lon, bmus, hr_idx, hr_offset, None, DPI_MP4)
+        _make_frame(
+            z500_nodes, moist_nodes, lat, lon, bmus, hr_idx, hr_offset, None, DPI_MP4
+        )
         for hr_idx, hr_offset in enumerate(hour_offsets)
     ]
 
@@ -156,16 +182,27 @@ def main():
         for k, img in enumerate(mp4_frames):
             img.save(os.path.join(tmp, f"frame_{k:03d}.png"))
         fps = 1000 / FRAME_MS
-        subprocess.run([
-            "ffmpeg", "-y",
-            "-r", str(fps),
-            "-i", os.path.join(tmp, "frame_%03d.png"),
-            "-c:v", "libx264",
-            "-crf", "18",
-            "-vf", "scale=trunc(iw/2)*2:trunc(ih/2)*2",
-            "-pix_fmt", "yuv420p",
-            mp4_path,
-        ], check=True, capture_output=True)
+        subprocess.run(
+            [
+                "ffmpeg",
+                "-y",
+                "-r",
+                str(fps),
+                "-i",
+                os.path.join(tmp, "frame_%03d.png"),
+                "-c:v",
+                "libx264",
+                "-crf",
+                "18",
+                "-vf",
+                "scale=trunc(iw/2)*2:trunc(ih/2)*2",
+                "-pix_fmt",
+                "yuv420p",
+                mp4_path,
+            ],
+            check=True,
+            capture_output=True,
+        )
     print("Done.")
 
 

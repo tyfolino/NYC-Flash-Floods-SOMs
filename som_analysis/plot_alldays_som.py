@@ -96,7 +96,7 @@ def _node_title(i, j, counts, totals, risk):
     r = risk[i, j]
     if np.isnan(r):
         return f"{node_label(i, j)}  FF=0/{tot}"
-    return f"{node_label(i, j)}  FF={n}/{tot} ({r*100:.1f}\\%)"
+    return f"{node_label(i, j)}  FF={n}/{tot} ({r * 100:.1f}\\%)"
 
 
 def main():
@@ -104,7 +104,9 @@ def main():
     setup_plotting()
 
     cfg = MOISTURE_CONFIGS[args.moisture_var]
-    paths = get_alldays_paths(args.moisture_var, args.xdim, args.ydim, snapshot_hour=args.snapshot_hour)
+    paths = get_alldays_paths(
+        args.moisture_var, args.xdim, args.ydim, snapshot_hour=args.snapshot_hour
+    )
     fig_dir = paths["fig_dir"]
     _lbl = paths["file_label"]
     moist_time_dim = cfg["time_dim"]
@@ -141,7 +143,6 @@ def main():
     lat = cached["lat"]
     lon = cached["lon"]
 
-    n_days = bmus.shape[0]
     n_ff = len(event_indices)
 
     # ── Load data files ───────────────────────────────────────────────────────
@@ -158,22 +159,32 @@ def main():
     moist_norm_daily = load_moist_var(
         f"{SOM_INTERMEDIATE_PATH}{pfx}_norm{alldays_suffix}.nc", var_name
     )
-    moist_daily = load_moist_var(f"{SOM_INTERMEDIATE_PATH}{pfx}{alldays_suffix}.nc", var_name)
+    moist_daily = load_moist_var(
+        f"{SOM_INTERMEDIATE_PATH}{pfx}{alldays_suffix}.nc", var_name
+    )
     z500_norm_weighted_daily = xr.load_dataarray(
         f"{SOM_INTERMEDIATE_PATH}era5_Z500_norm_weighted{alldays_suffix}.nc"
     )
     z500_norm_daily = xr.load_dataarray(
         f"{SOM_INTERMEDIATE_PATH}era5_Z500_norm{alldays_suffix}.nc"
     )
-    z500_daily = xr.load_dataarray(f"{SOM_INTERMEDIATE_PATH}era5_Z500{alldays_suffix}.nc")
+    z500_daily = xr.load_dataarray(
+        f"{SOM_INTERMEDIATE_PATH}era5_Z500{alldays_suffix}.nc"
+    )
 
     # ── Compute QE for FF days ────────────────────────────────────────────────
     # Reconstruct feature matrix X for QE calculation (matches training)
     print("Computing quantization errors ...")
     z500_lat_dim = "latitude" if "latitude" in z500_norm_weighted_daily.dims else "lat"
-    z500_lon_dim = "longitude" if "longitude" in z500_norm_weighted_daily.dims else "lon"
-    z500_time_dim = "valid_time" if "valid_time" in z500_norm_weighted_daily.dims else "time"
-    z500_flat = z500_norm_weighted_daily.stack(features=[z500_lat_dim, z500_lon_dim]).values
+    z500_lon_dim = (
+        "longitude" if "longitude" in z500_norm_weighted_daily.dims else "lon"
+    )
+    z500_time_dim = (
+        "valid_time" if "valid_time" in z500_norm_weighted_daily.dims else "time"
+    )
+    z500_flat = z500_norm_weighted_daily.stack(
+        features=[z500_lat_dim, z500_lon_dim]
+    ).values
     moist_flat = moist_norm_weighted_daily.stack(
         features=[cfg["lat_dim"], cfg["lon_dim"]]
     ).values
@@ -195,7 +206,10 @@ def main():
             "timestamp": ff_timestamps,
             "node_i": ff_node_i,
             "node_j": ff_node_j,
-            "node": [node_label(int(i), int(j)) for i, j in zip(ff_node_i, ff_node_j)],
+            "node": [
+                node_label(int(i), int(j))
+                for i, j in zip(ff_node_i, ff_node_j, strict=False)
+            ],
             "qe": qe_ff,
         }
     ).sort_values("qe")
@@ -265,7 +279,9 @@ def main():
 
     for idx, (x, y) in enumerate(coords):
         ix, iy = divmod(idx, ydim)
-        plt.text(x, y, node_label(ix, iy), fontsize=7, ha="center", va="center", zorder=5)
+        plt.text(
+            x, y, node_label(ix, iy), fontsize=7, ha="center", va="center", zorder=5
+        )
 
     plt.title(
         "Sammon / MDS Distortion Grid\nU-Matrix (Color) \\& Node Frequency (Size)"
@@ -368,7 +384,9 @@ def main():
 
     # ── Raw composites — all days ─────────────────────────────────────────────
     print("Plotting raw composites (all days) ...")
-    z500_raw_comp, _ = compute_composites(z500_daily, bmus, xdim, ydim, time_dim=z500_time_dim)
+    z500_raw_comp, _ = compute_composites(
+        z500_daily, bmus, xdim, ydim, time_dim=z500_time_dim
+    )
     moist_raw_comp, _ = compute_composites(
         moist_daily, bmus, xdim, ydim, time_dim=moist_time_dim
     )
@@ -421,7 +439,9 @@ def main():
     ff_bmus = bmus[event_indices]
 
     # Subset data arrays to FF days
-    z500_ff = z500_daily.isel({z500_time_dim: xr.DataArray(event_indices, dims="valid_time")})
+    z500_ff = z500_daily.isel(
+        {z500_time_dim: xr.DataArray(event_indices, dims="valid_time")}
+    )
     moist_ff = moist_daily.isel(
         {moist_time_dim: xr.DataArray(event_indices, dims="valid_time")}
     )
@@ -602,15 +622,17 @@ def main():
                 ha="center",
                 va="center",
                 fontsize=6,
-                color="white"
-                if (not np.isnan(r) and r > 0.6 * risk[~np.isnan(risk)].max())
-                else "black",
+                color=(
+                    "white"
+                    if (not np.isnan(r) and r > 0.6 * risk[~np.isnan(risk)].max())
+                    else "black"
+                ),
             )
     ax.set_xticks(np.arange(xdim))
     ax.set_yticks(np.arange(ydim))
     ax.set_xlabel("X-index")
     ax.set_ylabel("Y-index")
-    ax.set_title(f"Flash Flood Risk by Node (FF days / total days)")
+    ax.set_title("Flash Flood Risk by Node (FF days / total days)")
     cbar = fig.colorbar(im, ax=ax, shrink=0.8)
     cbar.set_label("FF Risk", fontsize=7)
     plt.savefig(f"{fig_dir}/ff_risk_heatmap.png", bbox_inches="tight")
@@ -633,7 +655,6 @@ def main():
     fig, ax = plt.subplots(
         figsize=(0.8 * xdim + 1, 0.9 * ydim + 1), dpi=300, constrained_layout=True
     )
-    vmax = max(cutoff_freq.max(), 0.01)
     im = ax.imshow(cutoff_freq.T * 100, cmap="YlOrRd", vmin=0, vmax=100, origin="lower")
     for i in range(xdim):
         for j in range(ydim):
@@ -737,7 +758,6 @@ def main():
     # For each node: mean(obs_norm - node_centroid) over FF days in that node.
     # Also compute mean spatial correlation r(obs, centroid) per node.
     print("Plotting residual composites (FF days, per node) ...")
-    n_grid = len(lat) * len(lon)
     z500_residuals = np.full((xdim, ydim, len(lat), len(lon)), np.nan)
     moist_residuals = np.full((xdim, ydim, len(lat), len(lon)), np.nan)
     mean_corr_per_node = np.full((xdim, ydim), np.nan)
@@ -750,7 +770,10 @@ def main():
             node_wt = weights[i * ydim + j]
 
             z500_obs = np.stack(
-                [z500_norm_daily.isel({z500_time_dim: int(k)}).values for k in idx_ff_node]
+                [
+                    z500_norm_daily.isel({z500_time_dim: int(k)}).values
+                    for k in idx_ff_node
+                ]
             )
             moist_obs = np.stack(
                 [

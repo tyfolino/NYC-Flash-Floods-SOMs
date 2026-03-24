@@ -95,14 +95,14 @@ def parse_args():
         type=int,
         default=None,
         help="Use a single hourly snapshot per day (e.g. 20 for 2000 UTC) "
-             "instead of daily means.",
+        "instead of daily means.",
     )
     parser.add_argument(
         "--topology",
         choices=["rectangular", "hexagonal"],
         default="rectangular",
         help="SOM grid topology (default: rectangular). Hexagonal reduces corner "
-             "clustering by giving each interior node 6 neighbors instead of 4.",
+        "clustering by giving each interior node 6 neighbors instead of 4.",
     )
     return parser.parse_args()
 
@@ -137,17 +137,15 @@ def load_flash_flood_days(storm_csv):
 def main():
     args = parse_args()
     cfg = MOISTURE_CONFIGS[args.moisture_var]
-    paths = get_alldays_paths(args.moisture_var, args.xdim, args.ydim, snapshot_hour=args.snapshot_hour)
+    paths = get_alldays_paths(
+        args.moisture_var, args.xdim, args.ydim, snapshot_hour=args.snapshot_hour
+    )
 
     xdim, ydim = args.xdim, args.ydim
     pfx = cfg["file_prefix"]
     var_name = cfg["var_name"]
-    moist_time_dim = cfg["time_dim"]
-
     # ── Load data ─────────────────────────────────────────────────────────────
-    print(
-        f"Loading data for {args.moisture_var} (weight={args.moisture_weight})..."
-    )
+    print(f"Loading data for {args.moisture_var} (weight={args.moisture_weight})...")
 
     if args.snapshot_hour is not None:
         alldays_suffix = f"_snapshot_{args.snapshot_hour:02d}utc"
@@ -157,18 +155,8 @@ def main():
     moist_norm_weighted_daily = load_moist_var(
         f"{SOM_INTERMEDIATE_PATH}{pfx}_norm_weighted{alldays_suffix}.nc", var_name
     )
-    moist_norm_daily = load_moist_var(
-        f"{SOM_INTERMEDIATE_PATH}{pfx}_norm{alldays_suffix}.nc", var_name
-    )
-    moist_daily = load_moist_var(
-        f"{SOM_INTERMEDIATE_PATH}{pfx}{alldays_suffix}.nc", var_name
-    )
-
     z500_norm_weighted_daily = xr.load_dataarray(
         f"{SOM_INTERMEDIATE_PATH}era5_Z500_norm_weighted{alldays_suffix}.nc"
-    )
-    z500_norm_daily = xr.load_dataarray(
-        f"{SOM_INTERMEDIATE_PATH}era5_Z500_norm{alldays_suffix}.nc"
     )
     z500_daily = xr.load_dataarray(
         f"{SOM_INTERMEDIATE_PATH}era5_Z500{alldays_suffix}.nc"
@@ -179,10 +167,12 @@ def main():
     event_days = load_flash_flood_days(STORM_DATA_CSV)
     print(f"  Found {len(event_days)} unique flash-flood days.")
 
-    z500_time_dim = "valid_time" if "valid_time" in z500_norm_weighted_daily.dims else "time"
-    som_days = pd.to_datetime(z500_norm_weighted_daily[z500_time_dim].values).tz_localize(
-        None
+    z500_time_dim = (
+        "valid_time" if "valid_time" in z500_norm_weighted_daily.dims else "time"
     )
+    som_days = pd.to_datetime(
+        z500_norm_weighted_daily[z500_time_dim].values
+    ).tz_localize(None)
     is_ff = np.isin(som_days.normalize(), pd.to_datetime(event_days))
     event_indices = np.where(is_ff)[0]
     print(
@@ -192,15 +182,17 @@ def main():
 
     # ── Flatten & concatenate ─────────────────────────────────────────────────
     z500_lat_dim = "latitude" if "latitude" in z500_norm_weighted_daily.dims else "lat"
-    z500_lon_dim = "longitude" if "longitude" in z500_norm_weighted_daily.dims else "lon"
-    z500_flat = z500_norm_weighted_daily.stack(features=[z500_lat_dim, z500_lon_dim]).values
+    z500_lon_dim = (
+        "longitude" if "longitude" in z500_norm_weighted_daily.dims else "lon"
+    )
+    z500_flat = z500_norm_weighted_daily.stack(
+        features=[z500_lat_dim, z500_lon_dim]
+    ).values
     moist_flat = moist_norm_weighted_daily.stack(
         features=[cfg["lat_dim"], cfg["lon_dim"]]
     ).values
 
-    X = np.concatenate(
-        (z500_flat, moist_flat * args.moisture_weight), axis=1
-    )
+    X = np.concatenate((z500_flat, moist_flat * args.moisture_weight), axis=1)
     print(f"Training matrix shape: {X.shape}")
 
     # ── SOM training ──────────────────────────────────────────────────────────
@@ -357,8 +349,10 @@ def main():
     print(f"Topology          : {args.topology}")
     print(f"Random seed       : {args.seed}")
     print(f"Rotated           : {args.rotate}")
-    print(f"Flash-flood days  : {is_ff.sum()} / {len(som_days)} "
-          f"({overall_risk:.1%} overall risk)")
+    print(
+        f"Flash-flood days  : {is_ff.sum()} / {len(som_days)} "
+        f"({overall_risk:.1%} overall risk)"
+    )
     print("\nNode counts and flash-flood risk:")
     for i in range(xdim):
         for j in range(ydim):

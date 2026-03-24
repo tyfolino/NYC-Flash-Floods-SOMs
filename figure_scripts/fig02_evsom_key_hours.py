@@ -35,18 +35,18 @@ CACHE_PATH = (
 
 # ── Figure / SOM parameters ───────────────────────────────────────────────────
 XDIM, YDIM = 2, 2
-FIG_WIDTH  = 7.0
+FIG_WIDTH = 7.0
 FIG_HEIGHT = 4.2
 DPI_RASTER = 300
 
 # Key hours (T−18 to T=0, 6-hourly) and their indices in the 24h window
-KEY_HOURS   = [-18, -12, -6, 0]
-KEY_INDICES = [5, 11, 17, 23]   # index into hour_offset axis (T-23=0 … T=0=23)
-KEY_LABELS  = [r"T$-$18h", r"T$-$12h", r"T$-$6h", r"T$=$0"]
+KEY_HOURS = [-18, -12, -6, 0]
+KEY_INDICES = [5, 11, 17, 23]  # index into hour_offset axis (T-23=0 … T=0=23)
+KEY_LABELS = [r"T$-$18h", r"T$-$12h", r"T$-$6h", r"T$=$0"]
 
 # Contour levels — identical to Fig. 1
 LEVELS_MOIST = np.arange(-1.2, 1.21, 0.2)
-LEVELS_Z     = np.arange(-1.4, 1.41, 0.2)
+LEVELS_Z = np.arange(-1.4, 1.41, 0.2)
 
 # Node traversal order: A1, A2, B1, B2
 NODE_ORDER = [(i, j) for j in range(YDIM) for i in range(XDIM)]
@@ -57,17 +57,18 @@ def main():
 
     # ── Load cached evSOM results ─────────────────────────────────────────────
     print(f"Loading cache from {CACHE_PATH} ...")
-    cached      = np.load(CACHE_PATH)
-    z500_nodes  = cached["z500_nodes"]   # (xdim, ydim, n_hours, nlat, nlon)
+    cached = np.load(CACHE_PATH)
+    z500_nodes = cached["z500_nodes"]  # (xdim, ydim, n_hours, nlat, nlon)
     moist_nodes = cached["moist_nodes"]
-    bmus        = cached["bmus"]         # (121, 2)
-    lat         = cached["lat_z"]
-    lon         = cached["lon_z"]
+    bmus = cached["bmus"]  # (121, 2)
+    lat = cached["lat_z"]
+    lon = cached["lon_z"]
 
     # ── Build figure: 4 rows (nodes) × 4 cols (hours) ────────────────────────
     proj = ccrs.PlateCarree()
     fig, axes = plt.subplots(
-        4, 4,
+        4,
+        4,
         figsize=(FIG_WIDTH, FIG_HEIGHT),
         subplot_kw={"projection": proj},
         constrained_layout=True,
@@ -81,12 +82,16 @@ def main():
         # Count events in this node
         n = int(np.sum((bmus[:, 0] == i) & (bmus[:, 1] == j)))
 
-        for col, (hr_idx, hr_label) in enumerate(zip(KEY_INDICES, KEY_LABELS)):
+        for col, (hr_idx, hr_label) in enumerate(
+            zip(KEY_INDICES, KEY_LABELS, strict=False)
+        ):
             ax = axes[row, col]
 
             # θe shaded
             im = ax.contourf(
-                lon, lat, moist_nodes[i, j, hr_idx],
+                lon,
+                lat,
+                moist_nodes[i, j, hr_idx],
                 cmap="balance",
                 levels=LEVELS_MOIST,
                 transform=proj,
@@ -95,7 +100,9 @@ def main():
 
             # Z500 contoured
             cn = ax.contour(
-                lon, lat, z500_nodes[i, j, hr_idx],
+                lon,
+                lat,
+                z500_nodes[i, j, hr_idx],
                 colors="black",
                 linewidths=0.4,
                 levels=LEVELS_Z,
@@ -107,19 +114,26 @@ def main():
             # Node label: outside upper-left of leftmost column only
             if col == 0:
                 ax.text(
-                    0.0, 1.01, f"{lbl}  ($n$={n})",
+                    0.0,
+                    1.01,
+                    f"{lbl}  ($n$={n})",
                     transform=ax.transAxes,
-                    fontsize=5.5, fontweight="bold",
-                    ha="left", va="bottom",
+                    fontsize=5.5,
+                    fontweight="bold",
+                    ha="left",
+                    va="bottom",
                 )
 
             # Time label: above top row only
             if row == 0:
                 ax.text(
-                    0.5, 1.01, hr_label,
+                    0.5,
+                    1.01,
+                    hr_label,
                     transform=ax.transAxes,
                     fontsize=5.5,
-                    ha="center", va="bottom",
+                    ha="center",
+                    va="bottom",
                 )
 
     # ── Shared colorbar ───────────────────────────────────────────────────────

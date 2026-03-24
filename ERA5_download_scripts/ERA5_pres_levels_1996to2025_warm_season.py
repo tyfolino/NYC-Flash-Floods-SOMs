@@ -9,7 +9,7 @@ base_outdir = "/mnt/drive2/ERA5/NC_files"
 # Variable lookup: short name -> CDS API variable name(s) and pressure level
 VARIABLES = {
     "thetae": {"cds_names": ["specific humidity", "temperature"], "level": "850"},
-    "z500":   {"cds_names": ["geopotential"], "level": "500"},
+    "z500": {"cds_names": ["geopotential"], "level": "500"},
 }
 
 # ---- Edit this to select the variable to download ----

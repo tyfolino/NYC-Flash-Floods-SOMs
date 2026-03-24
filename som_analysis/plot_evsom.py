@@ -23,7 +23,12 @@ import numpy as np
 import pandas as pd
 import xarray as xr
 
-from .config import MOISTURE_CONFIGS, SOM_INTERMEDIATE_PATH, get_evsom_paths, setup_plotting
+from .config import (
+    MOISTURE_CONFIGS,
+    SOM_INTERMEDIATE_PATH,
+    get_evsom_paths,
+    setup_plotting,
+)
 from .helpers import add_map_features, get_node_indices, load_moist_var, node_label
 
 
@@ -93,7 +98,6 @@ def main():
     paths = get_evsom_paths(args.moisture_var, args.moisture_weight, args.n_hours)
     fig_dir = paths["fig_dir"]
     _lbl = paths["file_label"]
-    moist_label = cfg["label"]
     moist_label_short = cfg["label_short"]
     pfx = cfg["file_prefix"]
     var_name = cfg["var_name"]
@@ -109,29 +113,18 @@ def main():
     cache_path = os.path.join(fig_dir, ".cache", "som_results.npz")
     print(f"Loading SOM results from {cache_path} ...")
     cached = np.load(cache_path)
-    z500_nodes = cached["z500_nodes"]   # (xdim, ydim, n_hours, lat_z, lon_z)
-    moist_nodes = cached["moist_nodes"] # (xdim, ydim, n_hours, lat_m, lon_m)
+    z500_nodes = cached["z500_nodes"]  # (xdim, ydim, n_hours, lat_z, lon_z)
+    moist_nodes = cached["moist_nodes"]  # (xdim, ydim, n_hours, lat_m, lon_m)
     bmus = cached["bmus"]
     u_matrix = cached["u_matrix"]
     hit_map = cached["hit_map"]
-    coords = cached["coords"]
     lat_z = cached["lat_z"]
     lon_z = cached["lon_z"]
-    lat_m = cached["lat_m"]
-    lon_m = cached["lon_m"]
-
-    # Use Z500 coordinates for all plotting (they share the same domain)
-    lat = lat_z
-    lon = lon_z
 
     # ── Load event data for composites ────────────────────────────────────────
     print("Loading event data for composites ...")
-    z500_raw = xr.load_dataarray(
-        f"{SOM_INTERMEDIATE_PATH}era5_Z500_ffe_evsom.nc"
-    )
-    moist_raw = load_moist_var(
-        f"{SOM_INTERMEDIATE_PATH}{pfx}_ffe_evsom.nc", var_name
-    )
+    z500_raw = xr.load_dataarray(f"{SOM_INTERMEDIATE_PATH}era5_Z500_ffe_evsom.nc")
+    moist_raw = load_moist_var(f"{SOM_INTERMEDIATE_PATH}{pfx}_ffe_evsom.nc", var_name)
 
     # Composite over events for each node → (xdim, ydim, n_hours, lat, lon)
     def node_composites(da, time_dim="event_time"):
@@ -171,11 +164,20 @@ def main():
     plt.close()
 
     # ── Helper: 4-panel animated GIF (one panel per node) ────────────────────
-    def _make_4panel_gif(z_nodes, m_nodes, levels_z, levels_m, m_cmap,
-                         m_cbar_label, gif_path, title_prefix=""):
+    def _make_4panel_gif(
+        z_nodes,
+        m_nodes,
+        levels_z,
+        levels_m,
+        m_cmap,
+        m_cbar_label,
+        gif_path,
+        title_prefix="",
+    ):
         """Save a single animated GIF with all nodes shown in a 2×2 grid."""
         fig, axes = plt.subplots(
-            ydim, xdim,
+            ydim,
+            xdim,
             figsize=(5 * xdim, 3.2 * ydim),
             subplot_kw={"projection": ccrs.PlateCarree()},
             constrained_layout=True,
@@ -194,13 +196,21 @@ def main():
                     ax.cla()
                     add_map_features(ax)
                     last_cf = ax.contourf(
-                        lon_z, lat_z, m_nodes[ii, jj, frame_idx],
-                        levels=levels_m, cmap=m_cmap,
-                        transform=ccrs.PlateCarree(), extend="both",
+                        lon_z,
+                        lat_z,
+                        m_nodes[ii, jj, frame_idx],
+                        levels=levels_m,
+                        cmap=m_cmap,
+                        transform=ccrs.PlateCarree(),
+                        extend="both",
                     )
                     ax.contour(
-                        lon_z, lat_z, z_nodes[ii, jj, frame_idx],
-                        levels=levels_z, colors="black", linewidths=0.5,
+                        lon_z,
+                        lat_z,
+                        z_nodes[ii, jj, frame_idx],
+                        levels=levels_z,
+                        colors="black",
+                        linewidths=0.5,
                         transform=ccrs.PlateCarree(),
                     )
                     n_ev = int(hit_map.T[ii, jj])
@@ -212,9 +222,14 @@ def main():
 
         # First frame + colorbar
         cf0 = _draw(0)
-        cbar = fig.colorbar(cf0, ax=axes.ravel().tolist(),
-                            orientation="horizontal", pad=0.02,
-                            fraction=0.046, shrink=0.9)
+        cbar = fig.colorbar(
+            cf0,
+            ax=axes.ravel().tolist(),
+            orientation="horizontal",
+            pad=0.02,
+            fraction=0.046,
+            shrink=0.9,
+        )
         cbar.set_label(m_cbar_label, fontsize=6)
         cbar.ax.tick_params(labelsize=5)
 
@@ -233,7 +248,8 @@ def main():
     if not args.skip_anim:
         print("Generating animated GIF (weight space, 4-panel) ...")
         _make_4panel_gif(
-            z500_nodes, moist_nodes,
+            z500_nodes,
+            moist_nodes,
             levels_z=np.arange(-1.4, 1.41, 0.2),
             levels_m=cfg["levels_weights"],
             m_cmap="balance",
@@ -249,7 +265,8 @@ def main():
 
         print("Generating composite raw GIF (4-panel) ...")
         _make_4panel_gif(
-            z500_raw_comp / 98.1, moist_raw_comp,
+            z500_raw_comp / 98.1,
+            moist_raw_comp,
             levels_z=levels_z_raw,
             levels_m=cfg["levels_raw"],
             m_cmap=cfg["cmap_raw"],
@@ -287,32 +304,43 @@ def main():
     node_order = [(i, j) for j in range(ydim) for i in range(xdim)]
 
     fig, axes = plt.subplots(
-        n_rows, n_cols,
+        n_rows,
+        n_cols,
         figsize=(2.2 * n_cols, 1.6 * n_rows),
         subplot_kw={"projection": ccrs.PlateCarree()},
         constrained_layout=True,
         dpi=300,
     )
-    fig.set_constrained_layout_pads(h_pad=1/72, hspace=0.01)
+    fig.set_constrained_layout_pads(h_pad=1 / 72, hspace=0.01)
     if n_rows == 1:
         axes = axes[np.newaxis, :]
     if n_cols == 1:
         axes = axes[:, np.newaxis]
 
     for row, (i, j) in enumerate(node_order):
-        for col, (h_idx, h_off) in enumerate(zip(key_indices, key_hours_actual)):
+        for col, (h_idx, h_off) in enumerate(
+            zip(key_indices, key_hours_actual, strict=False)
+        ):
             ax = axes[row, col]
             z_fr = z500_nodes[i, j, h_idx]
             m_fr = moist_nodes[i, j, h_idx]
 
             im = ax.contourf(
-                lon_z, lat_z, m_fr,
-                levels=levels_m, cmap="balance",
-                transform=ccrs.PlateCarree(), extend="both",
+                lon_z,
+                lat_z,
+                m_fr,
+                levels=levels_m,
+                cmap="balance",
+                transform=ccrs.PlateCarree(),
+                extend="both",
             )
             ax.contour(
-                lon_z, lat_z, z_fr,
-                levels=levels_z, colors="black", linewidths=0.4,
+                lon_z,
+                lat_z,
+                z_fr,
+                levels=levels_z,
+                colors="black",
+                linewidths=0.4,
                 transform=ccrs.PlateCarree(),
             )
             add_map_features(ax)
@@ -325,8 +353,9 @@ def main():
                 ax.set_ylabel(f"{node_label(i, j)} N={n_ev}", fontsize=5, labelpad=2)
 
     # Shared colorbar
-    cbar = fig.colorbar(im, ax=axes.ravel().tolist(), shrink=0.4, pad=0.01,
-                        orientation="vertical")
+    cbar = fig.colorbar(
+        im, ax=axes.ravel().tolist(), shrink=0.4, pad=0.01, orientation="vertical"
+    )
     cbar.set_label(f"Standardized {moist_label_short} Anomaly", fontsize=6)
     cbar.ax.tick_params(labelsize=5)
 
@@ -340,16 +369,18 @@ def main():
     print(f"  Saved {out_key}")
 
     # ── Composite key-hours panels ────────────────────────────────────────────
-    def _save_key_hours_panel(z_comp, m_comp, levels_z, levels_m, m_cmap,
-                              m_cbar_label, suptitle, out_path):
+    def _save_key_hours_panel(
+        z_comp, m_comp, levels_z, levels_m, m_cmap, m_cbar_label, suptitle, out_path
+    ):
         fig, axes = plt.subplots(
-            n_rows, n_cols,
+            n_rows,
+            n_cols,
             figsize=(2.2 * n_cols, 1.6 * n_rows),
             subplot_kw={"projection": ccrs.PlateCarree()},
             constrained_layout=True,
             dpi=300,
         )
-        fig.set_constrained_layout_pads(h_pad=1/72, hspace=0.01)
+        fig.set_constrained_layout_pads(h_pad=1 / 72, hspace=0.01)
         _axes = axes
         if n_rows == 1:
             _axes = _axes[np.newaxis, :]
@@ -358,17 +389,25 @@ def main():
 
         for row, (i, j) in enumerate(node_order):
             for col, (h_idx, h_off) in enumerate(
-                zip(key_indices, key_hours_actual)
+                zip(key_indices, key_hours_actual, strict=False)
             ):
                 ax = _axes[row, col]
                 im = ax.contourf(
-                    lon_z, lat_z, m_comp[i, j, h_idx],
-                    levels=levels_m, cmap=m_cmap,
-                    transform=ccrs.PlateCarree(), extend="both",
+                    lon_z,
+                    lat_z,
+                    m_comp[i, j, h_idx],
+                    levels=levels_m,
+                    cmap=m_cmap,
+                    transform=ccrs.PlateCarree(),
+                    extend="both",
                 )
                 ax.contour(
-                    lon_z, lat_z, z_comp[i, j, h_idx],
-                    levels=levels_z, colors="black", linewidths=0.4,
+                    lon_z,
+                    lat_z,
+                    z_comp[i, j, h_idx],
+                    levels=levels_z,
+                    colors="black",
+                    linewidths=0.4,
                     transform=ccrs.PlateCarree(),
                 )
                 add_map_features(ax)
@@ -377,10 +416,13 @@ def main():
                     ax.set_title(t_str, fontsize=6)
                 if col == 0:
                     n_ev = int(hit_map.T[i, j])
-                    ax.set_ylabel(f"{node_label(i, j)} N={n_ev}", fontsize=5, labelpad=2)
+                    ax.set_ylabel(
+                        f"{node_label(i, j)} N={n_ev}", fontsize=5, labelpad=2
+                    )
 
-        cbar = fig.colorbar(im, ax=_axes.ravel().tolist(), shrink=0.4, pad=0.01,
-                            orientation="vertical")
+        cbar = fig.colorbar(
+            im, ax=_axes.ravel().tolist(), shrink=0.4, pad=0.01, orientation="vertical"
+        )
         cbar.set_label(m_cbar_label, fontsize=6)
         cbar.ax.tick_params(labelsize=5)
         plt.suptitle(suptitle, fontsize=8)
@@ -392,14 +434,14 @@ def main():
     levels_z_raw = range(552, 595, 3)
 
     _save_key_hours_panel(
-        z500_raw_comp / 98.1, moist_raw_comp,
+        z500_raw_comp / 98.1,
+        moist_raw_comp,
         levels_z=levels_z_raw,
         levels_m=cfg["levels_raw"],
         m_cmap=cfg["cmap_raw"],
         m_cbar_label=f"{moist_label_short} ({cfg['units_raw']})",
         suptitle=(
-            f"Evolution SOM Composite: "
-            f"Z500 (contoured) + {moist_label_short} (shaded)"
+            f"Evolution SOM Composite: Z500 (contoured) + {moist_label_short} (shaded)"
         ),
         out_path=f"{fig_dir}/key-hours/key_hours_{_lbl}_composite_raw.png",
     )
@@ -437,9 +479,7 @@ def main():
         fontsize=8,
         y=1.04,
     )
-    plt.savefig(
-        f"{fig_dir}/Z500_{_lbl}_evsom_monthly_counts.png", bbox_inches="tight"
-    )
+    plt.savefig(f"{fig_dir}/Z500_{_lbl}_evsom_monthly_counts.png", bbox_inches="tight")
     plt.close()
 
     print(f"\nAll plots saved to {fig_dir}/")

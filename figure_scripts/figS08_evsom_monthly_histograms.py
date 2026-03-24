@@ -26,13 +26,13 @@ BMU_CSV = os.path.join(DATA_DIR, "som_2x2_evsom_24h_bmus_thetae.csv")
 
 # ── Figure parameters ──────────────────────────────────────────────────────────
 XDIM, YDIM = 2, 2
-FIG_WIDTH  = 5.5
+FIG_WIDTH = 5.5
 FIG_HEIGHT = 4.0
 DPI_RASTER = 300
 
-MONTHS      = range(5, 11)        # May–October
+MONTHS = range(5, 11)  # May–October
 MONTH_LABELS = ["May", "Jun", "Jul", "Aug", "Sep", "Oct"]
-BAR_COLOR   = "#3a7ebf"
+BAR_COLOR = "#3a7ebf"
 
 # Node order: A1, A2 (top row), B1, B2 (bottom row)
 NODE_ORDER = [(i, j) for j in range(YDIM) for i in range(XDIM)]
@@ -50,32 +50,49 @@ def main():
 
     # ── Build figure ──────────────────────────────────────────────────────────
     fig, axes = plt.subplots(
-        YDIM, XDIM,
+        YDIM,
+        XDIM,
         figsize=(FIG_WIDTH, FIG_HEIGHT),
         constrained_layout=True,
         dpi=DPI_RASTER,
-        sharex=True, sharey=True,
+        sharex=True,
+        sharey=True,
     )
 
-    for idx, (i, j) in enumerate(NODE_ORDER):
-        ax  = axes[j, i]
+    for _idx, (i, j) in enumerate(NODE_ORDER):
+        ax = axes[j, i]
         lbl = node_label(i, j)
 
         # FFEs in this node per month, normalised by monthly total
-        node_mask    = (df["node_i"] == i) & (df["node_j"] == j)
-        node_monthly = df[node_mask].groupby("month").size().reindex(MONTHS, fill_value=0)
-        fractions    = node_monthly / monthly_totals.replace(0, np.nan)
+        node_mask = (df["node_i"] == i) & (df["node_j"] == j)
+        node_monthly = (
+            df[node_mask].groupby("month").size().reindex(MONTHS, fill_value=0)
+        )
+        fractions = node_monthly / monthly_totals.replace(0, np.nan)
 
-        ax.bar(np.arange(len(MONTHS)), fractions.values, width=0.7,
-               color=BAR_COLOR, linewidth=0)
+        ax.bar(
+            np.arange(len(MONTHS)),
+            fractions.values,
+            width=0.7,
+            color=BAR_COLOR,
+            linewidth=0,
+        )
         ax.set_xticks(np.arange(len(MONTHS)))
         ax.set_xticklabels(MONTH_LABELS, fontsize=5.5)
         ax.tick_params(axis="y", labelsize=5.5)
         ax.set_ylim(0, 1)
 
         # Node label bold upper-left
-        ax.text(0.03, 0.97, lbl, transform=ax.transAxes,
-                fontsize=6.5, fontweight="bold", ha="left", va="top")
+        ax.text(
+            0.03,
+            0.97,
+            lbl,
+            transform=ax.transAxes,
+            fontsize=6.5,
+            fontweight="bold",
+            ha="left",
+            va="top",
+        )
 
     # Shared axis labels
     for ax in axes[:, 0]:

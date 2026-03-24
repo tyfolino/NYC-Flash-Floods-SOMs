@@ -118,13 +118,13 @@ def print_crosstab(merged, xffe, yffe, xall, yall):
         top_pct = 100 * dist.max() / n_events
 
         print(f"\nFFE Node {node_ffe} ({n_events} events):")
-        print(
-            f"  Spread across {len(dist)} of {xall * yall} possible all-days nodes"
-        )
+        print(f"  Spread across {len(dist)} of {xall * yall} possible all-days nodes")
         print(f"  Entropy: {ent:.2f}")
         print(f"  Top destination: all-days {top_node} ({top_pct:.1f}%)")
         for node_all, count in dist.items():
-            print(f"    -> all-days {node_all}: {count} ({100 * count / n_events:.1f}%)")
+            print(
+                f"    -> all-days {node_all}: {count} ({100 * count / n_events:.1f}%)"
+            )
 
     print("\n\nComposition of All-Days SOM Nodes by FFE Source:")
     print("=" * 60)
@@ -149,7 +149,8 @@ def print_crosstab(merged, xffe, yffe, xall, yall):
 def plot_heatmaps(merged, xffe, yffe, xall, yall, out_path):
     """One subplot per FFE node showing % of its events in each all-days node."""
     fig, axes = plt.subplots(
-        yffe, xffe,
+        yffe,
+        xffe,
         figsize=(4 * xffe, 3.5 * yffe),
         dpi=600,
         layout="constrained",
@@ -185,12 +186,18 @@ def plot_heatmaps(merged, xffe, yffe, xall, yall, out_path):
                     if count > 0:
                         text_color = "white" if pcts[bi, bj] > 25 else "black"
                         ax.text(
-                            bi, bj, str(count),
-                            ha="center", va="center",
-                            fontsize=6, color=text_color,
+                            bi,
+                            bj,
+                            str(count),
+                            ha="center",
+                            va="center",
+                            fontsize=6,
+                            color=text_color,
                         )
 
-            ax.set_title(f"FF-Only SOM Node {node_label(i, j)}\nn={n_events}", fontsize=8)
+            ax.set_title(
+                f"FF-Only SOM Node {node_label(i, j)}\nn={n_events}", fontsize=8
+            )
             ax.set_xlabel("All-Days SOM col", fontsize=6)
             ax.set_ylabel("All-Days SOM row", fontsize=6)
             ax.set_xticks(np.arange(xall))
@@ -199,9 +206,7 @@ def plot_heatmaps(merged, xffe, yffe, xall, yall, out_path):
             ax.invert_yaxis()
 
     if last_im is not None:
-        cbar = fig.colorbar(
-            last_im, ax=axes.ravel().tolist(), shrink=0.6, pad=0.02
-        )
+        cbar = fig.colorbar(last_im, ax=axes.ravel().tolist(), shrink=0.6, pad=0.02)
         cbar.set_label(r"Percentage of Events (\%)", fontsize=7)
 
     plt.suptitle(
@@ -236,15 +241,23 @@ def plot_flow(merged, xffe, yffe, xall, yall, out_path):
         small_centers[(i, j)] = (left_x, y)
         n = len(merged[merged["node_ffe"] == node_label(i, j)])
         box = FancyBboxPatch(
-            (left_x - 0.04, y - 0.03), 0.08, 0.06,
+            (left_x - 0.04, y - 0.03),
+            0.08,
+            0.06,
             boxstyle="round,pad=0.01",
             facecolor=color_map[(i, j)],
-            edgecolor="black", linewidth=1,
+            edgecolor="black",
+            linewidth=1,
         )
         ax.add_patch(box)
         ax.text(
-            left_x, y, f"{node_label(i, j)}\nn={n}",
-            ha="center", va="center", fontsize=8, fontweight="bold",
+            left_x,
+            y,
+            f"{node_label(i, j)}\nn={n}",
+            ha="center",
+            va="center",
+            fontsize=8,
+            fontweight="bold",
         )
 
     # Draw all-days nodes (right column)
@@ -254,15 +267,22 @@ def plot_flow(merged, xffe, yffe, xall, yall, out_path):
         big_centers[(i, j)] = (right_x, y)
         n = len(merged[merged["node_all"] == node_label(i, j)])
         box = FancyBboxPatch(
-            (right_x - 0.03, y - 0.018), 0.06, 0.036,
+            (right_x - 0.03, y - 0.018),
+            0.06,
+            0.036,
             boxstyle="round,pad=0.005",
             facecolor="lightgray",
-            edgecolor="black", linewidth=0.5,
+            edgecolor="black",
+            linewidth=0.5,
         )
         ax.add_patch(box)
         ax.text(
-            right_x, y, f"{node_label(i, j)}\n{n}",
-            ha="center", va="center", fontsize=5,
+            right_x,
+            y,
+            f"{node_label(i, j)}\n{n}",
+            ha="center",
+            va="center",
+            fontsize=5,
         )
 
     # Draw connecting flows
@@ -292,19 +312,30 @@ def plot_flow(merged, xffe, yffe, xall, yall, out_path):
             )
 
     ax.text(
-        left_x, 0.98, f"{xffe}x{yffe} SOM\n(FFE-only)",
-        ha="center", va="bottom", fontsize=10, fontweight="bold",
+        left_x,
+        0.98,
+        f"{xffe}x{yffe} SOM\n(FFE-only)",
+        ha="center",
+        va="bottom",
+        fontsize=10,
+        fontweight="bold",
     )
     ax.text(
-        right_x, 0.98, f"{xall}x{yall} SOM\n(All Daily)",
-        ha="center", va="bottom", fontsize=10, fontweight="bold",
+        right_x,
+        0.98,
+        f"{xall}x{yall} SOM\n(All Daily)",
+        ha="center",
+        va="bottom",
+        fontsize=10,
+        fontweight="bold",
     )
     ax.set_xlim(0, 1)
     ax.set_ylim(0, 1.05)
     ax.axis("off")
     ax.set_title(
         f"Flow of Flash Flood Events: {xffe}x{yffe} SOM to {xall}x{yall} SOM Mapping",
-        fontsize=12, pad=20,
+        fontsize=12,
+        pad=20,
     )
 
     plt.tight_layout()
@@ -330,8 +361,12 @@ def plot_composition(merged, xffe, yffe, xall, yall, out_path):
 
             if n_total == 0:
                 rect = plt.Rectangle(
-                    (i - 0.45, j - 0.45), 0.9, 0.9,
-                    facecolor="lightgray", edgecolor="black", linewidth=0.5,
+                    (i - 0.45, j - 0.45),
+                    0.9,
+                    0.9,
+                    facecolor="lightgray",
+                    edgecolor="black",
+                    linewidth=0.5,
                 )
                 ax.add_patch(rect)
                 ax.text(i, j, "n=0", ha="center", va="center", fontsize=6)
@@ -350,26 +385,33 @@ def plot_composition(merged, xffe, yffe, xall, yall, out_path):
             for node_ffe, frac in sorted(fractions.items()):
                 rect = plt.Rectangle(
                     (i - 0.45 + cumulative * 0.9, j - 0.45),
-                    0.9 * frac, 0.9,
+                    0.9 * frac,
+                    0.9,
                     facecolor=color_map[node_ffe],
-                    edgecolor="black", linewidth=0.3,
+                    edgecolor="black",
+                    linewidth=0.3,
                 )
                 ax.add_patch(rect)
                 cumulative += frac
 
             ax.text(
-                i, j, f"n={n_total}",
-                ha="center", va="center",
-                fontsize=6, fontweight="bold", color="white",
-                path_effects=[
-                    patheffects.withStroke(linewidth=2, foreground="black")
-                ],
+                i,
+                j,
+                f"n={n_total}",
+                ha="center",
+                va="center",
+                fontsize=6,
+                fontweight="bold",
+                color="white",
+                path_effects=[patheffects.withStroke(linewidth=2, foreground="black")],
             )
 
     # Legend
     legend_elements = [
         plt.Rectangle(
-            (0, 0), 1, 1,
+            (0, 0),
+            1,
+            1,
             facecolor=color_map[(i, j)],
             label=f"FFE {node_label(i, j)}",
         )
@@ -378,8 +420,10 @@ def plot_composition(merged, xffe, yffe, xall, yall, out_path):
     ]
     ax.legend(
         handles=legend_elements,
-        loc="upper left", bbox_to_anchor=(1.02, 1),
-        fontsize=8, title="FFE Source Node",
+        loc="upper left",
+        bbox_to_anchor=(1.02, 1),
+        fontsize=8,
+        title="FFE Source Node",
     )
 
     ax.set_xlim(-0.6, xall - 0.4)
@@ -410,29 +454,39 @@ def main():
         description="Map FFE-only SOM nodes to all-days SOM nodes."
     )
     parser.add_argument(
-        "--ffe-var", required=True,
+        "--ffe-var",
+        required=True,
         choices=list(MOISTURE_CONFIGS.keys()),
         help="Moisture variable of the FFE SOM",
     )
     parser.add_argument(
-        "--alldays-var", default=None,
+        "--alldays-var",
+        default=None,
         choices=list(MOISTURE_CONFIGS.keys()),
         help="Moisture variable of the all-days SOM (default: same as --ffe-var)",
     )
     parser.add_argument(
-        "--xdim-ffe", type=int, default=2,
+        "--xdim-ffe",
+        type=int,
+        default=2,
         help="FFE SOM columns (default 2)",
     )
     parser.add_argument(
-        "--ydim-ffe", type=int, default=2,
+        "--ydim-ffe",
+        type=int,
+        default=2,
         help="FFE SOM rows (default 2)",
     )
     parser.add_argument(
-        "--xdim-alldays", type=int, default=5,
+        "--xdim-alldays",
+        type=int,
+        default=5,
         help="All-days SOM columns (default 5)",
     )
     parser.add_argument(
-        "--ydim-alldays", type=int, default=4,
+        "--ydim-alldays",
+        type=int,
+        default=4,
         help="All-days SOM rows (default 4)",
     )
     args = parser.parse_args()
@@ -466,15 +520,27 @@ def main():
     stem = f"som_{xffe}x{yffe}_{ffe_lbl}_to_{xall}x{yall}_{all_lbl}"
 
     plot_heatmaps(
-        merged, xffe, yffe, xall, yall,
+        merged,
+        xffe,
+        yffe,
+        xall,
+        yall,
         os.path.join(FIGS_DIR, f"{stem}_heatmaps.png"),
     )
     plot_flow(
-        merged, xffe, yffe, xall, yall,
+        merged,
+        xffe,
+        yffe,
+        xall,
+        yall,
         os.path.join(FIGS_DIR, f"{stem}_flow.png"),
     )
     plot_composition(
-        merged, xffe, yffe, xall, yall,
+        merged,
+        xffe,
+        yffe,
+        xall,
+        yall,
         os.path.join(
             FIGS_DIR,
             f"som_{xall}x{yall}_{all_lbl}_composition_by_{xffe}x{yffe}_{ffe_lbl}.png",

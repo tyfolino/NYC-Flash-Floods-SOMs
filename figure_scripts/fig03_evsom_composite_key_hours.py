@@ -29,26 +29,26 @@ from som_analysis.helpers import add_map_features, node_label
 OUT_DIR = os.path.join(os.path.dirname(os.path.dirname(__file__)), "figures", "fig03")
 os.makedirs(OUT_DIR, exist_ok=True)
 
-CACHE_PATH  = (
+CACHE_PATH = (
     "/home/janoski/nyc_flash_flood/figs/"
     "Z500-and-thetae-evSOM-24h/.cache/som_results.npz"
 )
-Z500_PATH   = "/mnt/drive2/SOM_intermediate_files/era5_Z500_ffe_evsom.nc"
+Z500_PATH = "/mnt/drive2/SOM_intermediate_files/era5_Z500_ffe_evsom.nc"
 THETAE_PATH = "/mnt/drive2/SOM_intermediate_files/era5_thetae_ffe_evsom.nc"
 
 # ── Figure / SOM parameters ───────────────────────────────────────────────────
 XDIM, YDIM = 2, 2
-FIG_WIDTH  = 7.0
+FIG_WIDTH = 7.0
 FIG_HEIGHT = 4.2
 DPI_RASTER = 300
 
 # Key hours and their hour_offset coordinate values
 KEY_OFFSETS = [-18, -12, -6, 0]
-KEY_LABELS  = [r"T$-$18h", r"T$-$12h", r"T$-$6h", r"T$=$0"]
+KEY_LABELS = [r"T$-$18h", r"T$-$12h", r"T$-$6h", r"T$=$0"]
 
 # Contour levels for raw fields
-LEVELS_THETAE = np.arange(295, 341, 5)   # K
-LEVELS_Z      = range(549, 598, 2)        # dam
+LEVELS_THETAE = np.arange(295, 341, 5)  # K
+LEVELS_Z = range(549, 598, 2)  # dam
 
 # Node traversal order: A1, A2, B1, B2
 NODE_ORDER = [(i, j) for j in range(YDIM) for i in range(XDIM)]
@@ -60,14 +60,14 @@ def main():
     # ── Load cache for BMU assignments ────────────────────────────────────────
     print(f"Loading cache from {CACHE_PATH} ...")
     cached = np.load(CACHE_PATH)
-    bmus   = cached["bmus"]   # (121, 2)
+    bmus = cached["bmus"]  # (121, 2)
 
     # ── Load raw evSOM fields ─────────────────────────────────────────────────
     print("Loading raw evSOM fields ...")
-    z500_var   = list(xr.open_dataset(Z500_PATH).data_vars)[0]
+    z500_var = list(xr.open_dataset(Z500_PATH).data_vars)[0]
     thetae_var = list(xr.open_dataset(THETAE_PATH).data_vars)[0]
-    z500_da    = xr.open_dataset(Z500_PATH)[z500_var]     # (event, hour_offset, lat, lon)
-    thetae_da  = xr.open_dataset(THETAE_PATH)[thetae_var]
+    z500_da = xr.open_dataset(Z500_PATH)[z500_var]  # (event, hour_offset, lat, lon)
+    thetae_da = xr.open_dataset(THETAE_PATH)[thetae_var]
 
     lat = z500_da["latitude"].values
     lon = z500_da["longitude"].values
@@ -75,7 +75,8 @@ def main():
     # ── Build figure: 4 rows (nodes) × 4 cols (hours) ────────────────────────
     proj = ccrs.PlateCarree()
     fig, axes = plt.subplots(
-        4, 4,
+        4,
+        4,
         figsize=(FIG_WIDTH, FIG_HEIGHT),
         subplot_kw={"projection": proj},
         constrained_layout=True,
@@ -87,18 +88,33 @@ def main():
     for row, (i, j) in enumerate(NODE_ORDER):
         lbl = node_label(i, j)
         idx = np.where((bmus[:, 0] == i) & (bmus[:, 1] == j))[0]
-        n   = len(idx)
+        n = len(idx)
 
-        for col, (hr, hr_label) in enumerate(zip(KEY_OFFSETS, KEY_LABELS)):
+        for col, (hr, hr_label) in enumerate(
+            zip(KEY_OFFSETS, KEY_LABELS, strict=False)
+        ):
             ax = axes[row, col]
 
             # Composite means for this node at this hour
-            thetae_comp = thetae_da.isel(event_time=idx).sel(hour_offset=hr).mean("event_time").values
-            z500_comp   = z500_da.isel(event_time=idx).sel(hour_offset=hr).mean("event_time").values / 98.1
+            thetae_comp = (
+                thetae_da.isel(event_time=idx)
+                .sel(hour_offset=hr)
+                .mean("event_time")
+                .values
+            )
+            z500_comp = (
+                z500_da.isel(event_time=idx)
+                .sel(hour_offset=hr)
+                .mean("event_time")
+                .values
+                / 98.1
+            )
 
             # θe shaded
             im = ax.contourf(
-                lon, lat, thetae_comp,
+                lon,
+                lat,
+                thetae_comp,
                 cmap="BuPu",
                 levels=LEVELS_THETAE,
                 transform=proj,
@@ -107,7 +123,9 @@ def main():
 
             # Z500 contoured
             cn = ax.contour(
-                lon, lat, z500_comp,
+                lon,
+                lat,
+                z500_comp,
                 colors="black",
                 linewidths=0.4,
                 levels=LEVELS_Z,
@@ -119,19 +137,26 @@ def main():
             # Node label: outside upper-left of leftmost column only
             if col == 0:
                 ax.text(
-                    0.0, 1.01, f"{lbl}  ($n$={n})",
+                    0.0,
+                    1.01,
+                    f"{lbl}  ($n$={n})",
                     transform=ax.transAxes,
-                    fontsize=5.5, fontweight="bold",
-                    ha="left", va="bottom",
+                    fontsize=5.5,
+                    fontweight="bold",
+                    ha="left",
+                    va="bottom",
                 )
 
             # Time label: above top row only
             if row == 0:
                 ax.text(
-                    0.5, 1.01, hr_label,
+                    0.5,
+                    1.01,
+                    hr_label,
                     transform=ax.transAxes,
                     fontsize=5.5,
-                    ha="center", va="bottom",
+                    ha="center",
+                    va="bottom",
                 )
 
     # ── Shared colorbar ───────────────────────────────────────────────────────

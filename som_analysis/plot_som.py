@@ -101,7 +101,6 @@ def main():
     cache_path = os.path.join(fig_dir, ".cache", cache_name)
     print(f"Loading SOM results from {cache_path} ...")
     cached = np.load(cache_path)
-    weights = cached["weights"]
     z500_nodes = cached["z500_nodes"]
     moist_nodes = cached["moist_nodes"]
     bmus = cached["bmus"]
@@ -117,9 +116,7 @@ def main():
     moist_norm_ffe = load_moist_var(
         f"{SOM_INTERMEDIATE_PATH}{pfx}_norm{ffe_suffix}.nc", var_name
     )
-    moist_ffe = load_moist_var(
-        f"{SOM_INTERMEDIATE_PATH}{pfx}{ffe_suffix}.nc", var_name
-    )
+    moist_ffe = load_moist_var(f"{SOM_INTERMEDIATE_PATH}{pfx}{ffe_suffix}.nc", var_name)
 
     z500_norm_weighted_ffe = xr.load_dataarray(
         f"{SOM_INTERMEDIATE_PATH}era5_Z500_norm_weighted{ffe_suffix}.nc"
@@ -134,9 +131,6 @@ def main():
 
     lat = moist_norm_ffe[cfg["lat_dim"]]
     lon = moist_norm_ffe[cfg["lon_dim"]]
-    n_lat, n_lon = lat.size, lon.size
-    n_features = n_lat * n_lon
-
     # ── U-matrix and hit map ──────────────────────────────────────────────────
     print("Plotting U-matrix and hit map ...")
     fig, axes = plt.subplots(1, 2, layout="constrained", figsize=(6, 3), dpi=600)
@@ -200,7 +194,9 @@ def main():
 
     for idx, (x, y) in enumerate(coords):
         ix, iy = divmod(idx, ydim)
-        plt.text(x, y, node_label(ix, iy), fontsize=8, ha="center", va="center", zorder=5)
+        plt.text(
+            x, y, node_label(ix, iy), fontsize=8, ha="center", va="center", zorder=5
+        )
 
     plt.title(
         "Sammon / MDS Distortion Grid\nU-Matrix (Color) \\& Node Frequency (Size)"
@@ -447,7 +443,7 @@ def main():
         f"{fig_dir}/Z500_and_{_lbl}_som_representativeness.png", bbox_inches="tight"
     )
     plt.close()
-    print(f"Saved representativeness figure.")
+    print("Saved representativeness figure.")
 
     # ── Composite mean map ────────────────────────────────────────────────────
     print("Plotting composite means ...")
@@ -557,9 +553,7 @@ def main():
             fontsize=8,
             y=1.04,
         )
-        out_fname = (
-            f"Z500_and_{_lbl}_SOM_composite_mean_{other_file_label}_shaded.png"
-        )
+        out_fname = f"Z500_and_{_lbl}_SOM_composite_mean_{other_file_label}_shaded.png"
         plt.savefig(f"{fig_dir}/{out_fname}", bbox_inches="tight")
         plt.close()
         print(f"  Saved {out_fname}")
@@ -690,25 +684,49 @@ def main():
         singles_dir = f"{fig_dir}/single-events"
         print(f"Saving single-event figures to {singles_dir}/ ...")
         plot_single_events(
-            moist_ffe, bmus, xdim, ydim, lon, lat,
+            moist_ffe,
+            bmus,
+            xdim,
+            ydim,
+            lon,
+            lat,
             time_dim=moist_time_dim,
-            levels=levels_moist_indiv, cmap=cmap_moist_raw,
+            levels=levels_moist_indiv,
+            cmap=cmap_moist_raw,
             save_dir=singles_dir,
             cbar_label=f"{moist_label_short} ({moist_units_raw})",
-            z500_data=z500_ffe, z500_levels=range(552, 595, 3),
-            z500_scale=1 / 98.1, z500_time_dim=z500_time_dim,
+            z500_data=z500_ffe,
+            z500_levels=range(552, 595, 3),
+            z500_scale=1 / 98.1,
+            z500_time_dim=z500_time_dim,
         )
         plot_single_events(
-            tp_ffe, bmus, xdim, ydim, lon, lat,
-            levels=np.arange(0, 28, 3), cmap="HomeyerRainbow",
-            save_dir=singles_dir, suffix="_precip",
-            scale=1000, cbar_label="Total Precipitation (mm)",
+            tp_ffe,
+            bmus,
+            xdim,
+            ydim,
+            lon,
+            lat,
+            levels=np.arange(0, 28, 3),
+            cmap="HomeyerRainbow",
+            save_dir=singles_dir,
+            suffix="_precip",
+            scale=1000,
+            cbar_label="Total Precipitation (mm)",
         )
         plot_single_events(
-            mslp_ffe, bmus, xdim, ydim, lon, lat,
-            levels=np.arange(976, 1041, 4), cmap=None,
-            save_dir=singles_dir, suffix="_mslp",
-            scale=0.01, contour=True,
+            mslp_ffe,
+            bmus,
+            xdim,
+            ydim,
+            lon,
+            lat,
+            levels=np.arange(976, 1041, 4),
+            cmap=None,
+            save_dir=singles_dir,
+            suffix="_mslp",
+            scale=0.01,
+            contour=True,
         )
         print("Done saving single-event figures.")
 
@@ -739,7 +757,9 @@ def main():
                 all_month_counts_warm > 0, monthly / all_month_counts_warm, 0.0
             )
             ax.bar(month_labels, frac, color="teal", alpha=0.9, width=0.8)
-            ax.axhline(uniform_frac, color="gray", linewidth=0.7, linestyle="--", alpha=0.8)
+            ax.axhline(
+                uniform_frac, color="gray", linewidth=0.7, linestyle="--", alpha=0.8
+            )
             ax.set_title(f"{node_label(i, j)}  N={monthly.sum()}", fontsize=6)
             ax.tick_params(axis="x", bottom=False, labelsize=5)
             ax.set_ylim(0, 0.65)

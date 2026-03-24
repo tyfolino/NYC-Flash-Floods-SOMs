@@ -125,9 +125,7 @@ with ProgressBar():
     std_doy = data.groupby(f"{time_dim}.dayofyear").std(dim=time_dim).compute()
 
 std_doy_smooth = (
-    std_doy.sortby("dayofyear")
-    .rolling(dayofyear=14, center=True, min_periods=7)
-    .mean()
+    std_doy.sortby("dayofyear").rolling(dayofyear=14, center=True, min_periods=7).mean()
 )
 
 # ── Extract N-hour windows per event ──────────────────────────────────────────
@@ -148,7 +146,8 @@ for t_event in times_utc:
     if missing:
         warnings.warn(
             f"Skipping event {t_event}: {len(missing)} hours missing from data "
-            f"(first missing: {missing[0]})"
+            f"(first missing: {missing[0]})",
+            stacklevel=2,
         )
         continue
 
@@ -216,7 +215,7 @@ da_norm_w = make_da(norm_w_arr, valid_event_times, hour_offsets, lat_coords, lon
 
 os.makedirs(OUT_DIR, exist_ok=True)
 
-suffix = f"_ffe_evsom.nc"
+suffix = "_ffe_evsom.nc"
 
 out_raw = f"{OUT_DIR}/{prefix}{suffix}"
 out_norm = f"{OUT_DIR}/{prefix}_norm{suffix}"
@@ -234,7 +233,7 @@ da_norm_w.to_netcdf(out_normw)
 print("\nDone.")
 print(f"  Shape: {da_raw.sizes}")
 print(f"  Events: {n_events}")
-print(f"  Window: T-{n_hours-1}h to T+0h  (hour_offset={hour_offsets[0]} to 0)")
+print(f"  Window: T-{n_hours - 1}h to T+0h  (hour_offset={hour_offsets[0]} to 0)")
 print(
     "\nVerification hint:"
     "\n  The last hour_offset slice (hour_offset=0) should match"

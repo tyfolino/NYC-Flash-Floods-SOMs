@@ -38,7 +38,7 @@ BMU_CSV = os.path.join(DATA_DIR, "som_2x2_evsom_24h_bmus_thetae.csv")
 
 # ── Figure / SOM parameters ───────────────────────────────────────────────────
 XDIM, YDIM = 2, 2
-FIG_WIDTH  = 5.5
+FIG_WIDTH = 5.5
 FIG_HEIGHT = 6.0
 DPI_RASTER = 300
 
@@ -79,15 +79,23 @@ def _plot_pmm(ax, node_fields, i, j, lat2d, lon2d, extent, show_star):
     ax.set_extent(extent)
     _add_map_features(ax, scale)
     ax.pcolormesh(
-        lon2d, lat2d, pmm_plot,
-        cmap=CMAP_NWS, norm=NORM_NWS,
-        shading="auto", zorder=2,
+        lon2d,
+        lat2d,
+        pmm_plot,
+        cmap=CMAP_NWS,
+        norm=NORM_NWS,
+        shading="auto",
+        zorder=2,
         transform=ccrs.PlateCarree(),
     )
     if show_star:
         ax.scatter(
-            -74.0, 40.7,
-            color="black", s=12, marker="*", zorder=5,
+            -74.0,
+            40.7,
+            color="black",
+            s=12,
+            marker="*",
+            zorder=5,
             transform=ccrs.PlateCarree(),
         )
     return n
@@ -107,7 +115,8 @@ def main():
     # ── Build figure ──────────────────────────────────────────────────────────
     proj = ccrs.PlateCarree()
     fig, axes = plt.subplots(
-        4, 2,
+        4,
+        2,
         figsize=(FIG_WIDTH, FIG_HEIGHT),
         subplot_kw={"projection": proj},
         constrained_layout=True,
@@ -120,25 +129,46 @@ def main():
         ax_nyc = axes[row, 1]
         lbl = node_label(i, j)
 
-        n_reg = _plot_pmm(ax_reg, node_fields, i, j, lat2d, lon2d, EXTENT_REG,
-                          show_star=False)
-        n_nyc = _plot_pmm(ax_nyc, node_fields, i, j, lat2d, lon2d, EXTENT_NYC,
-                          show_star=False)
+        n_reg = _plot_pmm(
+            ax_reg, node_fields, i, j, lat2d, lon2d, EXTENT_REG, show_star=False
+        )
+        n_nyc = _plot_pmm(
+            ax_nyc, node_fields, i, j, lat2d, lon2d, EXTENT_NYC, show_star=False
+        )
 
         # Node label outside upper-left; N outside upper-right
         for ax, n in [(ax_reg, n_reg), (ax_nyc, n_nyc)]:
-            ax.text(0.0, 1.01, lbl, transform=ax.transAxes,
-                    fontsize=5.5, fontweight="bold", ha="left", va="bottom")
-            ax.text(1.0, 1.01, f"$n$={n}", transform=ax.transAxes,
-                    fontsize=6.0, ha="right", va="bottom")
+            ax.text(
+                0.0,
+                1.01,
+                lbl,
+                transform=ax.transAxes,
+                fontsize=5.5,
+                fontweight="bold",
+                ha="left",
+                va="bottom",
+            )
+            ax.text(
+                1.0,
+                1.01,
+                f"$n$={n}",
+                transform=ax.transAxes,
+                fontsize=6.0,
+                ha="right",
+                va="bottom",
+            )
 
     # ── Shared colorbar ───────────────────────────────────────────────────────
     sm = ScalarMappable(cmap=CMAP_NWS, norm=NORM_NWS)
     sm.set_array([])
     cbar = fig.colorbar(
-        sm, ax=axes.ravel().tolist(),
-        orientation="vertical", pad=0.02, shrink=0.6,
-        extend="max", aspect=25,
+        sm,
+        ax=axes.ravel().tolist(),
+        orientation="vertical",
+        pad=0.02,
+        shrink=0.6,
+        extend="max",
+        aspect=25,
     )
     cbar.set_label("PMM Precipitation (in)", fontsize=6)
     cbar.set_ticks(NWS_LEVELS)

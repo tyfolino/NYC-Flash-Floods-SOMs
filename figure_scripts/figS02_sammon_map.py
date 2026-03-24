@@ -12,8 +12,8 @@ Usage:
 
 import os
 
-import matplotlib.pyplot as plt
 import matplotlib.patheffects as pe
+import matplotlib.pyplot as plt
 import numpy as np
 
 from som_analysis.config import setup_plotting
@@ -30,7 +30,7 @@ CACHE_PATH = (
 
 # ── Figure parameters ──────────────────────────────────────────────────────────
 XDIM, YDIM = 5, 4
-FIG_WIDTH  = 3.5
+FIG_WIDTH = 3.5
 FIG_HEIGHT = 3.2
 DPI_RASTER = 300
 
@@ -43,20 +43,21 @@ def main():
 
     # ── Load cache ────────────────────────────────────────────────────────────
     print(f"Loading cache from {CACHE_PATH} ...")
-    cached   = np.load(CACHE_PATH)
-    u_matrix = cached["u_matrix"]   # (xdim, ydim)
-    hit_map  = cached["hit_map"]    # (xdim, ydim)
-    coords   = cached["coords"]     # (n_nodes, 2) Sammon coords
+    cached = np.load(CACHE_PATH)
+    u_matrix = cached["u_matrix"]  # (xdim, ydim)
+    hit_map = cached["hit_map"]  # (xdim, ydim)
+    coords = cached["coords"]  # (n_nodes, 2) Sammon coords
 
     # Flatten in same order as node = i*YDIM+j
-    U_flat    = u_matrix.T.reshape(-1)
+    U_flat = u_matrix.T.reshape(-1)
     hits_flat = hit_map.T.reshape(-1)
     hits_norm = hits_flat / hits_flat.max()
-    sizes     = S_MIN + (S_MAX - S_MIN) * hits_norm
+    sizes = S_MIN + (S_MAX - S_MIN) * hits_norm
 
     # ── Build figure ──────────────────────────────────────────────────────────
-    fig, ax = plt.subplots(figsize=(FIG_WIDTH, FIG_HEIGHT), dpi=DPI_RASTER,
-                           constrained_layout=True)
+    fig, ax = plt.subplots(
+        figsize=(FIG_WIDTH, FIG_HEIGHT), dpi=DPI_RASTER, constrained_layout=True
+    )
 
     # Neighbor edges
     for i in range(XDIM):
@@ -69,12 +70,15 @@ def main():
                     ax.plot(
                         [coords[node, 0], coords[nbr, 0]],
                         [coords[node, 1], coords[nbr, 1]],
-                        color="0.70", lw=0.8, zorder=1,
+                        color="0.70",
+                        lw=0.8,
+                        zorder=1,
                     )
 
     # Scatter
     sc = ax.scatter(
-        coords[:, 0], coords[:, 1],
+        coords[:, 0],
+        coords[:, 1],
         c=U_flat,
         s=sizes,
         cmap="RdYlBu_r",
@@ -87,8 +91,13 @@ def main():
     for idx, (x, y) in enumerate(coords):
         ix, iy = divmod(idx, YDIM)
         ax.text(
-            x, y, node_label(ix, iy),
-            fontsize=4.5, ha="center", va="center", zorder=5,
+            x,
+            y,
+            node_label(ix, iy),
+            fontsize=4.5,
+            ha="center",
+            va="center",
+            zorder=5,
             path_effects=[
                 pe.withStroke(linewidth=1.5, foreground="white"),
             ],
@@ -106,8 +115,9 @@ def main():
     legend_handles = []
     for hv in hit_vals:
         s = S_MIN + (S_MAX - S_MIN) * (hv / hits_flat.max())
-        h = ax.scatter([], [], s=s, c="0.55", edgecolors="k",
-                       linewidths=0.4, label=f"{hv:d} days")
+        h = ax.scatter(
+            [], [], s=s, c="0.55", edgecolors="k", linewidths=0.4, label=f"{hv:d} days"
+        )
         legend_handles.append(h)
     ax.legend(
         handles=legend_handles,

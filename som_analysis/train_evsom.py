@@ -91,7 +91,6 @@ def main():
     xdim, ydim = 2, 2
     pfx = cfg["file_prefix"]
     var_name = cfg["var_name"]
-    moist_time_dim = cfg["time_dim"]
     n_hours = args.n_hours
 
     # ── Load evolution data (N_events, n_hours, lat, lon) ─────────────────────
@@ -99,24 +98,16 @@ def main():
 
     # Moisture: use load_moist_var then grab the DataArray
     moist_nw_path = f"{SOM_INTERMEDIATE_PATH}{pfx}_norm_weighted_ffe_evsom.nc"
-    moist_norm_path = f"{SOM_INTERMEDIATE_PATH}{pfx}_norm_ffe_evsom.nc"
-    moist_raw_path = f"{SOM_INTERMEDIATE_PATH}{pfx}_ffe_evsom.nc"
 
     moist_nw = load_moist_var(moist_nw_path, var_name)
-    moist_norm = load_moist_var(moist_norm_path, var_name)
-    moist_raw = load_moist_var(moist_raw_path, var_name)
 
     z500_nw = xr.load_dataarray(
         f"{SOM_INTERMEDIATE_PATH}era5_Z500_norm_weighted_ffe_evsom.nc"
     )
-    z500_norm = xr.load_dataarray(
-        f"{SOM_INTERMEDIATE_PATH}era5_Z500_norm_ffe_evsom.nc"
-    )
-
     # Verify shapes agree
-    assert z500_nw.sizes["event_time"] == moist_nw.sizes["event_time"], (
-        "Z500 and moisture event counts differ!"
-    )
+    assert (
+        z500_nw.sizes["event_time"] == moist_nw.sizes["event_time"]
+    ), "Z500 and moisture event counts differ!"
     N = z500_nw.sizes["event_time"]
     _z500_spatial = [d for d in z500_nw.dims if d not in ("event_time", "hour_offset")]
     _z500_lat_dim, _z500_lon_dim = _z500_spatial[0], _z500_spatial[1]
@@ -127,8 +118,8 @@ def main():
 
     # ── Flatten & concatenate ─────────────────────────────────────────────────
     # Feature layout: [Z500 h=T-(n-1), ..., Z500 h=T, moist h=T-(n-1), ..., moist h=T]
-    z500_flat = z500_nw.values.reshape(N, -1)        # (N, n_hours * lat_z * lon_z)
-    moist_flat = moist_nw.values.reshape(N, -1)      # (N, n_hours * lat_m * lon_m)
+    z500_flat = z500_nw.values.reshape(N, -1)  # (N, n_hours * lat_z * lon_z)
+    moist_flat = moist_nw.values.reshape(N, -1)  # (N, n_hours * lat_m * lon_m)
 
     X = np.concatenate([z500_flat, moist_flat * args.moisture_weight], axis=1)
     print(f"Training matrix shape: {X.shape}")
