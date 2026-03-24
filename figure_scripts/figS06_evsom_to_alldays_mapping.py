@@ -1,7 +1,8 @@
 """
 Supplementary Figure S6 — evSOM to All-Days SOM Node Mapping
 
-2×2 grid, one panel per evSOM node (A1, A2, B1, B2).
+4-row × 1-column layout, one panel per evSOM node (A1, A2, B1, B2),
+matching the row order of Figure 2.
 Each panel shows a 5×4 heatmap of what fraction of the node's FFEs
 fall into each all-days SOM node (thetae, 5×4).
 Event counts are annotated inside each cell.
@@ -30,8 +31,8 @@ ALLDAYS_CSV = os.path.join(DATA_DIR, "som_5x4_alldays_ffe_bmus_thetae.csv")
 XFFE, YFFE = 2, 2  # evSOM dimensions
 XALL, YALL = 5, 4  # all-days SOM dimensions
 
-FIG_WIDTH = 6.0
-FIG_HEIGHT = 5.0
+FIG_WIDTH = 3.5
+FIG_HEIGHT = 8.0
 DPI_RASTER = 300
 
 # Node traversal order: A1, A2, B1, B2
@@ -59,18 +60,18 @@ def main():
     merged = _load_and_merge(EVSOM_CSV, ALLDAYS_CSV)
     print(f"Matched {len(merged)} events")
 
-    # ── Build figure: 2 rows × 2 cols ────────────────────────────────────────
+    # ── Build figure: 4 rows × 1 col ─────────────────────────────────────────
     fig, axes = plt.subplots(
-        YFFE,
-        XFFE,
+        XFFE * YFFE,
+        1,
         figsize=(FIG_WIDTH, FIG_HEIGHT),
         constrained_layout=True,
         dpi=DPI_RASTER,
     )
 
     last_im = None
-    for _row_ax, (i, j) in zip(range(YFFE * XFFE), NODE_ORDER, strict=False):
-        ax = axes[j, i]
+    for row, (i, j) in enumerate(NODE_ORDER):
+        ax = axes[row]
         lbl = node_label(i, j)
         subset = merged[(merged["node_ev_i"] == i) & (merged["node_ev_j"] == j)]
         n_events = len(subset)
@@ -115,10 +116,9 @@ def main():
         ax.tick_params(length=2)
 
         # Axis labels only on outer edges
-        if j == YFFE - 1:
+        if row == XFFE * YFFE - 1:
             ax.set_xlabel("All-days SOM column", fontsize=5.5)
-        if i == 0:
-            ax.set_ylabel("All-days SOM row", fontsize=5.5)
+        ax.set_ylabel("All-days SOM row", fontsize=5.5)
 
         ax.text(
             0.0,
