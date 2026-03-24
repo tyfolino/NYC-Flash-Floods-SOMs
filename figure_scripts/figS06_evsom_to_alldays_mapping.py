@@ -1,5 +1,5 @@
 """
-Supplementary Figure S4 — evSOM to All-Days SOM Node Mapping
+Supplementary Figure S6 — evSOM to All-Days SOM Node Mapping
 
 2×2 grid, one panel per evSOM node (A1, A2, B1, B2).
 Each panel shows a 5×4 heatmap of what fraction of the node's FFEs
@@ -7,7 +7,7 @@ fall into each all-days SOM node (thetae, 5×4).
 Event counts are annotated inside each cell.
 
 Usage:
-    python -m figure_scripts.figS04_evsom_to_alldays_mapping
+    python -m figure_scripts.figS06_evsom_to_alldays_mapping
 """
 
 import os
@@ -20,7 +20,7 @@ from som_analysis.config import DATA_DIR, setup_plotting
 from som_analysis.helpers import node_label
 
 # ── Paths ─────────────────────────────────────────────────────────────────────
-OUT_DIR = os.path.join(os.path.dirname(os.path.dirname(__file__)), "figures", "figS04")
+OUT_DIR = os.path.join(os.path.dirname(os.path.dirname(__file__)), "figures", "figS06")
 os.makedirs(OUT_DIR, exist_ok=True)
 
 EVSOM_CSV = os.path.join(DATA_DIR, "som_2x2_evsom_24h_bmus_thetae.csv")
@@ -148,7 +148,7 @@ def main():
     cbar.ax.tick_params(labelsize=5)
 
     # ── Save ─────────────────────────────────────────────────────────────────
-    base = os.path.join(OUT_DIR, "figS04_evsom_to_alldays_mapping")
+    base = os.path.join(OUT_DIR, "figS06_evsom_to_alldays_mapping")
     fig.savefig(f"{base}.pdf")
     fig.savefig(f"{base}.png", dpi=DPI_RASTER)
     fig.savefig(f"{base}.tiff", dpi=DPI_RASTER)

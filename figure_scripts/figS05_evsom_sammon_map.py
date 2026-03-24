@@ -1,5 +1,5 @@
 """
-Supplementary Figure S6 — Sammon / MDS Map of Evolution SOM
+Supplementary Figure S5 — Sammon / MDS Map of Evolution SOM
 
 Single-panel figure showing the Sammon projection of the 2×2 evSOM.
 Nodes are colored by the U-matrix (mean distance to neighbors) and sized by
@@ -7,7 +7,7 @@ hit frequency (number of FFEs assigned). Topology-preserving neighbor edges
 are drawn as faint gray lines.
 
 Usage:
-    python -m figure_scripts.figS06_evsom_sammon_map
+    python -m figure_scripts.figS05_evsom_sammon_map
 """
 
 import os
@@ -20,7 +20,7 @@ from som_analysis.config import setup_plotting
 from som_analysis.helpers import node_label
 
 # ── Paths ─────────────────────────────────────────────────────────────────────
-OUT_DIR = os.path.join(os.path.dirname(os.path.dirname(__file__)), "figures", "figS06")
+OUT_DIR = os.path.join(os.path.dirname(os.path.dirname(__file__)), "figures", "figS05")
 os.makedirs(OUT_DIR, exist_ok=True)
 
 CACHE_PATH = os.path.join(
@@ -113,8 +113,8 @@ def main():
     cbar.set_label("U-matrix (mean neighbor distance)", fontsize=5.5)
     cbar.ax.tick_params(labelsize=4.5)
 
-    # Size legend — round hit counts spanning observed range (20–41 FFEs)
-    hit_vals = [20, 30, 40]
+    # Size legend — round hit counts spanning observed range (14–42 FFEs)
+    hit_vals = [15, 25, 40]
     legend_handles = []
     for hv in hit_vals:
         s = S_MIN + (S_MAX - S_MIN) * (hv / hits_flat.max())
@@ -135,7 +135,7 @@ def main():
     )
 
     # ── Save ─────────────────────────────────────────────────────────────────
-    base = os.path.join(OUT_DIR, "figS06_evsom_sammon_map")
+    base = os.path.join(OUT_DIR, "figS05_evsom_sammon_map")
     fig.savefig(f"{base}.pdf")
     fig.savefig(f"{base}.png", dpi=DPI_RASTER)
     fig.savefig(f"{base}.tiff", dpi=DPI_RASTER)
