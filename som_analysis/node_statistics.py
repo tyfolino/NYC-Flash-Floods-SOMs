@@ -515,7 +515,7 @@ def compute_tc_associations(bmu_df, xdim, ydim, time_window_hours=6):
     ibtracs = pd.read_csv(IBTRACS_PATH)
     ibtracs["ISO_TIME"] = pd.to_datetime(ibtracs["ISO_TIME"])
 
-    lat_min, lat_max = 30.0, 54.0
+    lat_min, lat_max = 32.0, 54.0
     lon_min, lon_max = -100.0, -60.0
 
     ibtracs_domain = ibtracs[
