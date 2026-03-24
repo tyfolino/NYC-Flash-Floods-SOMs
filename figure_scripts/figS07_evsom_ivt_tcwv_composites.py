@@ -57,7 +57,7 @@ def main():
     # ── Load cache ────────────────────────────────────────────────────────────
     print(f"Loading cache from {CACHE_PATH} ...")
     cached = np.load(CACHE_PATH)
-    bmus = cached["bmus"]  # (121, 2)
+    bmus = cached["bmus"]  # (118, 2)
 
     # ── Load raw FFE fields ───────────────────────────────────────────────────
     print("Loading raw FFE fields ...")

@@ -1,9 +1,10 @@
 """
-Supplementary Figure S7 — evSOM Monthly Node Frequency
+Supplementary Figure S8 — evSOM Monthly Node Frequency
 
-2×2 grid (A1, A2, B1, B2). Each panel shows the fraction of FFEs assigned to
-that node within each calendar month (May–October), normalised by the total
-number of FFEs in that month across all nodes. Events are grouped by evSOM node.
+4-row × 1-column layout (A1, A2, B1, B2), matching the row order of Figure 2.
+Each panel shows the fraction of FFEs assigned to that node within each calendar
+month (May–October), normalised by the total number of FFEs in that month across
+all nodes. Events are grouped by evSOM node.
 
 Usage:
     python -m figure_scripts.figS08_evsom_monthly_histograms
@@ -26,8 +27,8 @@ BMU_CSV = os.path.join(DATA_DIR, "som_2x2_evsom_24h_bmus_thetae.csv")
 
 # ── Figure parameters ──────────────────────────────────────────────────────────
 XDIM, YDIM = 2, 2
-FIG_WIDTH = 5.5
-FIG_HEIGHT = 4.0
+FIG_WIDTH = 3.5
+FIG_HEIGHT = 7.0
 DPI_RASTER = 300
 
 MONTHS = range(5, 11)  # May–October
@@ -50,8 +51,8 @@ def main():
 
     # ── Build figure ──────────────────────────────────────────────────────────
     fig, axes = plt.subplots(
-        YDIM,
-        XDIM,
+        XDIM * YDIM,
+        1,
         figsize=(FIG_WIDTH, FIG_HEIGHT),
         constrained_layout=True,
         dpi=DPI_RASTER,
@@ -59,8 +60,8 @@ def main():
         sharey=True,
     )
 
-    for _idx, (i, j) in enumerate(NODE_ORDER):
-        ax = axes[j, i]
+    for row, (i, j) in enumerate(NODE_ORDER):
+        ax = axes[row]
         lbl = node_label(i, j)
 
         # FFEs in this node per month, normalised by monthly total
@@ -95,7 +96,7 @@ def main():
         )
 
     # Shared axis labels
-    for ax in axes[:, 0]:
+    for ax in axes:
         ax.set_ylabel("Fraction of monthly FFEs", fontsize=6)
 
     # ── Save ─────────────────────────────────────────────────────────────────
