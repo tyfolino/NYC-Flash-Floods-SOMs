@@ -1,15 +1,20 @@
 """
 Supplementary Figure S8 — evSOM Monthly Node Frequency
 
-4-row × 1-column layout (A1, A2, B1, B2), matching the row order of Figure 2.
-Each panel shows the fraction of FFEs assigned to that node within each calendar
-month (May–October), normalised by the total number of FFEs in that month across
-all nodes. Events are grouped by evSOM node.
+Default (4-row × 1-column) layout (A1, A2, B1, B2), matching the row order of
+Figure 2. Each panel shows the fraction of FFEs assigned to that node within
+each calendar month (May–October), normalised by the total number of FFEs in
+that month across all nodes. Events are grouped by evSOM node.
+
+Wide layout (--wide flag): 2-row × 2-column.
+A1/A2 top row, B1/B2 bottom row.
 
 Usage:
     python -m figure_scripts.figS08_evsom_monthly_histograms
+    python -m figure_scripts.figS08_evsom_monthly_histograms --wide
 """
 
+import argparse
 import os
 
 import matplotlib.pyplot as plt
@@ -29,6 +34,8 @@ BMU_CSV = os.path.join(DATA_DIR, "som_2x2_evsom_24h_bmus_thetae.csv")
 XDIM, YDIM = 2, 2
 FIG_WIDTH = 3.5
 FIG_HEIGHT = 7.0
+FIG_WIDTH_WIDE = 6.5
+FIG_HEIGHT_WIDE = 3.5
 DPI_RASTER = 300
 
 MONTHS = range(5, 11)  # May–October
@@ -39,7 +46,18 @@ BAR_COLOR = "#3a7ebf"
 NODE_ORDER = [(i, j) for j in range(YDIM) for i in range(XDIM)]
 
 
+def parse_args():
+    p = argparse.ArgumentParser()
+    p.add_argument(
+        "--wide",
+        action="store_true",
+        help="Use wide 2×2 layout for presentations",
+    )
+    return p.parse_args()
+
+
 def main():
+    args = parse_args()
     setup_plotting()
 
     # ── Load BMU assignments ──────────────────────────────────────────────────
@@ -50,18 +68,25 @@ def main():
     monthly_totals = df.groupby("month").size().reindex(MONTHS, fill_value=0)
 
     # ── Build figure ──────────────────────────────────────────────────────────
+    if args.wide:
+        nrows, ncols = YDIM, XDIM  # 2×2
+        fig_w, fig_h = FIG_WIDTH_WIDE, FIG_HEIGHT_WIDE
+    else:
+        nrows, ncols = XDIM * YDIM, 1  # 4×1
+        fig_w, fig_h = FIG_WIDTH, FIG_HEIGHT
+
     fig, axes = plt.subplots(
-        XDIM * YDIM,
-        1,
-        figsize=(FIG_WIDTH, FIG_HEIGHT),
+        nrows,
+        ncols,
+        figsize=(fig_w, fig_h),
         constrained_layout=True,
         dpi=DPI_RASTER,
         sharex=True,
         sharey=True,
     )
 
-    for row, (i, j) in enumerate(NODE_ORDER):
-        ax = axes[row]
+    for i, j in NODE_ORDER:
+        ax = axes[j, i] if args.wide else axes[j * XDIM + i]
         lbl = node_label(i, j)
 
         # FFEs in this node per month, normalised by monthly total
@@ -96,11 +121,12 @@ def main():
         )
 
     # Shared axis labels
-    for ax in axes:
+    for ax in axes.ravel() if args.wide else axes:
         ax.set_ylabel("Fraction of monthly FFEs", fontsize=6)
 
     # ── Save ─────────────────────────────────────────────────────────────────
-    base = os.path.join(OUT_DIR, "figS08_evsom_monthly_histograms")
+    suffix = "_wide" if args.wide else ""
+    base = os.path.join(OUT_DIR, f"figS08_evsom_monthly_histograms{suffix}")
     fig.savefig(f"{base}.pdf")
     fig.savefig(f"{base}.png", dpi=DPI_RASTER)
     fig.savefig(f"{base}.tiff", dpi=DPI_RASTER)

@@ -1,15 +1,21 @@
 """
 Supplementary Figure S4 — FFE SOM Node Weights (left) and Raw Composites (right)
 
-4-row × 2-column layout. Each row is one SOM node (A1, A2, B1, B2).
+Default (4-row × 2-column) layout. Each row is one SOM node (A1, A2, B1, B2).
 Left column : standardized Z500 (contoured) + theta-e (shaded) node weights.
 Right column : raw mean Z500 in dam (contoured) + theta-e in K (shaded)
                composited over FF days assigned to that node.
 
+Wide layout (--wide flag): 2-row × 4-column.
+Left 2×2  : node weights (A1/A2 top, B1/B2 bottom)
+Right 2×2 : raw composites (A1/A2 top, B1/B2 bottom)
+
 Usage:
     python -m figure_scripts.figS04_ffe_som_node_weights_and_composites
+    python -m figure_scripts.figS04_ffe_som_node_weights_and_composites --wide
 """
 
+import argparse
 import os
 
 import cartopy.crs as ccrs
@@ -39,6 +45,8 @@ Z500_FFE_PATH = "/mnt/drive2/SOM_intermediate_files/era5_Z500_ffe.nc"
 XDIM, YDIM = 2, 2
 FIG_WIDTH = 6.0
 FIG_HEIGHT = 5.8
+FIG_WIDTH_WIDE = 11.0
+FIG_HEIGHT_WIDE = 3.5
 DPI_RASTER = 300
 
 # Contour levels
@@ -51,7 +59,18 @@ LEVELS_THETAE_RAW = np.arange(295, 341, 5)  # K — shared range with Fig. S3
 NODE_ORDER = [(i, j) for j in range(YDIM) for i in range(XDIM)]
 
 
+def parse_args():
+    p = argparse.ArgumentParser()
+    p.add_argument(
+        "--wide",
+        action="store_true",
+        help="Use wide 2×4 layout for presentations",
+    )
+    return p.parse_args()
+
+
 def main():
+    args = parse_args()
     setup_plotting()
 
     # ── Load cache ────────────────────────────────────────────────────────────
@@ -73,10 +92,17 @@ def main():
 
     # ── Build figure ──────────────────────────────────────────────────────────
     proj = ccrs.PlateCarree()
+    if args.wide:
+        nrows, ncols = 2, 4
+        fig_w, fig_h = FIG_WIDTH_WIDE, FIG_HEIGHT_WIDE
+    else:
+        nrows, ncols = 4, 2
+        fig_w, fig_h = FIG_WIDTH, FIG_HEIGHT
+
     fig, axes = plt.subplots(
-        4,
-        2,
-        figsize=(FIG_WIDTH, FIG_HEIGHT),
+        nrows,
+        ncols,
+        figsize=(fig_w, fig_h),
         subplot_kw={"projection": proj},
         constrained_layout=True,
         dpi=DPI_RASTER,
@@ -86,9 +112,14 @@ def main():
     im_weight = None
     im_comp = None
 
-    for row, (i, j) in enumerate(NODE_ORDER):
-        ax_wt = axes[row, 0]
-        ax_comp = axes[row, 1]
+    for i, j in NODE_ORDER:
+        if args.wide:
+            ax_wt = axes[j, i]
+            ax_comp = axes[j, i + 2]
+        else:
+            row = j * XDIM + i
+            ax_wt = axes[row, 0]
+            ax_comp = axes[row, 1]
         lbl = node_label(i, j)
         idx = get_node_indices(bmus, i, j)
         n = len(idx)
@@ -174,16 +205,24 @@ def main():
         )
 
     # ── Colorbars ─────────────────────────────────────────────────────────────
-    cb_wt = fig.colorbar(im_weight, ax=axes[:, 0], shrink=0.6, pad=0.02, aspect=25)
+    if args.wide:
+        ax_wt_group = axes[:, :2].ravel().tolist()
+        ax_comp_group = axes[:, 2:].ravel().tolist()
+    else:
+        ax_wt_group = axes[:, 0]
+        ax_comp_group = axes[:, 1]
+
+    cb_wt = fig.colorbar(im_weight, ax=ax_wt_group, shrink=0.6, pad=0.02, aspect=25)
     cb_wt.set_label(r"Standardized 850-hPa $\theta_e$ Anomaly", fontsize=6)
     cb_wt.ax.tick_params(labelsize=5)
 
-    cb_comp = fig.colorbar(im_comp, ax=axes[:, 1], shrink=0.6, pad=0.02, aspect=25)
+    cb_comp = fig.colorbar(im_comp, ax=ax_comp_group, shrink=0.6, pad=0.02, aspect=25)
     cb_comp.set_label(r"850-hPa $\theta_e$ (K)", fontsize=6)
     cb_comp.ax.tick_params(labelsize=5)
 
     # ── Save ──────────────────────────────────────────────────────────────────
-    base = os.path.join(OUT_DIR, "figS04_ffe_som")
+    suffix = "_wide" if args.wide else ""
+    base = os.path.join(OUT_DIR, f"figS04_ffe_som{suffix}")
     fig.savefig(f"{base}.pdf")
     fig.savefig(f"{base}.png", dpi=DPI_RASTER)
     fig.savefig(f"{base}.tiff", dpi=DPI_RASTER)

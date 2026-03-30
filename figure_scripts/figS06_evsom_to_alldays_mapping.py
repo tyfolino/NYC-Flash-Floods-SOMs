@@ -1,16 +1,21 @@
 """
 Supplementary Figure S6 — evSOM to All-Days SOM Node Mapping
 
-4-row × 1-column layout, one panel per evSOM node (A1, A2, B1, B2),
+Default (4-row × 1-column) layout, one panel per evSOM node (A1, A2, B1, B2),
 matching the row order of Figure 2.
 Each panel shows a 5×4 heatmap of what fraction of the node's FFEs
 fall into each all-days SOM node (thetae, 5×4).
 Event counts are annotated inside each cell.
 
+Wide layout (--wide flag): 2-row × 2-column.
+A1/A2 top row, B1/B2 bottom row.
+
 Usage:
     python -m figure_scripts.figS06_evsom_to_alldays_mapping
+    python -m figure_scripts.figS06_evsom_to_alldays_mapping --wide
 """
 
+import argparse
 import os
 
 import matplotlib.pyplot as plt
@@ -33,10 +38,22 @@ XALL, YALL = 5, 4  # all-days SOM dimensions
 
 FIG_WIDTH = 3.5
 FIG_HEIGHT = 8.0
+FIG_WIDTH_WIDE = 5.5
+FIG_HEIGHT_WIDE = 4.0
 DPI_RASTER = 300
 
 # Node traversal order: A1, A2, B1, B2
 NODE_ORDER = [(i, j) for j in range(YFFE) for i in range(XFFE)]
+
+
+def parse_args():
+    p = argparse.ArgumentParser()
+    p.add_argument(
+        "--wide",
+        action="store_true",
+        help="Use wide 2×2 layout for presentations",
+    )
+    return p.parse_args()
 
 
 def _load_and_merge(evsom_csv, alldays_csv):
@@ -54,24 +71,32 @@ def _load_and_merge(evsom_csv, alldays_csv):
 
 
 def main():
+    args = parse_args()
     setup_plotting()
 
     print("Loading BMU CSVs ...")
     merged = _load_and_merge(EVSOM_CSV, ALLDAYS_CSV)
     print(f"Matched {len(merged)} events")
 
-    # ── Build figure: 4 rows × 1 col ─────────────────────────────────────────
+    # ── Build figure ──────────────────────────────────────────────────────────
+    if args.wide:
+        nrows, ncols = YFFE, XFFE  # 2×2
+        fig_w, fig_h = FIG_WIDTH_WIDE, FIG_HEIGHT_WIDE
+    else:
+        nrows, ncols = XFFE * YFFE, 1  # 4×1
+        fig_w, fig_h = FIG_WIDTH, FIG_HEIGHT
+
     fig, axes = plt.subplots(
-        XFFE * YFFE,
-        1,
-        figsize=(FIG_WIDTH, FIG_HEIGHT),
+        nrows,
+        ncols,
+        figsize=(fig_w, fig_h),
         constrained_layout=True,
         dpi=DPI_RASTER,
     )
 
     last_im = None
-    for row, (i, j) in enumerate(NODE_ORDER):
-        ax = axes[row]
+    for i, j in NODE_ORDER:
+        ax = axes[j, i] if args.wide else axes[j * XFFE + i]
         lbl = node_label(i, j)
         subset = merged[(merged["node_ev_i"] == i) & (merged["node_ev_j"] == j)]
         n_events = len(subset)
@@ -116,9 +141,12 @@ def main():
         ax.tick_params(length=2)
 
         # Axis labels only on outer edges
-        if row == XFFE * YFFE - 1:
+        is_bottom = (j == YFFE - 1) if args.wide else (j * XFFE + i == XFFE * YFFE - 1)
+        is_left = (i == 0) if args.wide else True
+        if is_bottom:
             ax.set_xlabel("All-days SOM column", fontsize=5.5)
-        ax.set_ylabel("All-days SOM row", fontsize=5.5)
+        if is_left:
+            ax.set_ylabel("All-days SOM row", fontsize=5.5)
 
         ax.text(
             0.0,
@@ -141,14 +169,14 @@ def main():
         )
 
     # ── Shared colorbar ───────────────────────────────────────────────────────
-    cbar = fig.colorbar(
-        last_im, ax=axes.ravel().tolist(), shrink=0.6, pad=0.02, aspect=25
-    )
+    all_axes = axes.ravel().tolist() if args.wide else axes.tolist()
+    cbar = fig.colorbar(last_im, ax=all_axes, shrink=0.6, pad=0.02, aspect=25)
     cbar.set_label(r"Fraction of node events (\%)", fontsize=6)
     cbar.ax.tick_params(labelsize=5)
 
     # ── Save ─────────────────────────────────────────────────────────────────
-    base = os.path.join(OUT_DIR, "figS06_evsom_to_alldays_mapping")
+    suffix = "_wide" if args.wide else ""
+    base = os.path.join(OUT_DIR, f"figS06_evsom_to_alldays_mapping{suffix}")
     fig.savefig(f"{base}.pdf")
     fig.savefig(f"{base}.png", dpi=DPI_RASTER)
     fig.savefig(f"{base}.tiff", dpi=DPI_RASTER)

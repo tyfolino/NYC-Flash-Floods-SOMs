@@ -65,17 +65,17 @@ ENTRIES = [
     ),
     (
         "Figure S4",
-        os.path.join(FIGS, "figS04", "figS04_evsom_to_alldays_mapping.png"),
+        os.path.join(FIGS, "figS04", "figS04_ffe_som.png"),
         os.path.join(FIGS, "figS04", "caption.txt"),
     ),
     (
         "Figure S5",
-        os.path.join(FIGS, "figS05", "figS05_ffe_som.png"),
+        os.path.join(FIGS, "figS05", "figS05_evsom_sammon_map.png"),
         os.path.join(FIGS, "figS05", "caption.txt"),
     ),
     (
         "Figure S6",
-        os.path.join(FIGS, "figS06", "figS06_evsom_sammon_map.png"),
+        os.path.join(FIGS, "figS06", "figS06_evsom_to_alldays_mapping.png"),
         os.path.join(FIGS, "figS06", "caption.txt"),
     ),
     (
@@ -90,19 +90,19 @@ ENTRIES = [
     ),
     (
         "Figure S9",
-        os.path.join(FIGS, "figS09", "figS09_evsom_tc_tracks_and_histogram.png"),
+        os.path.join(FIGS, "figS09", "figS09_precip_histograms.png"),
         os.path.join(FIGS, "figS09", "caption.txt"),
+    ),
+    (
+        "Figure S10",
+        os.path.join(FIGS, "figS10", "figS10_evsom_tc_tracks_and_histogram.png"),
+        os.path.join(FIGS, "figS10", "caption.txt"),
     ),
     # Movies — first frame of GIF used as thumbnail
     (
         "Movie S1",
-        os.path.join(MOVS, "movieS01", "movieS01_evsom_node_weights.gif"),
+        os.path.join(MOVS, "movieS01", "movieS01_evsom_combined.gif"),
         os.path.join(MOVS, "movieS01", "caption.txt"),
-    ),
-    (
-        "Movie S2",
-        os.path.join(MOVS, "movieS02", "movieS02_evsom_composite.gif"),
-        os.path.join(MOVS, "movieS02", "caption.txt"),
     ),
 ]
 

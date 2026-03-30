@@ -1,17 +1,23 @@
 """
-Supplementary Figure S6 — evSOM Moisture Composites: IVT (left) and TCWV (right)
+Supplementary Figure S7 — evSOM Moisture Composites: IVT (left) and TCWV (right)
 
-4-row × 2-column layout. Each row is one evSOM node (A1, A2, B1, B2).
+Default (4-row × 2-column) layout. Each row is one evSOM node (A1, A2, B1, B2).
 Left column  : IVT composite mean (shaded, kg m⁻¹ s⁻¹) + Z500 (contoured, dam)
 Right column : TCWV composite mean (shaded, kg m⁻²) + Z500 (contoured, dam)
 
+Wide layout (--wide flag): 2-row × 4-column.
+Left 2×2  : IVT (A1/A2 top, B1/B2 bottom)
+Right 2×2 : TCWV (A1/A2 top, B1/B2 bottom)
+
 FFE events are grouped by evSOM node (T=0 snapshot).
-Separate shared colorbars for each column.
+Separate shared colorbars for each variable group.
 
 Usage:
     python -m figure_scripts.figS07_evsom_ivt_tcwv_composites
+    python -m figure_scripts.figS07_evsom_ivt_tcwv_composites --wide
 """
 
+import argparse
 import os
 
 import cartopy.crs as ccrs
@@ -41,6 +47,8 @@ Z500_PATH = f"{SOM_INTERMEDIATE_PATH}era5_Z500_ffe.nc"
 XDIM, YDIM = 2, 2
 FIG_WIDTH = 6.0
 FIG_HEIGHT = 5.8
+FIG_WIDTH_WIDE = 11.0
+FIG_HEIGHT_WIDE = 3.5
 DPI_RASTER = 300
 
 LEVELS_IVT = np.arange(0, 701, 100)  # kg m⁻¹ s⁻¹
@@ -51,7 +59,18 @@ LEVELS_Z = range(549, 598, 2)  # dam
 NODE_ORDER = [(i, j) for j in range(YDIM) for i in range(XDIM)]
 
 
+def parse_args():
+    p = argparse.ArgumentParser()
+    p.add_argument(
+        "--wide",
+        action="store_true",
+        help="Use wide 2×4 layout for presentations",
+    )
+    return p.parse_args()
+
+
 def main():
+    args = parse_args()
     setup_plotting()
 
     # ── Load cache ────────────────────────────────────────────────────────────
@@ -70,10 +89,17 @@ def main():
 
     # ── Build figure ──────────────────────────────────────────────────────────
     proj = ccrs.PlateCarree()
+    if args.wide:
+        nrows, ncols = 2, 4
+        fig_w, fig_h = FIG_WIDTH_WIDE, FIG_HEIGHT_WIDE
+    else:
+        nrows, ncols = 4, 2
+        fig_w, fig_h = FIG_WIDTH, FIG_HEIGHT
+
     fig, axes = plt.subplots(
-        4,
-        2,
-        figsize=(FIG_WIDTH, FIG_HEIGHT),
+        nrows,
+        ncols,
+        figsize=(fig_w, fig_h),
         subplot_kw={"projection": proj},
         constrained_layout=True,
         dpi=DPI_RASTER,
@@ -82,9 +108,14 @@ def main():
 
     im_ivt = im_tcwv = None
 
-    for row, (i, j) in enumerate(NODE_ORDER):
-        ax_ivt = axes[row, 0]
-        ax_tcwv = axes[row, 1]
+    for i, j in NODE_ORDER:
+        if args.wide:
+            ax_ivt = axes[j, i]
+            ax_tcwv = axes[j, i + 2]
+        else:
+            row = j * XDIM + i
+            ax_ivt = axes[row, 0]
+            ax_tcwv = axes[row, 1]
         lbl = node_label(i, j)
         idx = get_node_indices(bmus, i, j)
         n = len(idx)
@@ -179,9 +210,16 @@ def main():
         )
 
     # ── Colorbars ─────────────────────────────────────────────────────────────
+    if args.wide:
+        ax_ivt_group = axes[:, :2].ravel().tolist()
+        ax_tcwv_group = axes[:, 2:].ravel().tolist()
+    else:
+        ax_ivt_group = axes[:, 0].tolist()
+        ax_tcwv_group = axes[:, 1].tolist()
+
     cbar_ivt = fig.colorbar(
         im_ivt,
-        ax=axes[:, 0].tolist(),
+        ax=ax_ivt_group,
         orientation="vertical",
         pad=0.02,
         shrink=0.7,
@@ -192,7 +230,7 @@ def main():
 
     cbar_tcwv = fig.colorbar(
         im_tcwv,
-        ax=axes[:, 1].tolist(),
+        ax=ax_tcwv_group,
         orientation="vertical",
         pad=0.02,
         shrink=0.7,
@@ -202,7 +240,8 @@ def main():
     cbar_tcwv.ax.tick_params(labelsize=5)
 
     # ── Save ─────────────────────────────────────────────────────────────────
-    base = os.path.join(OUT_DIR, "figS07_evsom_ivt_tcwv_composites")
+    suffix = "_wide" if args.wide else ""
+    base = os.path.join(OUT_DIR, f"figS07_evsom_ivt_tcwv_composites{suffix}")
     fig.savefig(f"{base}.pdf")
     fig.savefig(f"{base}.png", dpi=DPI_RASTER)
     fig.savefig(f"{base}.tiff", dpi=DPI_RASTER)

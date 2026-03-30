@@ -1,15 +1,21 @@
 """
 Supplementary Figure S9 — Per-Node Precipitation Histograms (Stage IV + ASOS)
 
-4-row × 2-column layout, matching the row order of Figure 2 (A1, A2, B1, B2).
+Default (4-row × 2-column) layout, matching the row order of Figure 2.
 Left column  : Stage IV max hourly precip over NYC within ±6 h of episode onset.
 Right column : ASOS max hourly precip (JFK, LGA, Central Park, EWR) within ±6 h.
 Red dashed line marks the per-node median.
 
+Wide layout (--wide flag): 2-row × 4-column.
+Left 2×2  : Stage IV (A1/A2 top, B1/B2 bottom)
+Right 2×2 : ASOS (A1/A2 top, B1/B2 bottom)
+
 Usage:
     python -m figure_scripts.figS09_precip_histograms
+    python -m figure_scripts.figS09_precip_histograms --wide
 """
 
+import argparse
 import os
 
 import matplotlib.pyplot as plt
@@ -34,6 +40,8 @@ BMU_CSV = os.path.join(DATA_DIR, "som_2x2_evsom_24h_bmus_thetae.csv")
 XDIM, YDIM = 2, 2
 FIG_WIDTH = 7.0
 FIG_HEIGHT = 7.0
+FIG_WIDTH_WIDE = 12.0
+FIG_HEIGHT_WIDE = 3.5
 DPI_RASTER = 300
 
 BINS = np.arange(0, 3.76, 0.25)
@@ -43,6 +51,16 @@ YLIM_MAX = 15
 NODE_ORDER = [(i, j) for j in range(YDIM) for i in range(XDIM)]
 
 COL_COLORS = {"Stage IV": "#3a7ebf", "ASOS": "#e07b3a"}
+
+
+def parse_args():
+    p = argparse.ArgumentParser()
+    p.add_argument(
+        "--wide",
+        action="store_true",
+        help="Use wide 2×4 layout for presentations",
+    )
+    return p.parse_args()
 
 
 def _plot_node_hist(ax, data, color, label):
@@ -79,6 +97,7 @@ def _plot_node_hist(ax, data, color, label):
 
 
 def main():
+    args = parse_args()
     setup_plotting()
 
     # ── Load BMUs ─────────────────────────────────────────────────────────────
@@ -98,30 +117,45 @@ def main():
     asos_vals = compute_asos_max_precip(bmu_df, precip_dfs, window_hours=6)
     bmu_df["asos_max"] = asos_vals
 
-    # ── Build figure: 4 rows × 2 cols ─────────────────────────────────────────
+    # ── Build figure ──────────────────────────────────────────────────────────
+    if args.wide:
+        nrows, ncols = 2, 4
+        fig_w, fig_h = FIG_WIDTH_WIDE, FIG_HEIGHT_WIDE
+    else:
+        nrows, ncols = XDIM * YDIM, 2
+        fig_w, fig_h = FIG_WIDTH, FIG_HEIGHT
+
     fig, axes = plt.subplots(
-        XDIM * YDIM,
-        2,
-        figsize=(FIG_WIDTH, FIG_HEIGHT),
+        nrows,
+        ncols,
+        figsize=(fig_w, fig_h),
         constrained_layout=True,
         dpi=DPI_RASTER,
         sharex=True,
         sharey=True,
     )
+    if args.wide:
+        for ax in axes.ravel():
+            ax.tick_params(axis="y", labelleft=True)
 
-    for row, (i, j) in enumerate(NODE_ORDER):
+    for i, j in NODE_ORDER:
+        if args.wide:
+            ax_s4 = axes[j, i]
+            ax_as = axes[j, i + 2]
+        else:
+            row = j * XDIM + i
+            ax_s4 = axes[row, 0]
+            ax_as = axes[row, 1]
+
         lbl = node_label(i, j)
         subset = bmu_df[(bmu_df["node_i"] == i) & (bmu_df["node_j"] == j)]
-
-        ax_s4 = axes[row, 0]
-        ax_as = axes[row, 1]
 
         n_s4 = _plot_node_hist(
             ax_s4, subset["s4_max"], COL_COLORS["Stage IV"], "Stage IV"
         )
         n_as = _plot_node_hist(ax_as, subset["asos_max"], COL_COLORS["ASOS"], "ASOS")
 
-        # Node label + n outside upper-left of left panel
+        # Node label + n inside upper-left of each panel
         ax_s4.text(
             0.03,
             0.97,
@@ -143,18 +177,26 @@ def main():
             va="top",
         )
 
+        # y-axis label on left-most column of each group
         ax_s4.set_ylabel("Count", fontsize=5.5)
+        if args.wide:
+            ax_as.set_ylabel("Count", fontsize=5.5)
 
     # Column headers on top row
-    axes[0, 0].set_title("Stage IV", fontsize=7, fontweight="bold")
-    axes[0, 1].set_title("ASOS", fontsize=7, fontweight="bold")
+    if args.wide:
+        axes[0, 0].set_title("Stage IV", fontsize=7, fontweight="bold")
+        axes[0, 2].set_title("ASOS", fontsize=7, fontweight="bold")
+    else:
+        axes[0, 0].set_title("Stage IV", fontsize=7, fontweight="bold")
+        axes[0, 1].set_title("ASOS", fontsize=7, fontweight="bold")
 
-    # x-axis label on bottom row only (sharex handles hiding upper ticks)
+    # x-axis label on bottom row only
     for ax in axes[-1, :]:
         ax.set_xlabel("Max Hourly Precip (in)", fontsize=5.5)
 
     # ── Save ─────────────────────────────────────────────────────────────────
-    base = os.path.join(OUT_DIR, "figS09_precip_histograms")
+    suffix = "_wide" if args.wide else ""
+    base = os.path.join(OUT_DIR, f"figS09_precip_histograms{suffix}")
     fig.savefig(f"{base}.pdf")
     fig.savefig(f"{base}.png", dpi=DPI_RASTER)
     fig.savefig(f"{base}.tiff", dpi=DPI_RASTER)

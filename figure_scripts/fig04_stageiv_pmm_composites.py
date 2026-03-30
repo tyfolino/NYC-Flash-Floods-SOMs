@@ -1,17 +1,23 @@
 """
 Figure 4 — Stage IV PMM Precipitation Composites by SOM Node
 
-4-row × 2-column layout. Each row is one SOM node (A1, A2, B1, B2).
+Default (4-row × 2-column) layout. Each row is one SOM node (A1, A2, B1, B2).
 Left column  : regional-scale PMM composite (38.5–44°N, 78–70°W)
 Right column : NYC-scale PMM composite (40.3–41.2°N, 74.8–73.4°W)
+
+Wide layout (--wide flag): 2-row × 4-column.
+Left 2×2  : regional-scale (A1/A2 top, B1/B2 bottom)
+Right 2×2 : NYC-scale (A1/A2 top, B1/B2 bottom)
 
 Single shared NWS-style colorbar on the right.
 Star marks NYC on regional panels only.
 
 Usage:
     python -m figure_scripts.fig04_stageiv_pmm_composites
+    python -m figure_scripts.fig04_stageiv_pmm_composites --wide
 """
 
+import argparse
 import os
 
 import cartopy.crs as ccrs
@@ -40,6 +46,8 @@ BMU_CSV = os.path.join(DATA_DIR, "som_2x2_evsom_24h_bmus_thetae.csv")
 XDIM, YDIM = 2, 2
 FIG_WIDTH = 5.5
 FIG_HEIGHT = 6.0
+FIG_WIDTH_WIDE = 11.0
+FIG_HEIGHT_WIDE = 3.5
 DPI_RASTER = 300
 
 EXTENT_REG = [-78.0, -70.0, 38.5, 44.0]
@@ -57,6 +65,16 @@ NORM_NWS = BoundaryNorm(NWS_LEVELS, ncolors=_N_BINS, clip=False)
 
 # Node order: A1, A2, B1, B2
 NODE_ORDER = [(i, j) for j in range(YDIM) for i in range(XDIM)]
+
+
+def parse_args():
+    p = argparse.ArgumentParser()
+    p.add_argument(
+        "--wide",
+        action="store_true",
+        help="Use wide 2×4 layout for presentations",
+    )
+    return p.parse_args()
 
 
 def _add_map_features(ax, scale):
@@ -102,6 +120,7 @@ def _plot_pmm(ax, node_fields, i, j, lat2d, lon2d, extent, show_star):
 
 
 def main():
+    args = parse_args()
     setup_plotting()
 
     # ── Load BMU assignments ──────────────────────────────────────────────────
@@ -114,19 +133,34 @@ def main():
 
     # ── Build figure ──────────────────────────────────────────────────────────
     proj = ccrs.PlateCarree()
+    if args.wide:
+        nrows, ncols = 2, 4
+        fig_w, fig_h = FIG_WIDTH_WIDE, FIG_HEIGHT_WIDE
+    else:
+        nrows, ncols = 4, 2
+        fig_w, fig_h = FIG_WIDTH, FIG_HEIGHT
+
     fig, axes = plt.subplots(
-        4,
-        2,
-        figsize=(FIG_WIDTH, FIG_HEIGHT),
+        nrows,
+        ncols,
+        figsize=(fig_w, fig_h),
         subplot_kw={"projection": proj},
         constrained_layout=True,
         dpi=DPI_RASTER,
     )
     fig.get_layout_engine().set(hspace=0.0, wspace=0.02)
 
-    for row, (i, j) in enumerate(NODE_ORDER):
-        ax_reg = axes[row, 0]
-        ax_nyc = axes[row, 1]
+    for i, j in NODE_ORDER:
+        if args.wide:
+            # j = SOM row (0/1), i = SOM col (0/1)
+            # regional in left 2×2, NYC in right 2×2
+            ax_reg = axes[j, i]
+            ax_nyc = axes[j, i + 2]
+        else:
+            row = j * XDIM + i
+            ax_reg = axes[row, 0]
+            ax_nyc = axes[row, 1]
+
         lbl = node_label(i, j)
 
         n_reg = _plot_pmm(
@@ -175,7 +209,8 @@ def main():
     cbar.ax.tick_params(labelsize=5)
 
     # ── Save ──────────────────────────────────────────────────────────────────
-    base = os.path.join(OUT_DIR, "fig04_stageiv_pmm")
+    suffix = "_wide" if args.wide else ""
+    base = os.path.join(OUT_DIR, f"fig04_stageiv_pmm{suffix}")
     fig.savefig(f"{base}.pdf")
     fig.savefig(f"{base}.png", dpi=DPI_RASTER)
     fig.savefig(f"{base}.tiff", dpi=DPI_RASTER)
