@@ -127,7 +127,7 @@ def main():
         title="Hit frequency",
         title_fontsize=5,
         fontsize=4.5,
-        loc="lower left",
+        loc="upper left",
         framealpha=0.8,
         handletextpad=0.8,
         borderpad=1.8,

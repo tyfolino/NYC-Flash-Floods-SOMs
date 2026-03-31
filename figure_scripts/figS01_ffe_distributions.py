@@ -40,6 +40,10 @@ def load_data():
         begin_str, format="%m/%d/%Y %H%M", errors="coerce"
     )
     df = df.drop_duplicates(subset=["EPISODE_ID"], keep="first").copy()
+    # Deduplicate by UTC calendar day (EST + 5h) to match SOM preprocessing
+    df["BEGIN_UTC"] = df["BEGIN_DATETIME"] + pd.Timedelta(hours=5)
+    df["UTC_DATE"] = df["BEGIN_UTC"].dt.date
+    df = df.drop_duplicates(subset=["UTC_DATE"], keep="first").copy()
     df["EVENT_COUNT"] = 1
     return df
 
