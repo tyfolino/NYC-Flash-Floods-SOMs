@@ -245,11 +245,13 @@ def compute_stageiv_max_precip(bmu_df, window_hours=6, agg="max"):
 # ── StageIV Composite Maps ────────────────────────────────────────────────────
 
 
-def probability_matched_mean(fields):
+def probability_matched_mean(fields, winsorize_pct=None):
     """
     Probability-matched mean (PMM) composite precipitation.
 
     fields: ndarray (n_events, nlat, nlon), NaN where no data.
+    winsorize_pct: if given (e.g. 95), cap the pooled distribution at that
+        percentile before rank-matching, suppressing extreme outlier events.
     Returns PMM field (nlat, nlon).
 
     Spatial pattern from arithmetic mean; intensities drawn from the pooled
@@ -263,6 +265,10 @@ def probability_matched_mean(fields):
     pooled = pooled[np.isfinite(pooled) & (pooled > 0)]
     if len(pooled) == 0 or np.nanmax(mean_field) == 0:
         return mean_field
+
+    if winsorize_pct is not None:
+        cap = np.percentile(pooled, winsorize_pct)
+        pooled = np.minimum(pooled, cap)
 
     pooled_sorted = np.sort(pooled)[::-1]  # descending
 
@@ -279,6 +285,62 @@ def probability_matched_mean(fields):
         )
 
     return pmm_flat.reshape(nlat, nlon)
+
+
+def bootstrap_pmm(
+    node_fields, n_bootstrap=500, min_n=None, seed=42, winsorize_pct=None
+):
+    """
+    Bootstrap PMM: for each node, repeatedly subsample min_n events (without
+    replacement) and compute PMM, then average the resulting fields across
+    iterations.  This removes sample-size bias so nodes with different n are
+    directly comparable.
+
+    Parameters
+    ----------
+    node_fields  : dict {(i,j): ndarray (n_events, nlat, nlon)} — from
+                   compute_stageiv_node_composites(), values in inches.
+    n_bootstrap  : int  — number of bootstrap iterations (default 500).
+    min_n        : int or None — subsample size; if None, uses the smallest
+                   valid-event count across all nodes.
+    seed         : int — random seed for reproducibility.
+    winsorize_pct: float or None — passed through to probability_matched_mean.
+
+    Returns
+    -------
+    boot_pmm : dict {(i,j): ndarray (nlat, nlon)}
+    min_n    : int — the subsample size actually used.
+    """
+    rng = np.random.default_rng(seed)
+
+    # Index of events with valid Stage IV data for each node
+    valid_idxs = {}
+    for key, fields in node_fields.items():
+        valid = ~np.all(np.isnan(fields), axis=(1, 2))
+        valid_idxs[key] = np.where(valid)[0]
+
+    if min_n is None:
+        min_n = min(len(v) for v in valid_idxs.values())
+
+    boot_pmm = {}
+    for key, fields in node_fields.items():
+        idxs = valid_idxs[key]
+        if len(idxs) <= min_n:
+            # Already at or below target size — no subsampling needed
+            boot_pmm[key] = probability_matched_mean(
+                fields[idxs], winsorize_pct=winsorize_pct
+            )
+            continue
+
+        stack = []
+        for _ in range(n_bootstrap):
+            sample = rng.choice(idxs, size=min_n, replace=False)
+            stack.append(
+                probability_matched_mean(fields[sample], winsorize_pct=winsorize_pct)
+            )
+        boot_pmm[key] = np.nanmean(np.stack(stack, axis=0), axis=0)
+
+    return boot_pmm, min_n
 
 
 def compute_stageiv_node_composites(bmu_df, xdim, ydim, window_hours=6):
@@ -353,6 +415,43 @@ def compute_stageiv_node_composites(bmu_df, xdim, ydim, window_hours=6):
             node_fields[(i, j)] = np.stack(event_list, axis=0)
 
     return node_fields, lat2d_reg, lon2d_reg
+
+
+def compute_stageiv_conditional_mean(node_fields, min_precip_in=0.10, min_events=3):
+    """
+    For each node, compute the mean precipitation at each grid point
+    conditioned on events that produced >= min_precip_in there, masking
+    grid points where fewer than min_events met that threshold.
+
+    This is robust to extreme outliers (e.g., a single TC event) because
+    one event alone cannot meet the min_events requirement.
+
+    Parameters
+    ----------
+    node_fields : dict {(i, j): ndarray (n_events, nlat, nlon)}
+        Per-event max-over-window precip fields in inches, from
+        compute_stageiv_node_composites().
+    min_precip_in : float
+        Minimum precipitation to count an event as producing rain at a
+        grid point (default 0.10 in).
+    min_events : int
+        Minimum number of events required to show a value (default 3).
+
+    Returns
+    -------
+    cond_mean : dict {(i, j): ndarray (nlat, nlon)}
+        Conditional mean precipitation in inches; NaN where fewer than
+        min_events produced >= min_precip_in.
+    """
+    cond_mean = {}
+    for key, fields in node_fields.items():
+        rain_mask = fields >= min_precip_in
+        masked = np.where(rain_mask, fields, np.nan)
+        count = np.sum(rain_mask, axis=0)
+        mean_field = np.nanmean(masked, axis=0)
+        mean_field[count < min_events] = np.nan
+        cond_mean[key] = mean_field
+    return cond_mean
 
 
 def plot_stageiv_composite_maps(

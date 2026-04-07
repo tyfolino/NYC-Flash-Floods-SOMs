@@ -1,20 +1,20 @@
 """
-Figure 4 — Stage IV PMM Precipitation Composites by SOM Node
+Figure 4 (alternate) — Stage IV Conditional Mean Precipitation by SOM Node
+
+For each evSOM node, shows the mean of the maximum hourly Stage IV accumulation
+within ±6 hours of flash flood onset, conditioned on events that produced
+>= MIN_PRECIP_IN at each grid point, and only shown where >= MIN_EVENTS events
+met that threshold. This suppresses the influence of single extreme outliers.
 
 Default (4-row × 2-column) layout. Each row is one SOM node (A1, A2, B1, B2).
-Left column  : regional-scale PMM composite (38.5–44°N, 78–70°W)
-Right column : NYC-scale PMM composite (40.3–41.2°N, 74.8–73.4°W)
+Left column  : regional-scale composite (38.5–44°N, 78–70°W)
+Right column : NYC-scale composite (40.3–41.2°N, 74.8–73.4°W)
 
 Wide layout (--wide flag): 2-row × 4-column.
-Left 2×2  : regional-scale (A1/A2 top, B1/B2 bottom)
-Right 2×2 : NYC-scale (A1/A2 top, B1/B2 bottom)
-
-Single shared NWS-style colorbar on the right.
-Star marks NYC on regional panels only.
 
 Usage:
-    python -m figure_scripts.fig04_stageiv_pmm_composites
-    python -m figure_scripts.fig04_stageiv_pmm_composites --wide
+    python -m figure_scripts.fig04_stageiv_exceedance
+    python -m figure_scripts.fig04_stageiv_exceedance --wide
 """
 
 import argparse
@@ -32,9 +32,8 @@ from matplotlib.colors import BoundaryNorm, ListedColormap
 from som_analysis.config import DATA_DIR, setup_plotting
 from som_analysis.helpers import node_label
 from som_analysis.node_statistics import (
-    bootstrap_pmm,
+    compute_stageiv_conditional_mean,
     compute_stageiv_node_composites,
-    probability_matched_mean,
 )
 
 # ── Paths ─────────────────────────────────────────────────────────────────────
@@ -54,10 +53,12 @@ DPI_RASTER = 300
 EXTENT_REG = [-78.0, -70.0, 38.5, 44.0]
 EXTENT_NYC = [-74.8, -73.4, 40.3, 41.2]
 
-# ChaseSpectral precipitation colormap sampled across our bins
-# "over" color is black — clearly distinct from the 3–4" bin
+MIN_PRECIP_IN = 0.10  # minimum precip to count an event as producing rain
+MIN_EVENTS = 3  # minimum number of such events to show a grid point
+
+# NWS ChaseSpectral colormap (same as PMM figure)
 NWS_LEVELS = [0.10, 0.25, 0.50, 0.75, 1.00, 1.25, 1.50, 2.00, 2.50, 3.00, 4.00]
-_N_BINS = len(NWS_LEVELS) - 1  # 10
+_N_BINS = len(NWS_LEVELS) - 1
 _chase = plt.get_cmap("ChaseSpectral")
 _colors = [_chase(i / (_N_BINS - 1)) for i in range(_N_BINS)]
 CMAP_NWS = ListedColormap(_colors, name="ChaseSpectral_disc")
@@ -75,18 +76,6 @@ def parse_args():
         action="store_true",
         help="Use wide 2×4 layout for presentations",
     )
-    p.add_argument(
-        "--winsorize",
-        type=float,
-        default=None,
-        metavar="PCT",
-        help="Cap pooled distribution at this percentile before PMM (e.g. 95)",
-    )
-    p.add_argument(
-        "--bootstrap",
-        action="store_true",
-        help="Subsample each node to the smallest node size and average PMM across 500 iterations",
-    )
     return p.parse_args()
 
 
@@ -97,27 +86,13 @@ def _add_map_features(ax, scale):
     ax.add_feature(cfeature.COASTLINE.with_scale(scale), linewidth=0.4, zorder=4)
 
 
-def _plot_pmm(
-    ax,
-    node_fields,
-    i,
-    j,
-    lat2d,
-    lon2d,
-    extent,
-    show_star,
-    winsorize_pct=None,
-    precomputed=None,
-):
-    """Compute (or use precomputed) PMM for node (i, j) and plot on ax."""
+def _plot_condmean(ax, cond_mean, node_fields, i, j, lat2d, lon2d, extent):
+    """Plot conditional mean precipitation for node (i, j) on ax."""
+    field = cond_mean[(i, j)]
     fields = node_fields[(i, j)]
     n = int(np.sum(~np.all(np.isnan(fields), axis=(1, 2))))
-    pmm = (
-        precomputed[(i, j)]
-        if precomputed is not None
-        else probability_matched_mean(fields, winsorize_pct=winsorize_pct)
-    )
-    pmm_plot = np.where(pmm >= NWS_LEVELS[0], pmm, np.nan)
+
+    field_plot = np.where(field >= NWS_LEVELS[0], field, np.nan)
 
     lon_span = extent[1] - extent[0]
     scale = "10m" if lon_span < 4 else "50m"
@@ -127,23 +102,13 @@ def _plot_pmm(
     ax.pcolormesh(
         lon2d,
         lat2d,
-        pmm_plot,
+        field_plot,
         cmap=CMAP_NWS,
         norm=NORM_NWS,
         shading="auto",
         zorder=2,
         transform=ccrs.PlateCarree(),
     )
-    if show_star:
-        ax.scatter(
-            -74.0,
-            40.7,
-            color="black",
-            s=12,
-            marker="*",
-            zorder=5,
-            transform=ccrs.PlateCarree(),
-        )
     return n
 
 
@@ -156,18 +121,11 @@ def main():
     bmu_df = pd.read_csv(BMU_CSV)
     bmu_df["timestamp"] = pd.to_datetime(bmu_df["timestamp"])
 
-    # ── Compute Stage IV composites ───────────────────────────────────────────
+    # ── Compute Stage IV composites and conditional mean ──────────────────────
     node_fields, lat2d, lon2d = compute_stageiv_node_composites(bmu_df, XDIM, YDIM)
-
-    if args.bootstrap:
-        print("Running bootstrap PMM (500 iterations per node) ...")
-        boot_fields, min_n = bootstrap_pmm(
-            node_fields, n_bootstrap=500, winsorize_pct=args.winsorize
-        )
-        print(f"  Subsampled each node to n={min_n}")
-    else:
-        boot_fields = None
-        min_n = None
+    cond_mean = compute_stageiv_conditional_mean(
+        node_fields, min_precip_in=MIN_PRECIP_IN, min_events=MIN_EVENTS
+    )
 
     # ── Build figure ──────────────────────────────────────────────────────────
     proj = ccrs.PlateCarree()
@@ -190,8 +148,6 @@ def main():
 
     for i, j in NODE_ORDER:
         if args.wide:
-            # j = SOM row (0/1), i = SOM col (0/1)
-            # regional in left 2×2, NYC in right 2×2
             ax_reg = axes[j, i]
             ax_nyc = axes[j, i + 2]
         else:
@@ -201,32 +157,13 @@ def main():
 
         lbl = node_label(i, j)
 
-        n_reg = _plot_pmm(
-            ax_reg,
-            node_fields,
-            i,
-            j,
-            lat2d,
-            lon2d,
-            EXTENT_REG,
-            show_star=False,
-            winsorize_pct=args.winsorize,
-            precomputed=boot_fields,
+        n_reg = _plot_condmean(
+            ax_reg, cond_mean, node_fields, i, j, lat2d, lon2d, EXTENT_REG
         )
-        n_nyc = _plot_pmm(
-            ax_nyc,
-            node_fields,
-            i,
-            j,
-            lat2d,
-            lon2d,
-            EXTENT_NYC,
-            show_star=False,
-            winsorize_pct=args.winsorize,
-            precomputed=boot_fields,
+        n_nyc = _plot_condmean(
+            ax_nyc, cond_mean, node_fields, i, j, lat2d, lon2d, EXTENT_NYC
         )
 
-        # Node label outside upper-left; N outside upper-right
         for ax, n in [(ax_reg, n_reg), (ax_nyc, n_nyc)]:
             ax.text(
                 0.0,
@@ -260,17 +197,13 @@ def main():
         extend="max",
         aspect=25,
     )
-    cbar.set_label("PMM Precipitation (in)", fontsize=6)
+    cbar.set_label("Conditional Mean Precipitation (in)", fontsize=6)
     cbar.set_ticks(NWS_LEVELS)
     cbar.ax.tick_params(labelsize=5)
 
     # ── Save ──────────────────────────────────────────────────────────────────
-    win_suffix = (
-        f"_winsorized{int(args.winsorize)}" if args.winsorize is not None else ""
-    )
-    boot_suffix = f"_bootstrap{min_n}" if args.bootstrap else ""
     suffix = "_wide" if args.wide else ""
-    base = os.path.join(OUT_DIR, f"fig04_stageiv_pmm{win_suffix}{boot_suffix}{suffix}")
+    base = os.path.join(OUT_DIR, f"fig04_stageiv_condmean{suffix}")
     fig.savefig(f"{base}.pdf")
     fig.savefig(f"{base}.png", dpi=DPI_RASTER)
     fig.savefig(f"{base}.tiff", dpi=DPI_RASTER)
