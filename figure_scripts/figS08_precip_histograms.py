@@ -44,8 +44,8 @@ FIG_WIDTH_WIDE = 12.0
 FIG_HEIGHT_WIDE = 3.5
 DPI_RASTER = 300
 
-BINS = np.arange(0, 3.76, 0.25)
-XLIM = (0, 3.75)
+BINS = np.arange(0, 4.26, 0.25)
+XLIM = (0, 4.25)
 YLIM_MAX = 15
 
 NODE_ORDER = [(i, j) for j in range(YDIM) for i in range(XDIM)]
