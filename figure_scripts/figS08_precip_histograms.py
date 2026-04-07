@@ -11,8 +11,8 @@ Left 2×2  : Stage IV (A1/A2 top, B1/B2 bottom)
 Right 2×2 : ASOS (A1/A2 top, B1/B2 bottom)
 
 Usage:
-    python -m figure_scripts.figS09_precip_histograms
-    python -m figure_scripts.figS09_precip_histograms --wide
+    python -m figure_scripts.figS08_precip_histograms
+    python -m figure_scripts.figS08_precip_histograms --wide
 """
 
 import argparse
@@ -31,7 +31,7 @@ from som_analysis.node_statistics import (
 )
 
 # ── Paths ─────────────────────────────────────────────────────────────────────
-OUT_DIR = os.path.join(os.path.dirname(os.path.dirname(__file__)), "figures", "figS09")
+OUT_DIR = os.path.join(os.path.dirname(os.path.dirname(__file__)), "figures", "figS08")
 os.makedirs(OUT_DIR, exist_ok=True)
 
 BMU_CSV = os.path.join(DATA_DIR, "som_2x2_evsom_24h_bmus_thetae.csv")
@@ -196,7 +196,7 @@ def main():
 
     # ── Save ─────────────────────────────────────────────────────────────────
     suffix = "_wide" if args.wide else ""
-    base = os.path.join(OUT_DIR, f"figS09_precip_histograms{suffix}")
+    base = os.path.join(OUT_DIR, f"figS08_precip_histograms{suffix}")
     fig.savefig(f"{base}.pdf")
     fig.savefig(f"{base}.png", dpi=DPI_RASTER)
     fig.savefig(f"{base}.tiff", dpi=DPI_RASTER)

@@ -11,8 +11,8 @@ Left 2×2  : node weights (A1/A2 top, B1/B2 bottom)
 Right 2×2 : raw composites (A1/A2 top, B1/B2 bottom)
 
 Usage:
-    python -m figure_scripts.figS05_ffe_som_node_weights_and_composites
-    python -m figure_scripts.figS05_ffe_som_node_weights_and_composites --wide
+    python -m figure_scripts.figS06_ffe_som_node_weights_and_composites
+    python -m figure_scripts.figS06_ffe_som_node_weights_and_composites --wide
 """
 
 import argparse
@@ -28,7 +28,7 @@ from som_analysis.config import setup_plotting
 from som_analysis.helpers import add_map_features, get_node_indices, node_label
 
 # ── Paths ─────────────────────────────────────────────────────────────────────
-OUT_DIR = os.path.join(os.path.dirname(os.path.dirname(__file__)), "figures/figS05")
+OUT_DIR = os.path.join(os.path.dirname(os.path.dirname(__file__)), "figures/figS06")
 os.makedirs(OUT_DIR, exist_ok=True)
 
 CACHE_PATH = os.path.join(
@@ -222,7 +222,7 @@ def main():
 
     # ── Save ──────────────────────────────────────────────────────────────────
     suffix = "_wide" if args.wide else ""
-    base = os.path.join(OUT_DIR, f"figS05_ffe_som{suffix}")
+    base = os.path.join(OUT_DIR, f"figS06_ffe_som{suffix}")
     fig.savefig(f"{base}.pdf")
     fig.savefig(f"{base}.png", dpi=DPI_RASTER)
     fig.savefig(f"{base}.tiff", dpi=DPI_RASTER)

@@ -11,8 +11,8 @@ Wide layout (--wide flag): 2-row × 2-column.
 A1/A2 top row, B1/B2 bottom row.
 
 Usage:
-    python -m figure_scripts.figS06_evsom_to_alldays_mapping
-    python -m figure_scripts.figS06_evsom_to_alldays_mapping --wide
+    python -m figure_scripts.figS05_evsom_to_alldays_mapping
+    python -m figure_scripts.figS05_evsom_to_alldays_mapping --wide
 """
 
 import argparse
@@ -26,7 +26,7 @@ from som_analysis.config import DATA_DIR, setup_plotting
 from som_analysis.helpers import node_label
 
 # ── Paths ─────────────────────────────────────────────────────────────────────
-OUT_DIR = os.path.join(os.path.dirname(os.path.dirname(__file__)), "figures", "figS06")
+OUT_DIR = os.path.join(os.path.dirname(os.path.dirname(__file__)), "figures", "figS05")
 os.makedirs(OUT_DIR, exist_ok=True)
 
 EVSOM_CSV = os.path.join(DATA_DIR, "som_2x2_evsom_24h_bmus_thetae.csv")
@@ -176,7 +176,7 @@ def main():
 
     # ── Save ─────────────────────────────────────────────────────────────────
     suffix = "_wide" if args.wide else ""
-    base = os.path.join(OUT_DIR, f"figS06_evsom_to_alldays_mapping{suffix}")
+    base = os.path.join(OUT_DIR, f"figS05_evsom_to_alldays_mapping{suffix}")
     fig.savefig(f"{base}.pdf")
     fig.savefig(f"{base}.png", dpi=DPI_RASTER)
     fig.savefig(f"{base}.tiff", dpi=DPI_RASTER)

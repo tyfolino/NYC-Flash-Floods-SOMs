@@ -8,7 +8,7 @@ Two-panel figure:
            dashed line at overall TC fraction.
 
 Usage:
-    python -m figure_scripts.figS10_evsom_tc_tracks_and_histogram
+    python -m figure_scripts.figS09_evsom_tc_tracks_and_histogram
 """
 
 import os
@@ -29,7 +29,7 @@ IBTRACS_PATH = (
 )
 
 # ── Paths ─────────────────────────────────────────────────────────────────────
-OUT_DIR = os.path.join(os.path.dirname(os.path.dirname(__file__)), "figures", "figS10")
+OUT_DIR = os.path.join(os.path.dirname(os.path.dirname(__file__)), "figures", "figS09")
 os.makedirs(OUT_DIR, exist_ok=True)
 
 TC_CSV = os.path.join(DATA_DIR, "som_2x2_evsom_24h_tc_associations.csv")
@@ -240,7 +240,7 @@ def main():
     )
 
     # ── Save ─────────────────────────────────────────────────────────────────
-    base = os.path.join(OUT_DIR, "figS10_evsom_tc_tracks_and_histogram")
+    base = os.path.join(OUT_DIR, "figS09_evsom_tc_tracks_and_histogram")
     fig.savefig(f"{base}.pdf")
     fig.savefig(f"{base}.png", dpi=DPI_RASTER)
     fig.savefig(f"{base}.tiff", dpi=DPI_RASTER)
