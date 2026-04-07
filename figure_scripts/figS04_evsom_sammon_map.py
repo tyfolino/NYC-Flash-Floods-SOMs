@@ -7,7 +7,7 @@ hit frequency (number of FFEs assigned). Topology-preserving neighbor edges
 are drawn as faint gray lines.
 
 Usage:
-    python -m figure_scripts.figS05_evsom_sammon_map
+    python -m figure_scripts.figS04_evsom_sammon_map
 """
 
 import os
@@ -20,7 +20,7 @@ from som_analysis.config import setup_plotting
 from som_analysis.helpers import node_label
 
 # ── Paths ─────────────────────────────────────────────────────────────────────
-OUT_DIR = os.path.join(os.path.dirname(os.path.dirname(__file__)), "figures", "figS05")
+OUT_DIR = os.path.join(os.path.dirname(os.path.dirname(__file__)), "figures/figS04")
 os.makedirs(OUT_DIR, exist_ok=True)
 
 CACHE_PATH = os.path.join(
@@ -135,7 +135,7 @@ def main():
     )
 
     # ── Save ─────────────────────────────────────────────────────────────────
-    base = os.path.join(OUT_DIR, "figS05_evsom_sammon_map")
+    base = os.path.join(OUT_DIR, "figS04_evsom_sammon_map")
     fig.savefig(f"{base}.pdf")
     fig.savefig(f"{base}.png", dpi=DPI_RASTER)
     fig.savefig(f"{base}.tiff", dpi=DPI_RASTER)
