@@ -233,7 +233,7 @@ def main():
                 1.01,
                 lbl,
                 transform=ax.transAxes,
-                fontsize=5.5,
+                fontsize=7.5,
                 fontweight="bold",
                 ha="left",
                 va="bottom",
@@ -243,7 +243,7 @@ def main():
                 1.01,
                 f"$n$={n}",
                 transform=ax.transAxes,
-                fontsize=6.0,
+                fontsize=8.0,
                 ha="right",
                 va="bottom",
             )
@@ -260,9 +260,9 @@ def main():
         extend="max",
         aspect=25,
     )
-    cbar.set_label("PMM Precipitation (in)", fontsize=6)
+    cbar.set_label("PMM Precipitation (in)", fontsize=8)
     cbar.set_ticks(NWS_LEVELS)
-    cbar.ax.tick_params(labelsize=5)
+    cbar.ax.tick_params(labelsize=7)
 
     # ── Save ──────────────────────────────────────────────────────────────────
     win_suffix = (

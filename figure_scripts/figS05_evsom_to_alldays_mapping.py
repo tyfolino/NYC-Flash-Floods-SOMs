@@ -129,31 +129,31 @@ def main():
                         str(counts[bi, bj]),
                         ha="center",
                         va="center",
-                        fontsize=5.5,
+                        fontsize=7.5,
                         color=text_color,
                     )
 
         # Axis ticks — label all-days nodes
         ax.set_xticks(np.arange(XALL))
         ax.set_yticks(np.arange(YALL))
-        ax.set_xticklabels([str(bi + 1) for bi in range(XALL)], fontsize=5)
-        ax.set_yticklabels([node_label(0, bj)[0] for bj in range(YALL)], fontsize=5)
+        ax.set_xticklabels([str(bi + 1) for bi in range(XALL)], fontsize=7)
+        ax.set_yticklabels([node_label(0, bj)[0] for bj in range(YALL)], fontsize=7)
         ax.tick_params(length=2)
 
         # Axis labels only on outer edges
         is_bottom = (j == YFFE - 1) if args.wide else (j * XFFE + i == XFFE * YFFE - 1)
         is_left = (i == 0) if args.wide else True
         if is_bottom:
-            ax.set_xlabel("All-days SOM column", fontsize=5.5)
+            ax.set_xlabel("All-days SOM column", fontsize=7.5)
         if is_left:
-            ax.set_ylabel("All-days SOM row", fontsize=5.5)
+            ax.set_ylabel("All-days SOM row", fontsize=7.5)
 
         ax.text(
             0.0,
             1.02,
             lbl,
             transform=ax.transAxes,
-            fontsize=6.5,
+            fontsize=8.5,
             fontweight="bold",
             ha="left",
             va="bottom",
@@ -163,7 +163,7 @@ def main():
             1.02,
             f"$n$={n_events}",
             transform=ax.transAxes,
-            fontsize=5.5,
+            fontsize=7.5,
             ha="right",
             va="bottom",
         )
@@ -171,8 +171,8 @@ def main():
     # ── Shared colorbar ───────────────────────────────────────────────────────
     all_axes = axes.ravel().tolist() if args.wide else axes.tolist()
     cbar = fig.colorbar(last_im, ax=all_axes, shrink=0.6, pad=0.02, aspect=25)
-    cbar.set_label(r"Fraction of node events (\%)", fontsize=6)
-    cbar.ax.tick_params(labelsize=5)
+    cbar.set_label(r"Fraction of node events (\%)", fontsize=8)
+    cbar.ax.tick_params(labelsize=7)
 
     # ── Save ─────────────────────────────────────────────────────────────────
     suffix = "_wide" if args.wide else ""

@@ -108,7 +108,7 @@ def main():
                 levels=LEVELS_Z,
                 transform=proj,
             )
-            ax.clabel(cn, inline=True, fontsize=3.5, fmt="%.1f")
+            ax.clabel(cn, inline=True, fontsize=5.5, fmt="%.1f")
 
             add_map_features(ax)
 
@@ -118,7 +118,7 @@ def main():
                 1.01,
                 node_label(i, j),
                 transform=ax.transAxes,
-                fontsize=5.5,
+                fontsize=7.5,
                 fontweight="bold",
                 ha="left",
                 va="bottom",
@@ -130,7 +130,7 @@ def main():
                 1.01,
                 _ff_label(counts, totals, risk, i, j),
                 transform=ax.transAxes,
-                fontsize=5.0,
+                fontsize=7.0,
                 ha="right",
                 va="bottom",
             )
@@ -139,9 +139,9 @@ def main():
     cbar = fig.colorbar(im, ax=axes.ravel().tolist(), shrink=0.7, pad=0.02, aspect=30)
     cbar.set_label(
         r"Standardized 850-hPa $\theta_e$ Anomaly",
-        fontsize=6,
+        fontsize=8,
     )
-    cbar.ax.tick_params(labelsize=5)
+    cbar.ax.tick_params(labelsize=7)
 
     # ── Save ──────────────────────────────────────────────────────────────────
     base = os.path.join(OUT_DIR, "fig01_som_node_weights")

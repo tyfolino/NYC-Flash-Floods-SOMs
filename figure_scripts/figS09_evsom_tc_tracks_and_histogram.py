@@ -172,7 +172,7 @@ def main():
         plt.Line2D([0], [0], color="gray", lw=1.0, label=r"$\pm$48 h"),
     ]
     ax_map.legend(
-        handles=legend_handles, fontsize=4.5, loc="lower left", framealpha=0.8, ncol=2
+        handles=legend_handles, fontsize=6.5, loc="lower left", framealpha=0.8, ncol=2
     )
 
     ax_map.text(
@@ -180,7 +180,7 @@ def main():
         1.01,
         "(a)",
         transform=ax_map.transAxes,
-        fontsize=6.5,
+        fontsize=8.5,
         fontweight="bold",
         ha="right",
         va="bottom",
@@ -213,7 +213,7 @@ def main():
             f"{int(tc)}/{int(tot)}",
             ha="center",
             va="bottom",
-            fontsize=4.5,
+            fontsize=6.5,
         )
 
     # Overall TC % dashed line
@@ -222,18 +222,18 @@ def main():
     )
 
     ax_bar.set_xticks(x)
-    ax_bar.set_xticklabels(node_labels_flat, fontsize=5.5)
-    ax_bar.set_ylabel(r"TC-associated FFEs (\%)", fontsize=6)
+    ax_bar.set_xticklabels(node_labels_flat, fontsize=7.5)
+    ax_bar.set_ylabel(r"TC-associated FFEs (\%)", fontsize=8)
     ax_bar.set_ylim(0, max(tc_pct) + 12)
-    ax_bar.tick_params(axis="y", labelsize=5.5)
-    ax_bar.legend(fontsize=4.5, loc="upper left", framealpha=0.8)
+    ax_bar.tick_params(axis="y", labelsize=7.5)
+    ax_bar.legend(fontsize=6.5, loc="upper left", framealpha=0.8)
 
     ax_bar.text(
         -0.18,
         1.01,
         "(b)",
         transform=ax_bar.transAxes,
-        fontsize=6.5,
+        fontsize=8.5,
         fontweight="bold",
         ha="left",
         va="bottom",

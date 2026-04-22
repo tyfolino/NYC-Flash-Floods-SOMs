@@ -121,7 +121,7 @@ def main():
                 levels=LEVELS_Z,
                 transform=proj,
             )
-            ax.clabel(cn, inline=True, fontsize=3.5, fmt="%d")
+            ax.clabel(cn, inline=True, fontsize=5.5, fmt="%d")
 
             add_map_features(ax)
 
@@ -131,7 +131,7 @@ def main():
                 1.01,
                 node_label(i, j),
                 transform=ax.transAxes,
-                fontsize=5.5,
+                fontsize=7.5,
                 fontweight="bold",
                 ha="left",
                 va="bottom",
@@ -143,15 +143,15 @@ def main():
                 1.01,
                 _ff_label(counts, totals, risk, i, j),
                 transform=ax.transAxes,
-                fontsize=5.0,
+                fontsize=7.0,
                 ha="right",
                 va="bottom",
             )
 
     # ── Shared colorbar ───────────────────────────────────────────────────────
     cbar = fig.colorbar(im, ax=axes.ravel().tolist(), shrink=0.7, pad=0.02, aspect=30)
-    cbar.set_label(r"850-hPa $\theta_e$ (K)", fontsize=6)
-    cbar.ax.tick_params(labelsize=5)
+    cbar.set_label(r"850-hPa $\theta_e$ (K)", fontsize=8)
+    cbar.ax.tick_params(labelsize=7)
 
     # ── Save ─────────────────────────────────────────────────────────────────
     base = os.path.join(OUT_DIR, "figS03_alldays_raw_composites")

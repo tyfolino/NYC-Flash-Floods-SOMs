@@ -86,12 +86,12 @@ def _plot_node_hist(ax, data, color, label):
             linewidth=1.0,
             label=f'Median: {median:.2f}"',
         )
-        ax.legend(fontsize=4, loc="upper right", framealpha=0.7)
+        ax.legend(fontsize=6, loc="upper right", framealpha=0.7)
 
     ax.set_xlim(*XLIM)
     ax.set_ylim(0, YLIM_MAX)
     ax.set_yticks(np.arange(0, YLIM_MAX + 1, 3))
-    ax.tick_params(axis="both", labelsize=5)
+    ax.tick_params(axis="both", labelsize=7)
     ax.grid(True, linewidth=0.3, alpha=0.5, axis="y")
     return n
 
@@ -161,7 +161,7 @@ def main():
             0.97,
             f"{lbl}  ($n$={n_s4})",
             transform=ax_s4.transAxes,
-            fontsize=6,
+            fontsize=8,
             fontweight="bold",
             ha="left",
             va="top",
@@ -171,28 +171,28 @@ def main():
             0.97,
             f"{lbl}  ($n$={n_as})",
             transform=ax_as.transAxes,
-            fontsize=6,
+            fontsize=8,
             fontweight="bold",
             ha="left",
             va="top",
         )
 
         # y-axis label on left-most column of each group
-        ax_s4.set_ylabel("Count", fontsize=5.5)
+        ax_s4.set_ylabel("Count", fontsize=7.5)
         if args.wide:
-            ax_as.set_ylabel("Count", fontsize=5.5)
+            ax_as.set_ylabel("Count", fontsize=7.5)
 
     # Column headers on top row
     if args.wide:
-        axes[0, 0].set_title("Stage IV", fontsize=7, fontweight="bold")
-        axes[0, 2].set_title("ASOS", fontsize=7, fontweight="bold")
+        axes[0, 0].set_title("Stage IV", fontsize=9, fontweight="bold")
+        axes[0, 2].set_title("ASOS", fontsize=9, fontweight="bold")
     else:
-        axes[0, 0].set_title("Stage IV", fontsize=7, fontweight="bold")
-        axes[0, 1].set_title("ASOS", fontsize=7, fontweight="bold")
+        axes[0, 0].set_title("Stage IV", fontsize=9, fontweight="bold")
+        axes[0, 1].set_title("ASOS", fontsize=9, fontweight="bold")
 
     # x-axis label on bottom row only
     for ax in axes[-1, :]:
-        ax.set_xlabel("Max Hourly Precip (in)", fontsize=5.5)
+        ax.set_xlabel("Max Hourly Precip (in)", fontsize=7.5)
 
     # ── Save ─────────────────────────────────────────────────────────────────
     suffix = "_wide" if args.wide else ""

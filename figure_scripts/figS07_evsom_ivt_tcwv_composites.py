@@ -144,7 +144,7 @@ def main():
             levels=LEVELS_Z,
             transform=proj,
         )
-        ax_ivt.clabel(cn, inline=True, fontsize=3.5, fmt="%d")
+        ax_ivt.clabel(cn, inline=True, fontsize=5.5, fmt="%d")
         add_map_features(ax_ivt)
 
         ax_ivt.text(
@@ -152,7 +152,7 @@ def main():
             1.01,
             lbl,
             transform=ax_ivt.transAxes,
-            fontsize=5.5,
+            fontsize=7.5,
             fontweight="bold",
             ha="left",
             va="bottom",
@@ -162,7 +162,7 @@ def main():
             1.01,
             f"$n$={n}",
             transform=ax_ivt.transAxes,
-            fontsize=6.0,
+            fontsize=8.0,
             ha="right",
             va="bottom",
         )
@@ -186,7 +186,7 @@ def main():
             levels=LEVELS_Z,
             transform=proj,
         )
-        ax_tcwv.clabel(cn2, inline=True, fontsize=3.5, fmt="%d")
+        ax_tcwv.clabel(cn2, inline=True, fontsize=5.5, fmt="%d")
         add_map_features(ax_tcwv)
 
         ax_tcwv.text(
@@ -194,7 +194,7 @@ def main():
             1.01,
             lbl,
             transform=ax_tcwv.transAxes,
-            fontsize=5.5,
+            fontsize=7.5,
             fontweight="bold",
             ha="left",
             va="bottom",
@@ -204,7 +204,7 @@ def main():
             1.01,
             f"$n$={n}",
             transform=ax_tcwv.transAxes,
-            fontsize=6.0,
+            fontsize=8.0,
             ha="right",
             va="bottom",
         )
@@ -225,8 +225,8 @@ def main():
         shrink=0.7,
         aspect=25,
     )
-    cbar_ivt.set_label(r"$|\mathrm{IVT}|$ (kg m$^{-1}$ s$^{-1}$)", fontsize=6)
-    cbar_ivt.ax.tick_params(labelsize=5)
+    cbar_ivt.set_label(r"$|\mathrm{IVT}|$ (kg m$^{-1}$ s$^{-1}$)", fontsize=8)
+    cbar_ivt.ax.tick_params(labelsize=7)
 
     cbar_tcwv = fig.colorbar(
         im_tcwv,
@@ -236,8 +236,8 @@ def main():
         shrink=0.7,
         aspect=25,
     )
-    cbar_tcwv.set_label(r"TCWV (kg m$^{-2}$)", fontsize=6)
-    cbar_tcwv.ax.tick_params(labelsize=5)
+    cbar_tcwv.set_label(r"TCWV (kg m$^{-2}$)", fontsize=8)
+    cbar_tcwv.ax.tick_params(labelsize=7)
 
     # ── Save ─────────────────────────────────────────────────────────────────
     suffix = "_wide" if args.wide else ""

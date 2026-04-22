@@ -143,7 +143,7 @@ def main():
             levels=LEVELS_Z_WEIGHTS,
             transform=proj,
         )
-        ax_wt.clabel(cn, inline=True, fontsize=4.5, fmt="%.1f")
+        ax_wt.clabel(cn, inline=True, fontsize=6.5, fmt="%.1f")
         add_map_features(ax_wt)
 
         # Node label outside upper-left; N outside upper-right
@@ -152,7 +152,7 @@ def main():
             1.01,
             lbl,
             transform=ax_wt.transAxes,
-            fontsize=5.5,
+            fontsize=7.5,
             fontweight="bold",
             ha="left",
             va="bottom",
@@ -162,7 +162,7 @@ def main():
             1.01,
             f"$n$={n}",
             transform=ax_wt.transAxes,
-            fontsize=6.0,
+            fontsize=8.0,
             ha="right",
             va="bottom",
         )
@@ -189,7 +189,7 @@ def main():
             levels=LEVELS_Z_RAW,
             transform=proj,
         )
-        ax_comp.clabel(cn2, inline=True, fontsize=4.5, fmt="%.0f")
+        ax_comp.clabel(cn2, inline=True, fontsize=6.5, fmt="%.0f")
         add_map_features(ax_comp)
 
         # Node label outside upper-left on composite panel too
@@ -198,7 +198,7 @@ def main():
             1.01,
             lbl,
             transform=ax_comp.transAxes,
-            fontsize=5.5,
+            fontsize=7.5,
             fontweight="bold",
             ha="left",
             va="bottom",
@@ -213,12 +213,12 @@ def main():
         ax_comp_group = axes[:, 1]
 
     cb_wt = fig.colorbar(im_weight, ax=ax_wt_group, shrink=0.6, pad=0.02, aspect=25)
-    cb_wt.set_label(r"Standardized 850-hPa $\theta_e$ Anomaly", fontsize=6)
-    cb_wt.ax.tick_params(labelsize=5)
+    cb_wt.set_label(r"Standardized 850-hPa $\theta_e$ Anomaly", fontsize=8)
+    cb_wt.ax.tick_params(labelsize=7)
 
     cb_comp = fig.colorbar(im_comp, ax=ax_comp_group, shrink=0.6, pad=0.02, aspect=25)
-    cb_comp.set_label(r"850-hPa $\theta_e$ (K)", fontsize=6)
-    cb_comp.ax.tick_params(labelsize=5)
+    cb_comp.set_label(r"850-hPa $\theta_e$ (K)", fontsize=8)
+    cb_comp.ax.tick_params(labelsize=7)
 
     # ── Save ──────────────────────────────────────────────────────────────────
     suffix = "_wide" if args.wide else ""

@@ -92,7 +92,7 @@ def _make_frame(
                 levels=LEVELS_Z,
                 transform=proj,
             )
-            ax.clabel(cn, inline=True, fontsize=3.0, fmt="%.1f")
+            ax.clabel(cn, inline=True, fontsize=5.0, fmt="%.1f")
             add_map_features(ax)
 
             ax.text(
@@ -100,7 +100,7 @@ def _make_frame(
                 1.01,
                 f"{lbl}  ($n$={n})",
                 transform=ax.transAxes,
-                fontsize=5.5,
+                fontsize=7.5,
                 fontweight="bold",
                 ha="left",
                 va="bottom",
@@ -110,12 +110,12 @@ def _make_frame(
     sign = "−" if hr_offset < 0 else "="
     hrs = abs(hr_offset)
     tlabel = f"T {sign} {hrs}h" if hrs > 0 else "T = 0"
-    fig.suptitle(tlabel, fontsize=8)
+    fig.suptitle(tlabel, fontsize=10)
 
     # Shared colorbar (use im_ref levels so colorbar is identical every frame)
     cbar = fig.colorbar(im, ax=axes.ravel().tolist(), shrink=0.6, pad=0.02, aspect=28)
-    cbar.set_label(r"Standardized 850-hPa $\theta_e$ Anomaly", fontsize=6)
-    cbar.ax.tick_params(labelsize=4.5)
+    cbar.set_label(r"Standardized 850-hPa $\theta_e$ Anomaly", fontsize=8)
+    cbar.ax.tick_params(labelsize=6.5)
 
     buf = io.BytesIO()
     fig.savefig(buf, format="png", dpi=dpi)

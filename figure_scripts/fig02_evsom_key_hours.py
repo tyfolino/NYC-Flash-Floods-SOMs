@@ -111,7 +111,7 @@ def main():
                 levels=LEVELS_Z,
                 transform=proj,
             )
-            ax.clabel(cn, inline=True, fontsize=3.0, fmt="%.1f")
+            ax.clabel(cn, inline=True, fontsize=5.0, fmt="%.1f")
             add_map_features(ax)
 
             # Node label: outside upper-left of leftmost column only
@@ -121,7 +121,7 @@ def main():
                     1.01,
                     f"{lbl}  ($n$={n})",
                     transform=ax.transAxes,
-                    fontsize=5.5,
+                    fontsize=7.5,
                     fontweight="bold",
                     ha="left",
                     va="bottom",
@@ -134,15 +134,15 @@ def main():
                     1.01,
                     hr_label,
                     transform=ax.transAxes,
-                    fontsize=5.5,
+                    fontsize=7.5,
                     ha="center",
                     va="bottom",
                 )
 
     # ── Shared colorbar ───────────────────────────────────────────────────────
     cbar = fig.colorbar(im, ax=axes.ravel().tolist(), shrink=0.6, pad=0.02, aspect=30)
-    cbar.set_label(r"Standardized 850-hPa $\theta_e$ Anomaly", fontsize=6)
-    cbar.ax.tick_params(labelsize=5)
+    cbar.set_label(r"Standardized 850-hPa $\theta_e$ Anomaly", fontsize=8)
+    cbar.ax.tick_params(labelsize=7)
 
     # ── Save ─────────────────────────────────────────────────────────────────
     base = os.path.join(OUT_DIR, "fig02_evsom_key_hours")

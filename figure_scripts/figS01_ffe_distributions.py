@@ -90,17 +90,17 @@ def main():
     )
     ax1.set_xlim(1995.5, 2025.5)
     ax1.set_xticks(years[::2])
-    ax1.tick_params(axis="x", rotation=45, labelsize=5.5)
-    ax1.tick_params(axis="y", labelsize=5.5)
-    ax1.set_xlabel("Year", fontsize=6)
-    ax1.set_ylabel("Number of Episodes", fontsize=6)
-    ax1.legend(fontsize=5.5, loc="upper left", framealpha=0.7)
+    ax1.tick_params(axis="x", rotation=45, labelsize=7.5)
+    ax1.tick_params(axis="y", labelsize=7.5)
+    ax1.set_xlabel("Year", fontsize=8)
+    ax1.set_ylabel("Number of Episodes", fontsize=8)
+    ax1.legend(fontsize=7.5, loc="upper left", framealpha=0.7)
     ax1.text(
         -0.07,
         1.02,
         "(a)",
         transform=ax1.transAxes,
-        fontsize=6.5,
+        fontsize=8.5,
         fontweight="bold",
         ha="left",
         va="bottom",
@@ -113,16 +113,16 @@ def main():
     )
     ax2.set_xlim(0.5, 12.5)
     ax2.set_xticks(range(1, 13))
-    ax2.set_xticklabels(month_labels, fontsize=5.5)
-    ax2.tick_params(axis="y", labelsize=5.5)
-    ax2.set_xlabel("Month", fontsize=6)
-    ax2.set_ylabel("Number of Episodes", fontsize=6)
+    ax2.set_xticklabels(month_labels, fontsize=7.5)
+    ax2.tick_params(axis="y", labelsize=7.5)
+    ax2.set_xlabel("Month", fontsize=8)
+    ax2.set_ylabel("Number of Episodes", fontsize=8)
     ax2.text(
         -0.14,
         1.02,
         "(b)",
         transform=ax2.transAxes,
-        fontsize=6.5,
+        fontsize=8.5,
         fontweight="bold",
         ha="left",
         va="bottom",
@@ -134,16 +134,16 @@ def main():
     )
     ax3.set_xlim(0, 24)
     ax3.set_xticks(range(0, 24, 3))
-    ax3.tick_params(axis="x", labelsize=5.5)
-    ax3.tick_params(axis="y", labelsize=5.5)
-    ax3.set_xlabel("Hour of Day (EST)", fontsize=6)
-    ax3.set_ylabel("Number of Episodes", fontsize=6)
+    ax3.tick_params(axis="x", labelsize=7.5)
+    ax3.tick_params(axis="y", labelsize=7.5)
+    ax3.set_xlabel("Hour of Day (EST)", fontsize=8)
+    ax3.set_ylabel("Number of Episodes", fontsize=8)
     ax3.text(
         -0.14,
         1.02,
         "(c)",
         transform=ax3.transAxes,
-        fontsize=6.5,
+        fontsize=8.5,
         fontweight="bold",
         ha="left",
         va="bottom",

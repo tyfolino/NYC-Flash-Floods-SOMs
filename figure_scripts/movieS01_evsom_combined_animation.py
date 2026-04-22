@@ -187,14 +187,14 @@ def _make_frame(
                 levels=LEVELS_Z_ANOM,
                 transform=proj,
             )
-            ax.clabel(cn, inline=True, fontsize=3.0, fmt="%.1f")
+            ax.clabel(cn, inline=True, fontsize=5.0, fmt="%.1f")
             add_map_features(ax)
             ax.text(
                 0.0,
                 1.01,
                 f"{lbl}  ($n$={n})",
                 transform=ax.transAxes,
-                fontsize=5.5,
+                fontsize=7.5,
                 fontweight="bold",
                 ha="left",
                 va="bottom",
@@ -220,14 +220,14 @@ def _make_frame(
                 levels=LEVELS_Z_RAW,
                 transform=proj,
             )
-            ax.clabel(cn, inline=True, fontsize=3.0, fmt="%d")
+            ax.clabel(cn, inline=True, fontsize=5.0, fmt="%d")
             add_map_features(ax)
             ax.text(
                 0.0,
                 1.01,
                 f"{lbl}  ($n$={n})",
                 transform=ax.transAxes,
-                fontsize=5.5,
+                fontsize=7.5,
                 fontweight="bold",
                 ha="left",
                 va="bottom",
@@ -253,14 +253,14 @@ def _make_frame(
                 levels=LEVELS_Z_ANOM,
                 transform=proj,
             )
-            ax_l.clabel(cn_l, inline=True, fontsize=3.0, fmt="%.1f")
+            ax_l.clabel(cn_l, inline=True, fontsize=5.0, fmt="%.1f")
             add_map_features(ax_l)
             ax_l.text(
                 0.0,
                 1.01,
                 f"{lbl}  ($n$={n})",
                 transform=ax_l.transAxes,
-                fontsize=5.5,
+                fontsize=7.5,
                 fontweight="bold",
                 ha="left",
                 va="bottom",
@@ -285,14 +285,14 @@ def _make_frame(
                 levels=LEVELS_Z_RAW,
                 transform=proj,
             )
-            ax_r.clabel(cn_r, inline=True, fontsize=3.0, fmt="%d")
+            ax_r.clabel(cn_r, inline=True, fontsize=5.0, fmt="%d")
             add_map_features(ax_r)
             ax_r.text(
                 0.0,
                 1.01,
                 f"{lbl}  ($n$={n})",
                 transform=ax_r.transAxes,
-                fontsize=5.5,
+                fontsize=7.5,
                 fontweight="bold",
                 ha="left",
                 va="bottom",
@@ -303,14 +303,14 @@ def _make_frame(
         cbar_l = fig.colorbar(
             im_left, ax=axes.ravel().tolist(), shrink=0.6, pad=0.02, aspect=30
         )
-        cbar_l.set_label(r"Std. 850-hPa $\theta_e$ Anomaly", fontsize=5.5)
-        cbar_l.ax.tick_params(labelsize=4.5)
+        cbar_l.set_label(r"Std. 850-hPa $\theta_e$ Anomaly", fontsize=7.5)
+        cbar_l.ax.tick_params(labelsize=6.5)
     elif panel == "composite":
         cbar_r = fig.colorbar(
             im_right, ax=axes.ravel().tolist(), shrink=0.6, pad=0.02, aspect=30
         )
-        cbar_r.set_label(r"850-hPa $\theta_e$ (K)", fontsize=5.5)
-        cbar_r.ax.tick_params(labelsize=4.5)
+        cbar_r.set_label(r"850-hPa $\theta_e$ (K)", fontsize=7.5)
+        cbar_r.ax.tick_params(labelsize=6.5)
     else:
         ax_left_group = (
             axes[:, :2].ravel().tolist() if wide else axes[:, 0].ravel().tolist()
@@ -321,19 +321,19 @@ def _make_frame(
         cbar_l = fig.colorbar(
             im_left, ax=ax_left_group, shrink=0.6, pad=0.02, aspect=30
         )
-        cbar_l.set_label(r"Std. 850-hPa $\theta_e$ Anomaly", fontsize=5.5)
-        cbar_l.ax.tick_params(labelsize=4.5)
+        cbar_l.set_label(r"Std. 850-hPa $\theta_e$ Anomaly", fontsize=7.5)
+        cbar_l.ax.tick_params(labelsize=6.5)
         cbar_r = fig.colorbar(
             im_right, ax=ax_right_group, shrink=0.6, pad=0.02, aspect=30
         )
-        cbar_r.set_label(r"850-hPa $\theta_e$ (K)", fontsize=5.5)
-        cbar_r.ax.tick_params(labelsize=4.5)
+        cbar_r.set_label(r"850-hPa $\theta_e$ (K)", fontsize=7.5)
+        cbar_r.ax.tick_params(labelsize=6.5)
 
     # ── Time label ────────────────────────────────────────────────────────────
     sign = "−" if hr_offset < 0 else "="
     hrs = abs(hr_offset)
     tlabel = f"T {sign} {hrs}h" if hrs > 0 else "T = 0"
-    fig.suptitle(tlabel, fontsize=8)
+    fig.suptitle(tlabel, fontsize=10)
 
     buf = io.BytesIO()
     fig.savefig(buf, format="png", dpi=dpi)

@@ -97,7 +97,7 @@ def main():
             x,
             y,
             node_label(ix, iy),
-            fontsize=5.5,
+            fontsize=7.5,
             ha="center",
             va="center",
             zorder=5,
@@ -110,8 +110,8 @@ def main():
 
     # Colorbar
     cbar = fig.colorbar(sc, ax=ax, shrink=0.75, pad=0.02, aspect=22)
-    cbar.set_label("U-matrix (mean neighbor distance)", fontsize=5.5)
-    cbar.ax.tick_params(labelsize=4.5)
+    cbar.set_label("U-matrix (mean neighbor distance)", fontsize=7.5)
+    cbar.ax.tick_params(labelsize=6.5)
 
     # Size legend — round hit counts spanning observed range (14–42 FFEs)
     hit_vals = [15, 25, 40]
