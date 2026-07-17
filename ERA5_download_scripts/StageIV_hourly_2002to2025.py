@@ -9,7 +9,10 @@ years = list(range(2002, 2026))
 months = ["01", "02", "03", "04", "11", "12"]
 base_outdir = "/mnt/drive2/janoski/StageIV"
 tmp_dir = os.path.join(base_outdir, "tmp")
-base_url = "https://data.rda.ucar.edu/d507005/stage4"
+# NOTE: the old host data.rda.ucar.edu now serves an expired self-signed cert
+# (gridftp04.ucar.edu) after the RDA->GDEX migration, causing SSL verify errors.
+# The public OSDF mirror hosts the identical stage4.YYYYMM.tar layout with a valid cert.
+base_url = "https://osdf-director.osg-htc.org/ncar/gdex/d507005/stage4"
 
 # Minimum expected hourly files per month (conservative: 28 days * 24h)
 MIN_EXPECTED_FILES = 672
