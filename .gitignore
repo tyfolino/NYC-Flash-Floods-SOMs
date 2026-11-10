@@ -23,3 +23,6 @@ output/
 ruff_results.txt
 run_ff_som_pipeline.sh
 fetch_asos_update.py
+
+# Manuscript, reviews and revision notes (confidential)
+docs/
