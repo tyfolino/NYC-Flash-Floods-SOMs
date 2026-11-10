@@ -293,7 +293,7 @@ def main():
 
     # ── Node weight patterns ──────────────────────────────────────────────────
     print("Plotting node weight patterns ...")
-    levels_Z = np.arange(-1.4, 1.41, 0.2)
+    levels_Z = np.round(np.arange(-1.4, 1.41, 0.2), 2) + 0.0
     proj = ccrs.PlateCarree()
 
     fig, axes = create_som_figure(xdim, ydim)
@@ -341,7 +341,7 @@ def main():
     moist_anom_comp, _ = compute_composites(
         moist_norm_daily, bmus, xdim, ydim, time_dim=moist_time_dim
     )
-    levels_Z_anom = np.arange(-2.0, 2.1, 0.25)
+    levels_Z_anom = np.round(np.arange(-2.0, 2.1, 0.25), 2) + 0.0
 
     fig, axes = create_som_figure(xdim, ydim)
     for i in range(xdim):
@@ -788,7 +788,7 @@ def main():
             corr_vals = [np.corrcoef(X[k], node_wt)[0, 1] for k in idx_ff_node]
             mean_corr_per_node[i, j] = np.mean(corr_vals)
 
-    levels_resid = np.arange(-2.0, 2.05, 0.2)
+    levels_resid = np.round(np.arange(-2.0, 2.05, 0.2), 2) + 0.0
     fig, axes = create_som_figure(xdim, ydim)
     for i in range(xdim):
         for j in range(ydim):

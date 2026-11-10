@@ -27,6 +27,17 @@ DATA_DIR = os.path.join(_PROJECT_ROOT, "data")
 FIGS_DIR = os.path.join(_PROJECT_ROOT, "figs")
 STORM_DATA_CSV = os.path.join(DATA_DIR, "storm_data_search_results.csv")
 
+# NYC county FIPS codes (Bronx, Kings, New York, Queens, Richmond). Storm Events
+# rows outside these counties (one Eastern Dutchess zone row in the NCEI export)
+# are dropped by filter_nyc_counties().
+NYC_COUNTY_FIPS = (5, 47, 61, 81, 85)
+
+
+def filter_nyc_counties(df):
+    """Keep Storm Events rows for the five NYC counties only."""
+    return df[(df["CZ_TYPE"] == "C") & (df["CZ_FIPS"].isin(NYC_COUNTY_FIPS))]
+
+
 # ── Station coordinates (for ASOS precipitation) ─────────────────────────────
 
 STATION_COORDS = {
@@ -62,8 +73,8 @@ MOISTURE_CONFIGS = {
         file_label="ivt",
         units_raw=r"kg m$^{-1}$ s$^{-1}$",
         fig_subdir="Z500-and-ivt-SOM",
-        levels_weights=np.arange(-1.8, 1.81, 0.2),
-        levels_anom=np.arange(-2.5, 2.6, 0.5),
+        levels_weights=(np.round(np.arange(-1.8, 1.81, 0.2), 2) + 0.0),
+        levels_anom=(np.round(np.arange(-2.5, 2.6, 0.5), 2) + 0.0),
         levels_raw=np.arange(0, 701, 100),
         levels_indiv=np.arange(0, 1001, 100),
         cmap_raw="BuPu",
@@ -79,8 +90,8 @@ MOISTURE_CONFIGS = {
         file_label="tcwv",
         units_raw=r"kg m$^{-2}$",
         fig_subdir="Z500-and-tcwv-SOM",
-        levels_weights=np.arange(-1.8, 1.81, 0.2),
-        levels_anom=np.arange(-2.5, 2.6, 0.5),
+        levels_weights=(np.round(np.arange(-1.8, 1.81, 0.2), 2) + 0.0),
+        levels_anom=(np.round(np.arange(-2.5, 2.6, 0.5), 2) + 0.0),
         levels_raw=np.arange(20, 56, 5),
         levels_indiv=np.arange(10, 71, 5),
         cmap_raw="BuPu",
@@ -96,8 +107,8 @@ MOISTURE_CONFIGS = {
         file_label="theta_e",
         units_raw="K",
         fig_subdir="Z500-and-thetae-SOM",
-        levels_weights=np.arange(-1.8, 1.81, 0.2),
-        levels_anom=np.arange(-2.5, 2.6, 0.5),
+        levels_weights=(np.round(np.arange(-1.8, 1.81, 0.2), 2) + 0.0),
+        levels_anom=(np.round(np.arange(-2.5, 2.6, 0.5), 2) + 0.0),
         levels_raw=np.arange(285, 341, 5),
         levels_indiv=np.arange(270, 381, 10),
         cmap_raw="BuPu",

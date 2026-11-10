@@ -48,8 +48,8 @@ KEY_INDICES = [5, 11, 17, 23]  # index into hour_offset axis (T-23=0 … T=0=23)
 KEY_LABELS = [r"T$-$18h", r"T$-$12h", r"T$-$6h", r"T$=$0"]
 
 # Contour levels — identical to Fig. 1
-LEVELS_MOIST = np.arange(-1.2, 1.21, 0.2)
-LEVELS_Z = np.arange(-1.4, 1.41, 0.2)
+LEVELS_MOIST = np.round(np.arange(-1.2, 1.21, 0.2), 2) + 0.0
+LEVELS_Z = np.round(np.arange(-1.4, 1.41, 0.2), 2) + 0.0
 
 # Node traversal order: A1, A2, B1, B2
 NODE_ORDER = [(i, j) for j in range(YDIM) for i in range(XDIM)]

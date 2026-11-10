@@ -41,7 +41,7 @@ FIG_HEIGHT = 3.8  # inches
 DPI_RASTER = 300
 
 # Z500 contour levels (standardized anomaly weights)
-LEVELS_Z = np.arange(-1.4, 1.41, 0.2)
+LEVELS_Z = np.round(np.arange(-1.4, 1.41, 0.2), 2) + 0.0
 LEVELS_MOIST = np.arange(
     -1.2, 1.21, 0.2
 )  # tighter range; extend="both" handles outliers

@@ -55,13 +55,14 @@ EXTENT_REG = [-78.0, -70.0, 38.5, 44.0]
 EXTENT_NYC = [-74.8, -73.4, 40.3, 41.2]
 
 # ChaseSpectral precipitation colormap sampled across our bins
-# "over" color is black — clearly distinct from the 3–4" bin
+# "over" (> 4 in) color is cyan — not in the palette (the lowest bin is near-black;
+# white, used previously, read as missing data)
 NWS_LEVELS = [0.10, 0.25, 0.50, 0.75, 1.00, 1.25, 1.50, 2.00, 2.50, 3.00, 4.00]
 _N_BINS = len(NWS_LEVELS) - 1  # 10
 _chase = plt.get_cmap("ChaseSpectral")
 _colors = [_chase(i / (_N_BINS - 1)) for i in range(_N_BINS)]
 CMAP_NWS = ListedColormap(_colors, name="ChaseSpectral_disc")
-CMAP_NWS.set_over("white")
+CMAP_NWS.set_over("#00e5ee")
 NORM_NWS = BoundaryNorm(NWS_LEVELS, ncolors=_N_BINS, clip=False)
 
 # Node order: A1, A2, B1, B2

@@ -87,6 +87,86 @@ def get_node_indices(bmus, i, j):
     return np.where((bmus[:, 0] == i) & (bmus[:, 1] == j))[0]
 
 
+def u_matrix(weights, xdim, ydim):
+    """U-matrix: mean Euclidean distance from each node to its grid neighbours.
+
+    Uses the 4 rook neighbours of a rectangular grid (the edges drawn in the
+    Sammon-map figures), so values are comparable between corner, edge and
+    interior nodes. (MiniSom's distance_map() default, scaling='sum', sums
+    over up to 8 neighbours and so mostly reflects the neighbour count.)
+
+    weights : array (xdim * ydim, n_features), node order i * ydim + j.
+    Returns array (xdim, ydim) in the units of the weight vectors.
+    """
+    W = np.asarray(weights, dtype=float).reshape(xdim, ydim, -1)
+    um = np.zeros((xdim, ydim))
+    for i in range(xdim):
+        for j in range(ydim):
+            d = [
+                np.linalg.norm(W[i, j] - W[i + di, j + dj])
+                for di, dj in ((-1, 0), (1, 0), (0, -1), (0, 1))
+                if 0 <= i + di < xdim and 0 <= j + dj < ydim
+            ]
+            um[i, j] = np.mean(d) if d else np.nan
+    return um
+
+
+def _sammon_stress_grad(y, D, iu, c):
+    Y = y.reshape(-1, 2)
+    diff = Y[:, None, :] - Y[None]
+    d = np.sqrt((diff**2).sum(-1) + 1e-12)
+    Dm = D.copy()
+    np.fill_diagonal(Dm, 1.0)
+    dd = d.copy()
+    np.fill_diagonal(dd, 1.0)
+    E = ((D - d) ** 2 / Dm)[iu].sum() / c
+    coef = -2 * (D - d) / (Dm * dd)
+    np.fill_diagonal(coef, 0.0)
+    g = (coef[:, :, None] * diff).sum(1) / c
+    return E, g.ravel()
+
+
+def sammon_map(weights, init=None, n_restarts=20, seed=0):
+    """True Sammon (1969) projection of SOM node weight vectors to 2-D.
+
+    Minimises Sammon stress with L-BFGS from ``init`` (e.g., metric-MDS
+    coordinates) plus ``n_restarts`` random starts; returns the lowest-stress
+    solution as (coords (n_nodes, 2), stress), rotated/reflected to match the
+    orientation of ``init`` when given.
+    """
+    from scipy.optimize import minimize
+    from sklearn.metrics import pairwise_distances
+
+    D = pairwise_distances(np.asarray(weights, dtype=float))
+    iu = np.triu_indices(len(D), 1)
+    c = D[iu].sum()
+    rng = np.random.default_rng(seed)
+    starts = [] if init is None else [np.asarray(init, dtype=float)]
+    starts += [rng.normal(size=(len(D), 2)) * D[iu].mean() for _ in range(n_restarts)]
+    best = None
+    for y0 in starts:
+        r = minimize(
+            _sammon_stress_grad,
+            y0.ravel(),
+            args=(D, iu, c),
+            jac=True,
+            method="L-BFGS-B",
+            options=dict(maxiter=20000, gtol=1e-12, ftol=1e-15),
+        )
+        if best is None or r.fun < best[1]:
+            best = (r.x.reshape(-1, 2), float(r.fun))
+    Y, stress = best
+    if init is not None:
+        # Orient like ``init`` (rotation/reflection only; distances unchanged)
+        from scipy.linalg import orthogonal_procrustes
+
+        A = np.asarray(init, dtype=float)
+        Yc = Y - Y.mean(0)
+        R, _ = orthogonal_procrustes(Yc, A - A.mean(0))
+        Y = Yc @ R + A.mean(0)
+    return Y, stress
+
+
 def compute_composites(data, bmus, xdim, ydim, time_dim="valid_time"):
     """Compute composite mean for each SOM node.
 

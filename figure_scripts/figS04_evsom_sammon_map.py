@@ -1,8 +1,9 @@
 """
-Supplementary Figure S5 — Sammon / MDS Map of Evolution SOM
+Supplementary Figure S4 — Sammon Map of Evolution SOM
 
 Single-panel figure showing the Sammon projection of the 2×2 evSOM.
-Nodes are colored by the U-matrix (mean distance to neighbors) and sized by
+Nodes are colored by the U-matrix (mean Euclidean weight-space distance to
+the 4 grid neighbors) and sized by
 hit frequency (number of FFEs assigned). Topology-preserving neighbor edges
 are drawn as faint gray lines.
 
@@ -17,10 +18,10 @@ import matplotlib.pyplot as plt
 import numpy as np
 
 from som_analysis.config import setup_plotting
-from som_analysis.helpers import node_label
+from som_analysis.helpers import node_label, sammon_map, u_matrix
 
 # ── Paths ─────────────────────────────────────────────────────────────────────
-OUT_DIR = os.path.join(os.path.dirname(os.path.dirname(__file__)), "figures/figS04")
+OUT_DIR = os.path.join(os.path.dirname(os.path.dirname(__file__)), "figures", "figS04")
 os.makedirs(OUT_DIR, exist_ok=True)
 
 CACHE_PATH = os.path.join(
@@ -47,12 +48,16 @@ def main():
     # ── Load cache ────────────────────────────────────────────────────────────
     print(f"Loading cache from {CACHE_PATH} ...")
     cached = np.load(CACHE_PATH)
-    u_matrix = cached["u_matrix"]  # (xdim, ydim)
-    hit_map = cached["hit_map"]  # (xdim, ydim)
-    coords = cached["coords"]  # (n_nodes, 2)
+    weights = cached["weights"]  # (n_nodes, n_features), node = i*YDIM+j
+    hit_map = cached["hit_map"]  # (ydim, xdim)
+    # True Sammon projection (the cached "coords" are metric MDS; used as the
+    # initial guess) and a 4-neighbour mean-distance U-matrix.
+    coords, stress = sammon_map(weights, init=cached["coords"])
+    print(f"Sammon stress: {stress:.4f}")
+    U = u_matrix(weights, XDIM, YDIM)
 
     # Flatten in same order as node = i*YDIM+j
-    U_flat = u_matrix.T.reshape(-1)
+    U_flat = U.reshape(-1)
     hits_flat = hit_map.T.reshape(-1)
     hits_norm = hits_flat / hits_flat.max()
     sizes = S_MIN + (S_MAX - S_MIN) * hits_norm
@@ -110,7 +115,7 @@ def main():
 
     # Colorbar
     cbar = fig.colorbar(sc, ax=ax, shrink=0.75, pad=0.02, aspect=22)
-    cbar.set_label("U-matrix (mean neighbor distance)", fontsize=7.5)
+    cbar.set_label("U-matrix (mean distance to grid neighbors)", fontsize=7.5)
     cbar.ax.tick_params(labelsize=6.5)
 
     # Size legend — round hit counts spanning observed range (14–42 FFEs)

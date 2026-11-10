@@ -69,8 +69,8 @@ DPI_MP4 = 300
 FRAME_MS = 250  # milliseconds per frame
 
 # Left column: standardized anomaly levels
-LEVELS_MOIST = np.arange(-1.2, 1.21, 0.2)
-LEVELS_Z_ANOM = np.arange(-1.4, 1.41, 0.2)
+LEVELS_MOIST = np.round(np.arange(-1.2, 1.21, 0.2), 2) + 0.0
+LEVELS_Z_ANOM = np.round(np.arange(-1.4, 1.41, 0.2), 2) + 0.0
 
 # Right column: raw composite levels
 LEVELS_THETAE = np.arange(295, 341, 5)  # K

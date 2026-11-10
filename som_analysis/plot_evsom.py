@@ -250,7 +250,7 @@ def main():
         _make_4panel_gif(
             z500_nodes,
             moist_nodes,
-            levels_z=np.arange(-1.4, 1.41, 0.2),
+            levels_z=(np.round(np.arange(-1.4, 1.41, 0.2), 2) + 0.0),
             levels_m=cfg["levels_weights"],
             m_cmap="balance",
             m_cbar_label=f"Standardized {moist_label_short} Anomaly",
@@ -297,7 +297,7 @@ def main():
     n_cols = len(key_indices)
     n_rows = xdim * ydim  # one row per node
 
-    levels_z = np.arange(-1.4, 1.41, 0.2)
+    levels_z = np.round(np.arange(-1.4, 1.41, 0.2), 2) + 0.0
     levels_m = cfg["levels_weights"]
 
     # Node order: row-first through the SOM (A1, A2, B1, B2)

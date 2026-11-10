@@ -23,7 +23,7 @@ from sklearn.manifold import MDS
 from sklearn.metrics import pairwise_distances
 
 from .config import MOISTURE_CONFIGS, SOM_INTERMEDIATE_PATH, get_paths
-from .helpers import load_moist_var, node_label
+from .helpers import load_moist_var, node_label, sammon_map, u_matrix
 
 
 def parse_args():
@@ -182,20 +182,20 @@ def main():
         moist_nodes = np.rot90(moist_nodes, k=-1, axes=(0, 1))
 
         bmus = np.column_stack([bmus[:, 1], xdim - 1 - bmus[:, 0]])
+        # Rotate the weight grid itself (keeps the moisture weighting and works
+        # for non-square grids). np.rot90(k=-1) over the (i, j) node axes
+        # moves the top-right node to the top-left, i.e. a 90-degree
+        # counter-clockwise rotation of the grid as displayed.
+        weights = np.rot90(weights.reshape(xdim, ydim, -1), k=-1, axes=(0, 1)).reshape(
+            xdim * ydim, -1
+        )
+        xdim, ydim = ydim, xdim
 
-        # Rebuild weights from rotated node arrays
-        weights_rotated = np.zeros_like(weights)
-        for i in range(xdim):
-            for j in range(ydim):
-                idx = i * ydim + j
-                weights_rotated[idx, :n_features] = z500_nodes[i, j].flatten()
-                weights_rotated[idx, n_features:] = moist_nodes[i, j].flatten()
-        weights = weights_rotated
-
-        print("\nSOM rotated 90 degrees clockwise.")
+        print("\nSOM grid rotated 90 degrees counter-clockwise.")
 
     # ── U-matrix and hit map ──────────────────────────────────────────────────
-    u_matrix = som.distance_map().T
+    # U-matrix from the final (possibly rotated) weights, shape (ydim, xdim)
+    u_mat = u_matrix(weights, xdim, ydim).T
     hit_map = np.zeros((xdim, ydim))
     for i, j in bmus:
         hit_map[i, j] += 1
@@ -203,13 +203,15 @@ def main():
 
     # ── Sammon / MDS coordinates ──────────────────────────────────────────────
     D = pairwise_distances(weights)
-    coords = MDS(
+    coords_mds = MDS(
         n_components=2,
         metric="precomputed",
         random_state=42,
         n_init=4,
         init="random",  # pyright: ignore[reportCallIssue]
     ).fit_transform(D)
+    # True Sammon projection, initialised from metric MDS
+    coords, _ = sammon_map(weights, init=coords_mds)
 
     # ── Save BMU CSV ──────────────────────────────────────────────────────────
     os.makedirs(os.path.dirname(paths["bmu_csv_path"]), exist_ok=True)
@@ -237,7 +239,7 @@ def main():
         z500_nodes=z500_nodes,
         moist_nodes=moist_nodes,
         bmus=bmus,
-        u_matrix=u_matrix,
+        u_matrix=u_mat,
         hit_map=hit_map,
         coords=coords,
     )

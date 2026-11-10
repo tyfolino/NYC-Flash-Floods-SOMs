@@ -78,28 +78,52 @@ def parse_args():
 
 
 def load_asos_precip():
-    """Load ASOS precipitation data from .npy files."""
+    """Load ASOS hourly precipitation, with every timestamp in UTC.
+
+    The .npy files have two segments with different time conventions:
+      * archive segment (timestamps on the hour, through 2025-07-14 22:00):
+        hour-ending local standard time (EST, no DST). Lag correlation with
+        Stage IV peaks at +5 h (r ~ 0.93), so these are shifted +5 h to UTC.
+      * IEM segment appended by fetch_asos_update.py (timestamps at :51,
+        from 2025-07-15 00:51): already UTC (requested with tz=UTC).
+    Where the two segments overlap after conversion, the archive values are
+    kept.
+    """
     precip_dfs = {}
     for name, fpath in STATION_NPY_FILES.items():
         arr = np.load(fpath, allow_pickle=True)
         df = pd.DataFrame(arr, columns=["precip", "time"])
         df["time"] = pd.to_datetime(df["time"])
-        df = df.set_index("time").sort_index()
         df["precip"] = pd.to_numeric(df["precip"], errors="coerce")
+        archive = df["time"].dt.minute == 0
+        old = df[archive].copy()
+        old["time"] = old["time"] + pd.Timedelta(hours=5)  # EST -> UTC
+        new = df[~archive]
+        new = new[new["time"] > old["time"].max()]
+        df = pd.concat([old, new]).set_index("time").sort_index()
         precip_dfs[name] = df
     return precip_dfs
 
 
 def compute_asos_max_precip(bmu_df, precip_dfs, window_hours=6):
-    """Compute max hourly ASOS precip within a window for each event."""
+    """Max hourly ASOS precip across stations within +/- window_hours of onset.
+
+    Uses the UTC ``timestamp`` column; ASOS values are hour-ending, so the
+    accumulation hours that fall inside [t0 - w, t0 + w] are those labelled
+    (t0 - w, t0 + w]. Returns NaN when no station has data in the window.
+    """
     max_precip = []
     for _, row in bmu_df.iterrows():
-        t = row["timestamp_local"]
+        t = row["timestamp"]
         lo = t - pd.Timedelta(hours=window_hours)
         hi = t + pd.Timedelta(hours=window_hours)
-        site_maxes = [df.loc[lo:hi, "precip"].max() for df in precip_dfs.values()]
+        site_maxes = []
+        for df in precip_dfs.values():
+            w = df.loc[lo:hi, "precip"]
+            w = w[w.index > lo]
+            site_maxes.append(w.max())
         valid = [v for v in site_maxes if not np.isnan(v)]
-        max_precip.append(max(valid) if valid else 0.0)
+        max_precip.append(max(valid) if valid else np.nan)
     return max_precip
 
 
@@ -207,7 +231,9 @@ def compute_stageiv_max_precip(bmu_df, window_hours=6, agg="max"):
     event_windows = []
     for _, row in bmu_df.iterrows():
         t0 = row["timestamp"]
-        mask = (s4_times >= t0 - pd.Timedelta(hours=window_hours)) & (
+        # Stage IV is hour-ending: the hour labelled t covers (t-1h, t], so the
+        # accumulation hours inside [t0 - w, t0 + w] are labelled (t0 - w, t0 + w].
+        mask = (s4_times > t0 - pd.Timedelta(hours=window_hours)) & (
             s4_times <= t0 + pd.Timedelta(hours=window_hours)
         )
         idxs = np.where(mask)[0].tolist()
@@ -258,7 +284,13 @@ def probability_matched_mean(fields, winsorize_pct=None):
     distribution of all individual event fields, matched by rank so the
     highest mean-field cell gets the highest pooled value.
     """
+    # Events with no data at all (e.g., before Stage IV begins in 2002) must not
+    # count toward n_events, or the rank stride below under-samples the pool.
+    has_data = ~np.all(np.isnan(fields), axis=(1, 2))
+    fields = fields[has_data]
     n_events, nlat, nlon = fields.shape
+    if n_events == 0:
+        return np.full((nlat, nlon), np.nan)
     mean_field = np.nanmean(fields, axis=0)
 
     pooled = fields.flatten()
@@ -343,9 +375,44 @@ def bootstrap_pmm(
     return boot_pmm, min_n
 
 
-def compute_stageiv_node_composites(bmu_df, xdim, ydim, window_hours=6):
+def coastal_land_mask(lat2d, lon2d, buffer_deg=0.15):
+    """True for Stage IV cells on land or within ~buffer_deg of the coast.
+
+    Open-ocean Stage IV cells are radar-only estimates far from gauges and
+    contain artifacts (e.g., 248 mm/h at 39.4N 72.8W on 2005-10-14), so they
+    are excluded from the regional composites. A 0.15-degree (~15 km) buffer
+    keeps New York Harbor, Long Island Sound and nearshore waters.
+    """
+    import cartopy.io.shapereader as shpreader
+    import shapely
+    from shapely.geometry import box
+    from shapely.ops import unary_union
+
+    bbox = box(
+        float(np.nanmin(lon2d)) - 1,
+        float(np.nanmin(lat2d)) - 1,
+        float(np.nanmax(lon2d)) + 1,
+        float(np.nanmax(lat2d)) + 1,
+    )
+    shp = shpreader.natural_earth(resolution="10m", category="physical", name="land")
+    land = unary_union(
+        [
+            g.intersection(bbox)
+            for g in shpreader.Reader(shp).geometries()
+            if g.intersects(bbox)
+        ]
+    ).buffer(buffer_deg)
+    return shapely.contains_xy(land, lon2d, lat2d)
+
+
+def compute_stageiv_node_composites(
+    bmu_df, xdim, ydim, window_hours=6, mask_open_ocean=True
+):
     """
     Collect per-event StageIV max-over-window precip fields for each node.
+
+    With mask_open_ocean (default), cells more than ~15 km offshore are set to
+    NaN before any compositing (see coastal_land_mask).
 
     Returns
     -------
@@ -379,7 +446,8 @@ def compute_stageiv_node_composites(bmu_df, xdim, ydim, window_hours=6):
     event_windows = []
     for _, row in bmu_df.iterrows():
         t0 = row["timestamp"]
-        tmask = (s4_times >= t0 - pd.Timedelta(hours=window_hours)) & (
+        # Hour-ending labels (see compute_stageiv_max_precip)
+        tmask = (s4_times > t0 - pd.Timedelta(hours=window_hours)) & (
             s4_times <= t0 + pd.Timedelta(hours=window_hours)
         )
         idxs = np.where(tmask)[0].tolist()
@@ -396,6 +464,10 @@ def compute_stageiv_node_composites(bmu_df, xdim, ydim, window_hours=6):
     )
     precip_raw = np.where(precip_raw < 0, np.nan, precip_raw)
     precip_raw[:, ~reg_mask_sub] = np.nan
+    if mask_open_ocean:
+        coast = coastal_land_mask(lat2d_reg, lon2d_reg)
+        precip_raw[:, ~coast] = np.nan
+        print(f"Masked {int((~coast & reg_mask_sub).sum())} open-ocean cells")
     idx_to_sub = {orig: new for new, orig in enumerate(needed_idxs)}
     ds_s4.close()
 
@@ -593,7 +665,8 @@ def compute_era5_max_precip(bmu_df, window_hours=6):
 
         for idx, row in grp.iterrows():
             t0 = row["timestamp"]
-            tmask = (era5_times >= t0 - pd.Timedelta(hours=window_hours)) & (
+            # ERA5 tp is accumulated over the hour ending at valid_time
+            tmask = (era5_times > t0 - pd.Timedelta(hours=window_hours)) & (
                 era5_times <= t0 + pd.Timedelta(hours=window_hours)
             )
             t_idxs = np.where(tmask)[0]
@@ -609,63 +682,89 @@ def compute_era5_max_precip(bmu_df, window_hours=6):
 # ── Tropical Cyclone Association ──────────────────────────────────────────────
 
 
-def compute_tc_associations(bmu_df, xdim, ydim, time_window_hours=6):
-    """Cross-reference flash flood events with IBTrACS."""
-    ibtracs = pd.read_csv(IBTRACS_PATH)
+# TC association rule (revision decision D7):
+#   * window: the 48 h before onset up to onset (T-48 h ... T0). A storm that
+#     only arrives after onset cannot have caused the flood.
+#   * domain: 32-54N, 100-68W.
+#   * a storm qualifies if it reached tropical-depression strength or stronger
+#     at any point in its life (TC_STATUSES); once it qualifies, any of its
+#     track points in the domain and window counts, including extratropical
+#     (EX) and remnant-low (LO) stages.
+TC_DOMAIN = dict(lat_min=32.0, lat_max=54.0, lon_min=-100.0, lon_max=-68.0)
+TC_HOURS_BEFORE = 48
+TC_HOURS_AFTER = 0
+TC_STATUSES = ("TD", "TS", "HU", "SD", "SS")
+_STATUS_RANK = {"SD": 1, "SS": 2, "TD": 3, "TS": 4, "HU": 5}
+
+
+def load_ibtracs():
+    ibtracs = pd.read_csv(IBTRACS_PATH, low_memory=False)
     ibtracs["ISO_TIME"] = pd.to_datetime(ibtracs["ISO_TIME"])
+    ibtracs["STAT"] = ibtracs["STAT"].astype(str).str.strip()
+    return ibtracs
 
-    lat_min, lat_max = 32.0, 54.0
-    lon_min, lon_max = -100.0, -68.0
 
+def compute_tc_associations(
+    bmu_df,
+    xdim,
+    ydim,
+    hours_before=TC_HOURS_BEFORE,
+    hours_after=TC_HOURS_AFTER,
+    statuses=TC_STATUSES,
+):
+    """Cross-reference flash flood events (UTC ``timestamp``) with IBTrACS."""
+    ibtracs = load_ibtracs()
+    qualifying = set(ibtracs.loc[ibtracs["STAT"].isin(statuses), "SID"])
+    max_status = (
+        ibtracs[ibtracs["STAT"].isin(_STATUS_RANK)]
+        .assign(rank=lambda d: d["STAT"].map(_STATUS_RANK))
+        .sort_values("rank")
+        .groupby("SID")["STAT"]
+        .last()
+    )
+
+    d = TC_DOMAIN
     ibtracs_domain = ibtracs[
-        (ibtracs["LAT"] >= lat_min)
-        & (ibtracs["LAT"] <= lat_max)
-        & (ibtracs["LON"] >= lon_min)
-        & (ibtracs["LON"] <= lon_max)
+        (ibtracs["LAT"] >= d["lat_min"])
+        & (ibtracs["LAT"] <= d["lat_max"])
+        & (ibtracs["LON"] >= d["lon_min"])
+        & (ibtracs["LON"] <= d["lon_max"])
+        & ibtracs["SID"].isin(qualifying)
     ].copy()
 
     print(f"Total IBTrACS records : {len(ibtracs):,}")
-    print(f"Records in domain     : {len(ibtracs_domain):,}")
+    print(f"Qualifying records in domain: {len(ibtracs_domain):,}")
     print(f"Unique storms         : {ibtracs_domain['SID'].nunique()}")
+    print(f"Window                : T-{hours_before} h to T+{hours_after} h")
 
     tc_associations = []
     for _, row in bmu_df.iterrows():
         event_time = row["timestamp"]
-        lo = event_time - pd.Timedelta(hours=time_window_hours)
-        hi = event_time + pd.Timedelta(hours=time_window_hours)
+        lo = event_time - pd.Timedelta(hours=hours_before)
+        hi = event_time + pd.Timedelta(hours=hours_after)
         matching_tcs = ibtracs_domain[
             (ibtracs_domain["ISO_TIME"] >= lo) & (ibtracs_domain["ISO_TIME"] <= hi)
         ]
-
+        rec = {
+            "timestamp": event_time,
+            "node_i": row["node_i"],
+            "node_j": row["node_j"],
+            "tc_present": len(matching_tcs) > 0,
+            "n_storms": 0,
+            "storm_ids": "",
+            "storm_status": "",
+            "max_status": "",
+        }
         if len(matching_tcs) > 0:
-            storm_ids = matching_tcs["SID"].unique()
-            tc_associations.append(
-                {
-                    "timestamp": event_time,
-                    "node_i": row["node_i"],
-                    "node_j": row["node_j"],
-                    "tc_present": True,
-                    "n_storms": len(storm_ids),
-                    "storm_ids": ", ".join(storm_ids),
-                    "storm_status": (
-                        matching_tcs["STAT"].mode().iloc[0]
-                        if len(matching_tcs["STAT"].dropna()) > 0
-                        else "Unknown"
-                    ),
-                }
+            storm_ids = list(matching_tcs["SID"].unique())
+            rec.update(
+                n_storms=len(storm_ids),
+                storm_ids=", ".join(storm_ids),
+                # Status(es) of the in-window, in-domain track points
+                storm_status="/".join(sorted(set(matching_tcs["STAT"]))),
+                max_status=", ".join(max_status.get(sid, "") for sid in storm_ids),
             )
-        else:
-            tc_associations.append(
-                {
-                    "timestamp": event_time,
-                    "node_i": row["node_i"],
-                    "node_j": row["node_j"],
-                    "tc_present": False,
-                    "n_storms": 0,
-                    "storm_ids": "",
-                    "storm_status": "",
-                }
-            )
+        tc_associations.append(rec)
 
     tc_df = pd.DataFrame(tc_associations)
     return tc_df, ibtracs, ibtracs_domain
@@ -836,8 +935,12 @@ def plot_tc_tracks(
                 transform=ccrs.PlateCarree(),
             )
 
-            wm = (full_track["ISO_TIME"] >= event_time - pd.Timedelta(hours=48)) & (
-                full_track["ISO_TIME"] <= event_time + pd.Timedelta(hours=48)
+            wm = (
+                full_track["ISO_TIME"]
+                >= event_time - pd.Timedelta(hours=TC_HOURS_BEFORE)
+            ) & (
+                full_track["ISO_TIME"]
+                <= event_time + pd.Timedelta(hours=TC_HOURS_AFTER)
             )
             wt = full_track[wm]
             if len(wt) > 1:
@@ -1160,13 +1263,7 @@ def main():
     bmu_csv = paths["bmu_csv_path"]
     print(f"Loading BMU assignments from {bmu_csv} ...")
     bmu_df = pd.read_csv(bmu_csv)
-    bmu_df["timestamp"] = pd.to_datetime(bmu_df["timestamp"])
-    bmu_df["timestamp_local"] = (
-        bmu_df["timestamp"]
-        .dt.tz_localize("UTC")
-        .dt.tz_convert("EST")
-        .dt.tz_localize(None)
-    )
+    bmu_df["timestamp"] = pd.to_datetime(bmu_df["timestamp"])  # UTC
 
     # ── ASOS Precipitation ────────────────────────────────────────────────────
     print("\n" + "=" * 60)

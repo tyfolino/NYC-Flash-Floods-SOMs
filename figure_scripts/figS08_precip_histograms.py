@@ -1,5 +1,5 @@
 """
-Supplementary Figure S9 — Per-Node Precipitation Histograms (Stage IV + ASOS)
+Supplementary Figure S8 — Per-Node Precipitation Histograms (Stage IV + ASOS)
 
 Default (4-row × 2-column) layout, matching the row order of Figure 2.
 Left column  : Stage IV max hourly precip over NYC within ±6 h of episode onset.
@@ -65,8 +65,9 @@ def parse_args():
 
 def _plot_node_hist(ax, data, color, label):
     """Plot histogram with median line for one node/source."""
+    # n = events with data (NaN = no Stage IV coverage / no ASOS station
+    # reporting). Zero-precipitation events count toward n.
     valid = pd.to_numeric(data, errors="coerce").dropna()
-    valid = valid[valid > 0]
     n = len(valid)
 
     ax.hist(
@@ -101,10 +102,7 @@ def main():
     setup_plotting()
 
     # ── Load BMUs ─────────────────────────────────────────────────────────────
-    bmu_df = pd.read_csv(BMU_CSV, parse_dates=["timestamp"])
-    # ASOS uses timestamp_local; timestamps are already UTC-converted EST so
-    # using the same column is consistent with ±6 h window logic
-    bmu_df["timestamp_local"] = bmu_df["timestamp"]
+    bmu_df = pd.read_csv(BMU_CSV, parse_dates=["timestamp"])  # UTC onset
 
     # ── Compute precip values ─────────────────────────────────────────────────
     print("Computing Stage IV max precip ...")

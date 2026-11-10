@@ -1,5 +1,5 @@
 """
-Supplementary Figure S4 — FFE SOM Node Weights (left) and Raw Composites (right)
+Supplementary Figure S6 — FFE SOM Node Weights (left) and Raw Composites (right)
 
 Default (4-row × 2-column) layout. Each row is one SOM node (A1, A2, B1, B2).
 Left column : standardized Z500 (contoured) + theta-e (shaded) node weights.
@@ -50,8 +50,8 @@ FIG_HEIGHT_WIDE = 3.5
 DPI_RASTER = 300
 
 # Contour levels
-LEVELS_Z_WEIGHTS = np.arange(-1.4, 1.41, 0.2)  # standardized anomaly
-LEVELS_MOIST_WEIGHTS = np.arange(-1.2, 1.21, 0.2)
+LEVELS_Z_WEIGHTS = np.round(np.arange(-1.4, 1.41, 0.2), 2) + 0.0  # standardized anomaly
+LEVELS_MOIST_WEIGHTS = np.round(np.arange(-1.2, 1.21, 0.2), 2) + 0.0
 LEVELS_Z_RAW = range(549, 598, 2)  # dam — shared range with Fig. S3
 LEVELS_THETAE_RAW = np.arange(295, 341, 5)  # K — shared range with Fig. S3
 

@@ -208,7 +208,7 @@ def main():
 
     # ── Node weights map ──────────────────────────────────────────────────────
     print("Plotting node weights ...")
-    levels_Z = np.arange(-1.4, 1.41, 0.2)
+    levels_Z = np.round(np.arange(-1.4, 1.41, 0.2), 2) + 0.0
     fig, axes = create_som_figure(xdim, ydim)
 
     for i in range(xdim):
@@ -255,7 +255,7 @@ def main():
     moist_patterns, _ = compute_composites(
         moist_norm_ffe, bmus, xdim, ydim, time_dim=moist_time_dim
     )
-    levels_Z_anom = np.arange(-2.0, 2.1, 0.25)
+    levels_Z_anom = np.round(np.arange(-2.0, 2.1, 0.25), 2) + 0.0
 
     fig, axes = create_som_figure(xdim, ydim)
     for i in range(xdim):

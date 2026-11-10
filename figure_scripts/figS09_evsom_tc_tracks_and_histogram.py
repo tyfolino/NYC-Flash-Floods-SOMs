@@ -1,9 +1,10 @@
 """
-Supplementary Figure S10 — evSOM TC Tracks and Node Association Histogram
+Supplementary Figure S9 — evSOM TC Tracks and Node Association Histogram
 
 Two-panel figure:
   Left  : TC tracks during FFEs, colored by evSOM node. Full track (faint) and
-           ±48 h window (bold) shown; dot marks position at event time.
+           the association window T-48 h to T0 (bold); dot marks position at
+           event time.
   Right : Stacked bar chart of TC-associated vs non-TC FFEs per node, with
            dashed line at overall TC fraction.
 
@@ -20,13 +21,9 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 
-from som_analysis.config import DATA_DIR, setup_plotting
+from som_analysis.config import DATA_DIR, IBTRACS_PATH, setup_plotting
 from som_analysis.helpers import node_label
-
-IBTRACS_PATH = (
-    "/home/janoski/nyc_flash_flood/precip_data_and_tc_association_code/"
-    "ibtracs.NA.list.v04r01.processed_6hrly.statslp3.csv"
-)
+from som_analysis.node_statistics import TC_DOMAIN, TC_HOURS_AFTER, TC_HOURS_BEFORE
 
 # ── Paths ─────────────────────────────────────────────────────────────────────
 OUT_DIR = os.path.join(os.path.dirname(os.path.dirname(__file__)), "figures", "figS09")
@@ -106,10 +103,10 @@ def main():
                 transform=ccrs.PlateCarree(),
             )
 
-            # ±48 h window (bold)
-            win = (track["ISO_TIME"] >= event_time - pd.Timedelta(hours=48)) & (
-                track["ISO_TIME"] <= event_time + pd.Timedelta(hours=48)
-            )
+            # Association window, T-48 h to T0 (bold)
+            win = (
+                track["ISO_TIME"] >= event_time - pd.Timedelta(hours=TC_HOURS_BEFORE)
+            ) & (track["ISO_TIME"] <= event_time + pd.Timedelta(hours=TC_HOURS_AFTER))
             wt = track[win]
             if len(wt) > 1:
                 ax_map.plot(
@@ -140,8 +137,8 @@ def main():
             plotted_nodes.add((ni, nj))
 
     # TC-association domain box
-    dom_lon = [-100.0, -68.0]
-    dom_lat = [32.0, 54.0]
+    dom_lon = [TC_DOMAIN["lon_min"], TC_DOMAIN["lon_max"]]
+    dom_lat = [TC_DOMAIN["lat_min"], TC_DOMAIN["lat_max"]]
     ax_map.plot(
         [dom_lon[0], dom_lon[1], dom_lon[1], dom_lon[0], dom_lon[0]],
         [dom_lat[0], dom_lat[0], dom_lat[1], dom_lat[1], dom_lat[0]],
@@ -169,7 +166,7 @@ def main():
         for i in range(XDIM)
     ] + [
         plt.Line2D([0], [0], color="gray", lw=0.5, alpha=0.4, label="Full track"),
-        plt.Line2D([0], [0], color="gray", lw=1.0, label=r"$\pm$48 h"),
+        plt.Line2D([0], [0], color="gray", lw=1.0, label=r"$-$48 h to 0"),
     ]
     ax_map.legend(
         handles=legend_handles, fontsize=6.5, loc="lower left", framealpha=0.8, ncol=2

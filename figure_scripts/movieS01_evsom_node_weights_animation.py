@@ -45,8 +45,8 @@ DPI_GIF = 300
 DPI_MP4 = 200
 FRAME_MS = 250  # milliseconds per frame
 
-LEVELS_MOIST = np.arange(-1.2, 1.21, 0.2)
-LEVELS_Z = np.arange(-1.4, 1.41, 0.2)
+LEVELS_MOIST = np.round(np.arange(-1.2, 1.21, 0.2), 2) + 0.0
+LEVELS_Z = np.round(np.arange(-1.4, 1.41, 0.2), 2) + 0.0
 
 # Node layout: rows = j, cols = i  →  A1 B1 / A2 B2
 NODE_LAYOUT = [[(i, j) for i in range(XDIM)] for j in range(YDIM)]

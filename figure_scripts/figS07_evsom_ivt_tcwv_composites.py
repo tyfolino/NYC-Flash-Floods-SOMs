@@ -23,9 +23,10 @@ import os
 import cartopy.crs as ccrs
 import matplotlib.pyplot as plt
 import numpy as np
+import pandas as pd
 import xarray as xr
 
-from som_analysis.config import SOM_INTERMEDIATE_PATH, setup_plotting
+from som_analysis.config import DATA_DIR, SOM_INTERMEDIATE_PATH, setup_plotting
 from som_analysis.helpers import add_map_features, get_node_indices, node_label
 
 # ── Paths ─────────────────────────────────────────────────────────────────────
@@ -42,6 +43,7 @@ CACHE_PATH = os.path.join(
 IVT_PATH = f"{SOM_INTERMEDIATE_PATH}era5_ivt_ffe.nc"
 TCWV_PATH = f"{SOM_INTERMEDIATE_PATH}era5_tcwv_ffe.nc"
 Z500_PATH = f"{SOM_INTERMEDIATE_PATH}era5_Z500_ffe.nc"
+BMU_CSV = os.path.join(DATA_DIR, "som_2x2_evsom_24h_bmus_thetae.csv")
 
 # ── Figure / SOM parameters ───────────────────────────────────────────────────
 XDIM, YDIM = 2, 2
@@ -54,6 +56,7 @@ DPI_RASTER = 300
 LEVELS_IVT = np.arange(0, 701, 100)  # kg m⁻¹ s⁻¹
 LEVELS_TCWV = np.arange(20, 56, 5)  # kg m⁻²
 LEVELS_Z = range(549, 598, 2)  # dam
+TIME_DIM = "valid_time"
 
 # Node traversal order: A1, A2, B1, B2
 NODE_ORDER = [(i, j) for j in range(YDIM) for i in range(XDIM)]
@@ -78,11 +81,30 @@ def main():
     cached = np.load(CACHE_PATH)
     bmus = cached["bmus"]  # (118, 2)
 
-    # ── Load raw FFE fields ───────────────────────────────────────────────────
+    # Event times in the same order as the cached BMUs. The IVT/TCWV *_ffe.nc
+    # files hold 121 times (written before same-UTC-day deduplication), so the
+    # fields must be selected by timestamp, never by position.
+    bmu_df = pd.read_csv(BMU_CSV, parse_dates=["timestamp"])
+    assert len(bmu_df) == len(bmus), "BMU CSV and cache differ in length"
+    assert (
+        bmu_df[["node_i", "node_j"]].values == bmus
+    ).all(), "BMU CSV and cache disagree on node assignments"
+    event_times = pd.DatetimeIndex(bmu_df["timestamp"])
+
+    # ── Load raw FFE fields (aligned to the evSOM event order) ────────────────
     print("Loading raw FFE fields ...")
-    ivt_da = xr.open_dataset(IVT_PATH)["ivt"]
-    tcwv_da = xr.open_dataset(TCWV_PATH)["tcwv"]
-    z500_da = xr.open_dataset(Z500_PATH)["z"]
+
+    def _load(path, var):
+        da = xr.open_dataset(path)[var]
+        missing = event_times.difference(pd.DatetimeIndex(da[TIME_DIM].values))
+        assert len(missing) == 0, f"{path}: {len(missing)} event times missing"
+        da = da.sel({TIME_DIM: event_times})
+        assert (pd.DatetimeIndex(da[TIME_DIM].values) == event_times).all()
+        return da
+
+    ivt_da = _load(IVT_PATH, "ivt")
+    tcwv_da = _load(TCWV_PATH, "tcwv")
+    z500_da = _load(Z500_PATH, "z")
 
     lat = xr.open_dataset(IVT_PATH)["latitude"].values
     lon = xr.open_dataset(IVT_PATH)["longitude"].values

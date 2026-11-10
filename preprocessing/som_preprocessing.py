@@ -218,6 +218,9 @@ if cfg["compute_magnitude"] is not None:
 # NWS Storm Events Database uses EST (not EDT), so we hardwire EST here.
 df = pd.read_csv("../data/storm_data_search_results.csv")
 df = df[df["EVENT_ID"].astype(str).str.isdigit()]
+# Keep only the five NYC counties (the NCEI search export also returned one
+# Eastern Dutchess forecast-zone row, CZ_TYPE "Z", FIPS 66).
+df = df[(df["CZ_TYPE"] == "C") & (df["CZ_FIPS"].isin([5, 47, 61, 81, 85]))]
 df["BEGIN_TIME"] = df["BEGIN_TIME"].fillna(0).astype(int).astype(str).str.zfill(4)
 df["BEGIN_DATETIME"] = pd.to_datetime(
     df["BEGIN_DATE"] + " " + df["BEGIN_TIME"], format="%m/%d/%Y %H%M", errors="coerce"
@@ -231,7 +234,9 @@ event_hours = (
 times_utc = (
     pd.to_datetime(event_hours).tz_localize("EST").tz_convert("UTC").tz_convert(None)
 )
-# Keep only the first episode per UTC day to avoid overlapping training windows
+# Keep only the first episode per UTC calendar day (one sample per FF day).
+# NB: this does not guarantee non-overlapping windows; episodes on consecutive
+# UTC days can still overlap (e.g., 2019-07-22/23 overlap by 11 h).
 times_utc = times_utc[~times_utc.normalize().duplicated(keep="first")]
 intersect = pd.Index(times_utc).intersection(data.indexes[time_dim])
 print(f"Found {len(intersect)} matching events out of {len(times_utc)} total.")

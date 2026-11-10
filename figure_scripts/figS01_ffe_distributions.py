@@ -16,7 +16,7 @@ import matplotlib.pyplot as plt
 import pandas as pd
 from scipy import stats
 
-from som_analysis.config import DATA_DIR, setup_plotting
+from som_analysis.config import DATA_DIR, filter_nyc_counties, setup_plotting
 
 # ── Paths ─────────────────────────────────────────────────────────────────────
 OUT_DIR = os.path.join(os.path.dirname(os.path.dirname(__file__)), "figures", "figS01")
@@ -33,7 +33,7 @@ BAR_COLOR = "#3a7ebf"  # clean steel blue, no gradient
 
 def load_data():
     df = pd.read_csv(STORM_CSV)
-    df = df[df["EVENT_ID"].astype(str).str.isdigit()]
+    df = filter_nyc_counties(df[df["EVENT_ID"].astype(str).str.isdigit()])
     df["BEGIN_TIME"] = df["BEGIN_TIME"].fillna(0).astype(int).astype(str).str.zfill(4)
     begin_str = df["BEGIN_DATE"] + " " + df["BEGIN_TIME"]
     df["BEGIN_DATETIME"] = pd.to_datetime(
