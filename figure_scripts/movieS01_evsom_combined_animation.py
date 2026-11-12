@@ -39,22 +39,26 @@ import numpy as np
 import xarray as xr
 from PIL import Image
 
-from som_analysis.config import setup_plotting
+from som_analysis.config import (
+    FIGS_DIR,
+    MOVIES_DIR,
+    SOM_INTERMEDIATE_PATH,
+    setup_plotting,
+)
 from som_analysis.helpers import add_map_features, node_label
 
 # ── Paths ─────────────────────────────────────────────────────────────────────
-OUT_DIR = os.path.join(os.path.dirname(os.path.dirname(__file__)), "movies", "movieS01")
+OUT_DIR = os.path.join(MOVIES_DIR, "movieS01")
 os.makedirs(OUT_DIR, exist_ok=True)
 
 CACHE_PATH = os.path.join(
-    os.path.dirname(os.path.dirname(__file__)),
-    "figs",
+    FIGS_DIR,
     "Z500-and-thetae-evSOM-24h",
     ".cache",
     "som_results.npz",
 )
-Z500_PATH = "/mnt/drive2/SOM_intermediate_files/era5_Z500_ffe_evsom.nc"
-THETAE_PATH = "/mnt/drive2/SOM_intermediate_files/era5_thetae_ffe_evsom.nc"
+Z500_PATH = f"{SOM_INTERMEDIATE_PATH}era5_Z500_ffe_evsom.nc"
+THETAE_PATH = f"{SOM_INTERMEDIATE_PATH}era5_thetae_ffe_evsom.nc"
 
 # ── Figure / animation parameters ─────────────────────────────────────────────
 XDIM, YDIM = 2, 2

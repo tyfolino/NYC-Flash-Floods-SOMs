@@ -17,16 +17,15 @@ import matplotlib.patheffects as pe
 import matplotlib.pyplot as plt
 import numpy as np
 
-from som_analysis.config import setup_plotting
+from som_analysis.config import FIGS_DIR, FIGURES_DIR, setup_plotting
 from som_analysis.helpers import node_label, sammon_map, u_matrix
 
 # ── Paths ─────────────────────────────────────────────────────────────────────
-OUT_DIR = os.path.join(os.path.dirname(os.path.dirname(__file__)), "figures", "figS04")
+OUT_DIR = os.path.join(FIGURES_DIR, "figS04")
 os.makedirs(OUT_DIR, exist_ok=True)
 
 CACHE_PATH = os.path.join(
-    os.path.dirname(os.path.dirname(__file__)),
-    "figs",
+    FIGS_DIR,
     "Z500-and-thetae-evSOM-24h",
     ".cache",
     "som_results.npz",

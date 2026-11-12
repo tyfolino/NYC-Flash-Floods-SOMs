@@ -33,11 +33,12 @@ from .config import (
     MOISTURE_CONFIGS,
     STAGEIV_NC,
     STATION_COORDS,
-    STATION_NPY_FILES,
     get_paths,
     setup_plotting,
 )
 from .helpers import node_label
+from .timeutils import hour_ending_window
+from .timeutils import load_asos_precip as load_asos_precip  # re-export (UTC)
 
 
 def parse_args():
@@ -75,34 +76,6 @@ def parse_args():
 
 
 # ── ASOS Precipitation ───────────────────────────────────────────────────────
-
-
-def load_asos_precip():
-    """Load ASOS hourly precipitation, with every timestamp in UTC.
-
-    The .npy files have two segments with different time conventions:
-      * archive segment (timestamps on the hour, through 2025-07-14 22:00):
-        hour-ending local standard time (EST, no DST). Lag correlation with
-        Stage IV peaks at +5 h (r ~ 0.93), so these are shifted +5 h to UTC.
-      * IEM segment appended by fetch_asos_update.py (timestamps at :51,
-        from 2025-07-15 00:51): already UTC (requested with tz=UTC).
-    Where the two segments overlap after conversion, the archive values are
-    kept.
-    """
-    precip_dfs = {}
-    for name, fpath in STATION_NPY_FILES.items():
-        arr = np.load(fpath, allow_pickle=True)
-        df = pd.DataFrame(arr, columns=["precip", "time"])
-        df["time"] = pd.to_datetime(df["time"])
-        df["precip"] = pd.to_numeric(df["precip"], errors="coerce")
-        archive = df["time"].dt.minute == 0
-        old = df[archive].copy()
-        old["time"] = old["time"] + pd.Timedelta(hours=5)  # EST -> UTC
-        new = df[~archive]
-        new = new[new["time"] > old["time"].max()]
-        df = pd.concat([old, new]).set_index("time").sort_index()
-        precip_dfs[name] = df
-    return precip_dfs
 
 
 def compute_asos_max_precip(bmu_df, precip_dfs, window_hours=6):
@@ -233,9 +206,7 @@ def compute_stageiv_max_precip(bmu_df, window_hours=6, agg="max"):
         t0 = row["timestamp"]
         # Stage IV is hour-ending: the hour labelled t covers (t-1h, t], so the
         # accumulation hours inside [t0 - w, t0 + w] are labelled (t0 - w, t0 + w].
-        mask = (s4_times > t0 - pd.Timedelta(hours=window_hours)) & (
-            s4_times <= t0 + pd.Timedelta(hours=window_hours)
-        )
+        mask = hour_ending_window(s4_times, t0, window_hours)
         idxs = np.where(mask)[0].tolist()
         event_windows.append(idxs)
         all_needed.update(idxs)
@@ -317,6 +288,24 @@ def probability_matched_mean(fields, winsorize_pct=None):
         )
 
     return pmm_flat.reshape(nlat, nlon)
+
+
+def subdomain_fields(node_fields, lat2d, lon2d, extent, margin_deg=0.025):
+    """Mask event fields to a sub-domain so a PMM built from them pools only
+    that sub-domain's cells (e.g. the Fig. 4 NYC panel).
+
+    extent = [lon_min, lon_max, lat_min, lat_max]. Cells whose centres lie
+    within ``margin_deg`` (~half a Stage IV cell) of the extent are kept, so
+    cells overlapping the panel edges are not blank.
+    """
+    lon0, lon1, lat0, lat1 = extent
+    m = (
+        (lat2d >= lat0 - margin_deg)
+        & (lat2d <= lat1 + margin_deg)
+        & (lon2d >= lon0 - margin_deg)
+        & (lon2d <= lon1 + margin_deg)
+    )
+    return {k: np.where(m, f, np.nan) for k, f in node_fields.items()}
 
 
 def bootstrap_pmm(
@@ -447,9 +436,7 @@ def compute_stageiv_node_composites(
     for _, row in bmu_df.iterrows():
         t0 = row["timestamp"]
         # Hour-ending labels (see compute_stageiv_max_precip)
-        tmask = (s4_times > t0 - pd.Timedelta(hours=window_hours)) & (
-            s4_times <= t0 + pd.Timedelta(hours=window_hours)
-        )
+        tmask = hour_ending_window(s4_times, t0, window_hours)
         idxs = np.where(tmask)[0].tolist()
         event_windows.append(idxs)
         all_needed.update(idxs)
@@ -666,9 +653,7 @@ def compute_era5_max_precip(bmu_df, window_hours=6):
         for idx, row in grp.iterrows():
             t0 = row["timestamp"]
             # ERA5 tp is accumulated over the hour ending at valid_time
-            tmask = (era5_times > t0 - pd.Timedelta(hours=window_hours)) & (
-                era5_times <= t0 + pd.Timedelta(hours=window_hours)
-            )
+            tmask = hour_ending_window(era5_times, t0, window_hours)
             t_idxs = np.where(tmask)[0]
             if len(t_idxs) == 0:
                 continue

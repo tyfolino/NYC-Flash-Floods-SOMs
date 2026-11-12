@@ -42,12 +42,16 @@ import numpy as np  # noqa: E402
 import xarray as xr  # noqa: E402
 from minisom import MiniSom  # noqa: E402
 
-from som_analysis.config import MOISTURE_CONFIGS, SOM_INTERMEDIATE_PATH  # noqa: E402
+from som_analysis.config import (  # noqa: E402
+    MOISTURE_CONFIGS,
+    SOM_INTERMEDIATE_PATH_V1,
+    SOM_INTERMEDIATE_PATH_V2,
+)
 from som_analysis.helpers import load_moist_var  # noqa: E402
 
 OUT_DIR = "/mnt/drive2/SOM_robustness"
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-P = SOM_INTERMEDIATE_PATH
+INTER = {"v1": SOM_INTERMEDIATE_PATH_V1, "v2": SOM_INTERMEDIATE_PATH_V2}
 CFG = MOISTURE_CONFIGS["thetae"]
 
 # Published training parameters (Table S1 / training scripts)
@@ -68,10 +72,15 @@ _X_CACHE: dict = {}
 # ── Data ──────────────────────────────────────────────────────────────────────
 
 
-def load_X(kind):
-    """Training matrix for a SOM kind, exactly as the training scripts build it."""
-    if kind in _X_CACHE:
-        return _X_CACHE[kind]
+def load_X(kind, inter="v1"):
+    """Training matrix for a SOM kind, exactly as the training scripts build it.
+
+    inter: "v1" (published intermediates) or "v2" (month-day, smoothed-mean
+    climatology).
+    """
+    if (kind, inter) in _X_CACHE:
+        return _X_CACHE[(kind, inter)]
+    P = INTER[inter]
     if kind == "static":
         m = load_moist_var(f"{P}era5_thetae_norm_weighted_ffe.nc", CFG["var_name"])
         z = xr.load_dataarray(f"{P}era5_Z500_norm_weighted_ffe.nc")
@@ -101,7 +110,7 @@ def load_X(kind):
         )
     else:
         raise ValueError(kind)
-    _X_CACHE[kind] = X
+    _X_CACHE[(kind, inter)] = X
     return X
 
 
@@ -141,6 +150,9 @@ DEFAULTS = dict(
     sigma1=None,
     n1=None,
     n2=None,
+    inter="v1",
+    xdim=None,
+    ydim=None,
 )
 
 
@@ -168,9 +180,10 @@ def train_one(c):
     t0 = time.time()
     c = full(c)
     kind = c["kind"]
-    X = load_X(kind)
+    X = load_X(kind, c["inter"])
     p = PUBLISHED[kind]
-    xdim, ydim = p["xdim"], p["ydim"]
+    xdim = p["xdim"] if c["xdim"] is None else c["xdim"]
+    ydim = p["ydim"] if c["ydim"] is None else c["ydim"]
     lr1 = p["lr1"] if c["lr1"] is None else c["lr1"]
     lr2 = p["lr2"] if c["lr2"] is None else c["lr2"]
     sigma1 = np.sqrt(xdim**2 + ydim**2) if c["sigma1"] is None else c["sigma1"]
@@ -336,6 +349,96 @@ def stage2_configs():
     return cfgs
 
 
+FINAL = dict(init="random", mode="random", sigma2=1.0, inter="v2")
+GRIDS = [(3, 3), (4, 3), (4, 4), (5, 3), (5, 4), (6, 4), (5, 5), (6, 5)]
+
+
+def stage3_configs():
+    """Stage 3a: all-days grid sweep with the stage-2 winning settings
+    (lr 0.3 -> 0.02, 5x length, Gaussian sigma2=1, rectangular, random init)
+    on the v2 intermediates; 10 seeds per grid."""
+    cfgs = []
+    for (xd, yd), seed in itertools.product(GRIDS, range(10)):
+        cfgs.append(
+            {
+                **FINAL,
+                "kind": "alldays",
+                "length": 5,
+                "lr1": 0.3,
+                "lr2": 0.02,
+                "xdim": xd,
+                "ydim": yd,
+                "seed": seed,
+            }
+        )
+    cfgs.sort(key=lambda c: -c["xdim"] * c["ydim"])
+    return cfgs
+
+
+def stage4_configs(grid=(5, 4), n_seeds=30, length_alldays=5):
+    """Stage 3b: final ensembles on v2. All-days on the chosen grid; static
+    and evSOM 2x2 with lr 0.5 -> 0.02 at 1x and 5x length."""
+    xd, yd = grid
+    cfgs = []
+    for seed in range(n_seeds):
+        cfgs.append(
+            {
+                **FINAL,
+                "kind": "alldays",
+                "length": length_alldays,
+                "lr1": 0.3,
+                "lr2": 0.02,
+                "xdim": xd,
+                "ydim": yd,
+                "seed": seed,
+            }
+        )
+        for kind, length in itertools.product(["static", "evsom"], [1, 5]):
+            cfgs.append(
+                {
+                    **FINAL,
+                    "kind": kind,
+                    "length": length,
+                    "lr1": 0.5,
+                    "lr2": 0.02,
+                    "seed": seed,
+                }
+            )
+    cfgs.sort(key=lambda c: -(c["length"] * (20 if c["kind"] == "alldays" else 1)))
+    return cfgs
+
+
+def grid_edges(xdim, ydim):
+    """Rook-neighbour edges of a rectangular grid (flat index i * ydim + j)."""
+    e = []
+    for i in range(xdim):
+        for j in range(ydim):
+            if i + 1 < xdim:
+                e.append((i * ydim + j, (i + 1) * ydim + j))
+            if j + 1 < ydim:
+                e.append((i * ydim + j, i * ydim + j + 1))
+    return e
+
+
+def edge_crossings(Y, edges):
+    """Number of pairs of grid edges that cross in a 2-D projection (twisting)."""
+
+    def ccw(a, b, c):
+        return (c[1] - a[1]) * (b[0] - a[0]) - (b[1] - a[1]) * (c[0] - a[0])
+
+    n = 0
+    for (a, b), (c, d) in itertools.combinations(edges, 2):
+        if len({a, b, c, d}) < 4:
+            continue
+        p1, p2, p3, p4 = Y[a], Y[b], Y[c], Y[d]
+        if (
+            ccw(p1, p2, p3) * ccw(p1, p2, p4) < 0
+            and ccw(p3, p4, p1) * ccw(p3, p4, p2) < 0
+        ):
+            n += 1
+    return n
+
+
 # ── Summary ───────────────────────────────────────────────────────────────────
 
 
@@ -384,22 +487,34 @@ def summarize():
             te_median=float(np.median([r[4] for r in rs])),
         )
         if kind == "alldays":
+            from som_analysis.helpers import sammon_map
+
             is_ff = pub["alldays"]["is_ff"].astype(bool)
             p0 = is_ff.mean()
-            empty, maxr, corner = [], [], []
+            xd = cfg["xdim"] or PUBLISHED["alldays"]["xdim"]
+            yd = cfg["ydim"] or PUBLISHED["alldays"]["ydim"]
+            nn = xd * yd
+            edges = grid_edges(xd, yd)
+            empty, maxr, corner, cross = [], [], [], []
             pw = pub["alldays"]["weights"]
             for _c, lab, W, *_ in rs:
-                tot = np.bincount(lab, minlength=20)
-                ff = np.bincount(lab[is_ff], minlength=20)
+                assert len(lab) == len(is_ff), "day order differs from published"
+                tot = np.bincount(lab, minlength=nn)
+                ff = np.bincount(lab[is_ff], minlength=nn)
                 risk = np.where(tot > 0, ff / np.maximum(tot, 1), 0)
                 empty.append(int((ff == 0).sum()))
                 maxr.append(float(risk.max() / p0))
                 if pw is not None:
                     C = ((W[:, None, :].astype(np.float64) - pw[None]) ** 2).sum(-1)
-                    ri, ci = linear_sum_assignment(C)
-                    m = dict(zip(ri, ci, strict=True))
-                    top = m[int(risk.argmax())]  # published flat index of top node
-                    corner.append(top)
+                    if nn == len(pw):  # same grid: one-to-one matching
+                        ri, ci = linear_sum_assignment(C)
+                        m = dict(zip(ri, ci, strict=True))
+                        top = m[int(risk.argmax())]
+                    else:  # other grid: nearest published node
+                        top = int(C[int(risk.argmax())].argmin())
+                    corner.append(top)  # published flat index of top node
+                Y, _ = sammon_map(W.astype(np.float64), n_restarts=5, seed=0)
+                cross.append(edge_crossings(Y, edges))
             row.update(
                 empty_nodes_median=float(np.median(empty)),
                 empty_nodes_max=int(np.max(empty)),
@@ -409,6 +524,14 @@ def summarize():
                 top_node_published_labels=sorted(
                     {f"{chr(65 + k % 4)}{k // 4 + 1}" for k in corner}
                 ),
+                # published flat indices: A4 = 12, A5 = 16
+                top_node_in_A4_A5=(
+                    float(np.mean([k in (12, 16) for k in corner]))
+                    if corner
+                    else float("nan")
+                ),
+                sammon_crossings_median=float(np.median(cross)),
+                sammon_crossings_max=int(np.max(cross)),
             )
         else:
             # Share of the two most-populated nodes (published: A1+B2 = 69%)
@@ -440,6 +563,8 @@ def main():
     ap.add_argument("--stage", type=int, default=1)
     ap.add_argument("--workers", type=int, default=16)
     ap.add_argument("--summarize", action="store_true")
+    ap.add_argument("--grid", default="5x4", help="stage 4: all-days grid, e.g. 6x4")
+    ap.add_argument("--seeds", type=int, default=30, help="stage 4: ensemble size")
     args = ap.parse_args()
 
     if args.summarize:
@@ -449,7 +574,15 @@ def main():
         raise SystemExit("Refusing more than 32 workers on the shared server.")
 
     os.makedirs(os.path.join(OUT_DIR, "runs"), exist_ok=True)
-    cfgs = stage1_configs() if args.stage == 1 else stage2_configs()
+    if args.stage == 1:
+        cfgs = stage1_configs()
+    elif args.stage == 2:
+        cfgs = stage2_configs()
+    elif args.stage == 3:
+        cfgs = stage3_configs()
+    else:
+        grid = tuple(int(v) for v in args.grid.lower().split("x"))
+        cfgs = stage4_configs(grid=grid, n_seeds=args.seeds)
     build_pca_inits(sorted({c["kind"] for c in cfgs if c["init"] == "pca"}))
     todo = [
         c

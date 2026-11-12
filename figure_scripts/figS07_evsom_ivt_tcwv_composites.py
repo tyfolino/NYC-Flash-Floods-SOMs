@@ -26,16 +26,21 @@ import numpy as np
 import pandas as pd
 import xarray as xr
 
-from som_analysis.config import DATA_DIR, SOM_INTERMEDIATE_PATH, setup_plotting
+from som_analysis.config import (
+    DATA_DIR,
+    FIGS_DIR,
+    FIGURES_DIR,
+    SOM_INTERMEDIATE_PATH,
+    setup_plotting,
+)
 from som_analysis.helpers import add_map_features, get_node_indices, node_label
 
 # ── Paths ─────────────────────────────────────────────────────────────────────
-OUT_DIR = os.path.join(os.path.dirname(os.path.dirname(__file__)), "figures", "figS07")
+OUT_DIR = os.path.join(FIGURES_DIR, "figS07")
 os.makedirs(OUT_DIR, exist_ok=True)
 
 CACHE_PATH = os.path.join(
-    os.path.dirname(os.path.dirname(__file__)),
-    "figs",
+    FIGS_DIR,
     "Z500-and-thetae-evSOM-24h",
     ".cache",
     "som_results.npz",

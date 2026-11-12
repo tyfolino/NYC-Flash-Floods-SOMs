@@ -9,31 +9,50 @@ Extracts N consecutive hourly ERA5 snapshots per flash flood event
 The last hour_offset slice (T+0h) matches the single-snapshot file
 produced by som_preprocessing.py exactly.
 
-Usage:
-    python som_preprocessing_evolution.py Z500 [--n-hours 24]
-    python som_preprocessing_evolution.py theta_e [--n-hours 24]
+The standardization uses the climatology saved by som_preprocessing.py
+(``{prefix}_clim_mean_{mode}.nc`` / ``{prefix}_clim_std_smooth_{mode}.nc`` in
+the same intermediate directory), so the T+0h slice matches its
+``*_norm_weighted_ffe.nc`` exactly; if those files are missing the
+climatology is recomputed with the same code.
+
+Usage (from the project root; run som_preprocessing first):
+    NYCFF_INTERMEDIATE=v2 python -m preprocessing.som_preprocessing_evolution \
+        Z500 [--n-hours 24] [--climatology monthday|doy]
+    NYCFF_INTERMEDIATE=v2 python -m preprocessing.som_preprocessing_evolution \
+        theta_e [--n-hours 48]
+Output suffix: _ffe_evsom.nc for 24 h (published name), _ffe_evsom{N}h.nc else.
 """
 
 import argparse
 import os
 import warnings
 
+import dask
 import numpy as np
 import pandas as pd
 import xarray as xr
 from dask.diagnostics.progress import ProgressBar
 
-OUT_DIR = "/mnt/drive2/SOM_intermediate_files"
+from preprocessing.climatology import calendar_key, climatology, lat_weight
+from som_analysis.config import (
+    ERA5_SLICED_DIR,
+    SOM_INTERMEDIATE_PATH,
+    check_intermediate_writable,
+    evsom_suffix,
+)
+from som_analysis.timeutils import ff_event_hours_utc
 
-_SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
-_PROJECT_ROOT = os.path.dirname(_SCRIPT_DIR)
-STORM_DATA_CSV = os.path.join(_PROJECT_ROOT, "data", "storm_data_search_results.csv")
+dask.config.set(
+    scheduler="threads", num_workers=int(os.environ.get("NYCFF_DASK_WORKERS", "4"))
+)
+
+OUT_DIR = SOM_INTERMEDIATE_PATH.rstrip("/")
 
 # ── Variable configuration ─────────────────────────────────────────────────────
 
 CONFIGS = {
     "Z500": {
-        "file_path": "/mnt/drive2/ERA5/NC_files/hourly_sliced/era5_z500_NWHem_*.nc",
+        "file_path": f"{ERA5_SLICED_DIR}/era5_z500_NWHem_*.nc",
         "load_func": "mfdataset",
         "load_kwargs": {
             "combine": "by_coords",
@@ -48,7 +67,7 @@ CONFIGS = {
         "output_prefix": "era5_Z500",
     },
     "theta_e": {
-        "file_path": "/mnt/drive2/ERA5/NC_files/hourly_sliced/*thetae*.nc",
+        "file_path": f"{ERA5_SLICED_DIR}/*thetae*.nc",
         "load_func": "mfdataset",
         "load_kwargs": {
             "combine": "by_coords",
@@ -73,7 +92,14 @@ parser.add_argument(
     default=24,
     help="Length of the hourly window ending at the event hour (default: 24).",
 )
+parser.add_argument(
+    "--climatology",
+    choices=["monthday", "doy"],
+    default="monthday",
+    help="Calendar grouping (must match som_preprocessing; default monthday).",
+)
 args = parser.parse_args()
+check_intermediate_writable(OUT_DIR)
 
 cfg = CONFIGS[args.variable]
 n_hours = args.n_hours
@@ -99,41 +125,25 @@ print(f"  Data shape: {dict(data.sizes)}")
 
 # ── Flash flood event times ────────────────────────────────────────────────────
 
-# NWS Storm Events Database uses EST (not EDT).
-df = pd.read_csv(STORM_DATA_CSV)
-df = df[df["EVENT_ID"].astype(str).str.isdigit()]
-# Keep only the five NYC counties (the NCEI search export also returned one
-# Eastern Dutchess forecast-zone row, CZ_TYPE "Z", FIPS 66).
-df = df[(df["CZ_TYPE"] == "C") & (df["CZ_FIPS"].isin([5, 47, 61, 81, 85]))]
-df["BEGIN_TIME"] = df["BEGIN_TIME"].fillna(0).astype(int).astype(str).str.zfill(4)
-df["BEGIN_DATETIME"] = pd.to_datetime(
-    df["BEGIN_DATE"] + " " + df["BEGIN_TIME"], format="%m/%d/%Y %H%M", errors="coerce"
-)
-event_hours = (
-    df.drop_duplicates(subset=["EPISODE_ID"], keep="first")["BEGIN_DATETIME"]
-    .dt.floor("h")
-    .tolist()
-)
-
-times_utc = (
-    pd.to_datetime(event_hours).tz_localize("EST").tz_convert("UTC").tz_convert(None)
-)
-# Keep only the first episode per UTC calendar day (one sample per FF day).
-# NB: this does not guarantee non-overlapping windows; episodes on consecutive
-# UTC days can still overlap (e.g., 2019-07-22/23 overlap by 11 h).
-times_utc = times_utc[~times_utc.normalize().duplicated(keep="first")]
+# SED onsets -> UTC (CZ_TIMEZONE), first episode per UTC day; see timeutils.
+times_utc = ff_event_hours_utc()
 print(f"Flash flood events: {len(times_utc)} total")
 
-# ── DOY climatology (rolling-smoothed std) ─────────────────────────────────────
+# ── Calendar climatology (rolling-smoothed std) ───────────────────────────────
 
-print("Computing DOY climatology...")
-with ProgressBar():
-    mean_doy = data.groupby(f"{time_dim}.dayofyear").mean(dim=time_dim).compute()
-    std_doy = data.groupby(f"{time_dim}.dayofyear").std(dim=time_dim).compute()
-
-std_doy_smooth = (
-    std_doy.sortby("dayofyear").rolling(dayofyear=14, center=True, min_periods=7).mean()
-)
+mode = args.climatology
+key = "dayofyear" if mode == "doy" else "monthday"
+clim_mean_path = f"{OUT_DIR}/{prefix}_clim_mean_{mode}.nc"
+clim_std_path = f"{OUT_DIR}/{prefix}_clim_std_smooth_{mode}.nc"
+if os.path.exists(clim_mean_path) and os.path.exists(clim_std_path):
+    print(f"Using saved {mode} climatology from som_preprocessing.py")
+    mean_clim = xr.load_dataarray(clim_mean_path)
+    std_clim_smooth = xr.load_dataarray(clim_std_path)
+else:
+    print(f"Computing {mode} climatology...")
+    with ProgressBar():
+        mean_clim, std_clim_smooth = climatology(data, time_dim, mode=mode)
+        mean_clim, std_clim_smooth = mean_clim.compute(), std_clim_smooth.compute()
 
 # ── Extract N-hour windows per event ──────────────────────────────────────────
 
@@ -161,24 +171,16 @@ for t_event in times_utc:
     # Extract raw window: (n_hours, lat, lon)
     raw_win = data.sel({time_dim: window_times}).values  # numpy via .values
 
-    # Compute standardized anomaly for each hour using that hour's DOY
+    # Standardized anomaly for each hour using that hour's calendar key
     norm_win = np.empty_like(raw_win)
     for h_idx, t in enumerate(window_times):
-        doy = t.dayofyear
-        mu = mean_doy.sel(dayofyear=doy).values
-        sigma = std_doy_smooth.sel(dayofyear=doy).values
+        k = calendar_key(t, mode)
+        mu = mean_clim.sel({key: k}).values
+        sigma = std_clim_smooth.sel({key: k}).values
         norm_win[h_idx] = (raw_win[h_idx] - mu) / sigma
 
-    # Latitude weighting: sqrt(cos(lat))
-    lat_vals = data[lat_dim].values
-    lat_weight = np.sqrt(np.cos(np.deg2rad(lat_vals)))
-    # Broadcast to (n_hours, lat, lon)
-    if lat_dim == "lat":
-        # lat is the first spatial dim
-        weight_broadcast = lat_weight[:, np.newaxis]
-    else:
-        # latitude dim (also first spatial dim for these files)
-        weight_broadcast = lat_weight[:, np.newaxis]
+    # Latitude weighting: sqrt(cos(lat)); latitude is the first spatial dim
+    weight_broadcast = lat_weight(data[lat_dim].values)[:, np.newaxis]
     norm_weighted_win = norm_win * weight_broadcast
 
     raw_windows.append(raw_win)
@@ -222,7 +224,7 @@ da_norm_w = make_da(norm_w_arr, valid_event_times, hour_offsets, lat_coords, lon
 
 os.makedirs(OUT_DIR, exist_ok=True)
 
-suffix = "_ffe_evsom.nc"
+suffix = evsom_suffix(n_hours)
 
 out_raw = f"{OUT_DIR}/{prefix}{suffix}"
 out_norm = f"{OUT_DIR}/{prefix}_norm{suffix}"

@@ -15,11 +15,11 @@ import cmweather  # noqa: F401 — registers 'balance' and other cmweather color
 import matplotlib.pyplot as plt
 import numpy as np
 
-from som_analysis.config import setup_plotting
+from som_analysis.config import FIGS_DIR, FIGURES_DIR, setup_plotting
 from som_analysis.helpers import add_map_features, node_label
 
 # ── Output directory ──────────────────────────────────────────────────────────
-OUT_DIR = os.path.join(os.path.dirname(os.path.dirname(__file__)), "figures", "fig01")
+OUT_DIR = os.path.join(FIGURES_DIR, "fig01")
 os.makedirs(OUT_DIR, exist_ok=True)
 
 # ── SOM / figure parameters ───────────────────────────────────────────────────
@@ -28,8 +28,7 @@ MOISTURE_VAR = "thetae"
 
 # Cache produced by train_alldays_som.py in the original analysis repo
 CACHE_PATH = os.path.join(
-    os.path.dirname(os.path.dirname(__file__)),
-    "figs",
+    FIGS_DIR,
     "Z500-and-thetae-alldays-SOM",
     ".cache",
     "som_results.npz",

@@ -22,7 +22,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 
-from som_analysis.config import DATA_DIR, setup_plotting
+from som_analysis.config import DATA_DIR, FIGURES_DIR, setup_plotting
 from som_analysis.helpers import node_label
 from som_analysis.node_statistics import (
     compute_asos_max_precip,
@@ -31,7 +31,7 @@ from som_analysis.node_statistics import (
 )
 
 # ── Paths ─────────────────────────────────────────────────────────────────────
-OUT_DIR = os.path.join(os.path.dirname(os.path.dirname(__file__)), "figures", "figS08")
+OUT_DIR = os.path.join(FIGURES_DIR, "figS08")
 os.makedirs(OUT_DIR, exist_ok=True)
 
 BMU_CSV = os.path.join(DATA_DIR, "som_2x2_evsom_24h_bmus_thetae.csv")

@@ -3,7 +3,8 @@ Figure 4 — Stage IV PMM Precipitation Composites by SOM Node
 
 Default (4-row × 2-column) layout. Each row is one SOM node (A1, A2, B1, B2).
 Left column  : regional-scale PMM composite (38.5–44°N, 78–70°W)
-Right column : NYC-scale PMM composite (40.3–41.2°N, 74.8–73.4°W)
+Right column : NYC-scale PMM composite (40.3–41.2°N, 74.8–73.4°W), whose PMM
+               pools only NYC-panel cells (not the whole region)
 
 Wide layout (--wide flag): 2-row × 4-column.
 Left 2×2  : regional-scale (A1/A2 top, B1/B2 bottom)
@@ -29,16 +30,17 @@ import pandas as pd
 from matplotlib.cm import ScalarMappable
 from matplotlib.colors import BoundaryNorm, ListedColormap
 
-from som_analysis.config import DATA_DIR, setup_plotting
+from som_analysis.config import DATA_DIR, FIGURES_DIR, setup_plotting
 from som_analysis.helpers import node_label
 from som_analysis.node_statistics import (
     bootstrap_pmm,
     compute_stageiv_node_composites,
     probability_matched_mean,
+    subdomain_fields,
 )
 
 # ── Paths ─────────────────────────────────────────────────────────────────────
-OUT_DIR = os.path.join(os.path.dirname(os.path.dirname(__file__)), "figures", "fig04")
+OUT_DIR = os.path.join(FIGURES_DIR, "fig04")
 os.makedirs(OUT_DIR, exist_ok=True)
 
 BMU_CSV = os.path.join(DATA_DIR, "som_2x2_evsom_24h_bmus_thetae.csv")
@@ -159,15 +161,21 @@ def main():
 
     # ── Compute Stage IV composites ───────────────────────────────────────────
     node_fields, lat2d, lon2d = compute_stageiv_node_composites(bmu_df, XDIM, YDIM)
+    # NYC panel: PMM pooled from NYC-panel cells only, so its intensities come
+    # from NYC rainfall, not from the largest values anywhere in the region.
+    nyc_fields = subdomain_fields(node_fields, lat2d, lon2d, EXTENT_NYC)
 
     if args.bootstrap:
         print("Running bootstrap PMM (500 iterations per node) ...")
         boot_fields, min_n = bootstrap_pmm(
             node_fields, n_bootstrap=500, winsorize_pct=args.winsorize
         )
+        boot_nyc, _ = bootstrap_pmm(
+            nyc_fields, n_bootstrap=500, min_n=min_n, winsorize_pct=args.winsorize
+        )
         print(f"  Subsampled each node to n={min_n}")
     else:
-        boot_fields = None
+        boot_fields = boot_nyc = None
         min_n = None
 
     # ── Build figure ──────────────────────────────────────────────────────────
@@ -216,7 +224,7 @@ def main():
         )
         n_nyc = _plot_pmm(
             ax_nyc,
-            node_fields,
+            nyc_fields,
             i,
             j,
             lat2d,
@@ -224,7 +232,7 @@ def main():
             EXTENT_NYC,
             show_star=False,
             winsorize_pct=args.winsorize,
-            precomputed=boot_fields,
+            precomputed=boot_nyc,
         )
 
         # Node label outside upper-left; N outside upper-right

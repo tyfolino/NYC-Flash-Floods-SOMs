@@ -24,22 +24,26 @@ import matplotlib.pyplot as plt
 import numpy as np
 import xarray as xr
 
-from som_analysis.config import setup_plotting
+from som_analysis.config import (
+    FIGS_DIR,
+    FIGURES_DIR,
+    SOM_INTERMEDIATE_PATH,
+    setup_plotting,
+)
 from som_analysis.helpers import add_map_features, get_node_indices, node_label
 
 # ── Paths ─────────────────────────────────────────────────────────────────────
-OUT_DIR = os.path.join(os.path.dirname(os.path.dirname(__file__)), "figures/figS06")
+OUT_DIR = os.path.join(FIGURES_DIR, "figS06")
 os.makedirs(OUT_DIR, exist_ok=True)
 
 CACHE_PATH = os.path.join(
-    os.path.dirname(os.path.dirname(__file__)),
-    "figs",
+    FIGS_DIR,
     "Z500-and-thetae-SOM",
     ".cache",
     "som_results.npz",
 )
-THETAE_FFE_PATH = "/mnt/drive2/SOM_intermediate_files/era5_thetae_ffe.nc"
-Z500_FFE_PATH = "/mnt/drive2/SOM_intermediate_files/era5_Z500_ffe.nc"
+THETAE_FFE_PATH = f"{SOM_INTERMEDIATE_PATH}era5_thetae_ffe.nc"
+Z500_FFE_PATH = f"{SOM_INTERMEDIATE_PATH}era5_Z500_ffe.nc"
 
 # ── Figure / SOM parameters ───────────────────────────────────────────────────
 XDIM, YDIM = 2, 2

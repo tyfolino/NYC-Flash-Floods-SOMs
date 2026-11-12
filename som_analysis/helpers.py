@@ -65,6 +65,26 @@ def load_moist_var(filepath, var_name):
     return ds[var_name] if var_name in ds else ds[list(ds.data_vars)[0]]
 
 
+def assert_same_times(a, b, label_a="Z500", label_b="moisture"):
+    """Raise unless two DataArrays have identical time coordinates.
+
+    Looks for the first of valid_time / time / event_time on each array.
+    """
+
+    def _times(da):
+        for d in ("valid_time", "time", "event_time"):
+            if d in da.coords:
+                return pd.DatetimeIndex(da[d].values)
+        raise ValueError(f"No time coordinate in {da.name!r}: {list(da.coords)}")
+
+    ta, tb = _times(a), _times(b)
+    if len(ta) != len(tb) or not (ta == tb).all():
+        raise ValueError(
+            f"Time coordinates of {label_a} ({len(ta)}) and {label_b} ({len(tb)}) "
+            "differ; refusing to combine misaligned fields."
+        )
+
+
 def node_label(i, j):
     """Convert SOM grid indices to alphanumeric label.
 

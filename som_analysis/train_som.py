@@ -17,13 +17,12 @@ import os
 import numpy as np
 import pandas as pd
 import xarray as xr
-from minisom import MiniSom
-from sklearn.decomposition import PCA
 from sklearn.manifold import MDS
 from sklearn.metrics import pairwise_distances
 
 from .config import MOISTURE_CONFIGS, SOM_INTERMEDIATE_PATH, get_paths
-from .helpers import load_moist_var, node_label, sammon_map, u_matrix
+from .helpers import assert_same_times, load_moist_var, node_label, sammon_map, u_matrix
+from .training import add_training_args, config_json, train_two_phase
 
 
 def parse_args():
@@ -82,6 +81,7 @@ def parse_args():
         default="rectangular",
         help="SOM grid topology (default: rectangular).",
     )
+    add_training_args(parser, n1=1000, n2=1000, lr1=0.5, lr2=0.1, topology=False)
     return parser.parse_args()
 
 
@@ -113,6 +113,8 @@ def main():
     z500_norm_weighted_ffe = xr.load_dataarray(
         f"{SOM_INTERMEDIATE_PATH}era5_Z500_norm_weighted{ffe_suffix}.nc"
     )
+    assert_same_times(z500_norm_weighted_ffe, moist_norm_weighted_ffe)
+    assert_same_times(z500_norm_weighted_ffe, moist_ffe, "Z500", "moisture raw")
 
     # ── Flatten & concatenate ─────────────────────────────────────────────────
     z500_flat = z500_norm_weighted_ffe.stack(features=["latitude", "longitude"]).values
@@ -124,42 +126,7 @@ def main():
     print(f"Training matrix shape: {X.shape}")
 
     # ── SOM training ──────────────────────────────────────────────────────────
-    sig1 = np.sqrt(xdim**2 + ydim**2)
-    sig2 = 1.0
-    lr1, lr2 = 0.5, 0.1
-
-    som = MiniSom(
-        xdim,
-        ydim,
-        input_len=X.shape[1],
-        sigma=sig1,
-        learning_rate=lr1,
-        decay_function="linear_decay_to_zero",
-        sigma_decay_function="linear_decay_to_one",
-        neighborhood_function="gaussian",
-        topology=args.topology,
-        random_seed=args.seed,
-    )
-
-    if args.init == "pca":
-        pca = PCA(n_components=2, random_state=args.seed)
-        pca.fit(X)
-        w = np.zeros((xdim, ydim, X.shape[1]))
-        for i, c1 in enumerate(np.linspace(-1, 1, xdim)):
-            for j, c2 in enumerate(np.linspace(-1, 1, ydim)):
-                w[i, j] = pca.mean_ + c1 * pca.components_[0] + c2 * pca.components_[1]
-        som._weights = w
-        print("Initialized weights via PCA.")
-    else:
-        som.random_weights_init(X)
-
-    print(f"\nPhase 1: {args.n1} iterations (sigma={sig1:.2f}, lr={lr1})")
-    som.train_random(X, args.n1, verbose=True)
-
-    som._sigma = sig2  # type: ignore
-    som._learning_rate = lr2
-    print(f"\nPhase 2: {args.n2} iterations (sigma={sig2:.2f}, lr={lr2})")
-    som.train_random(X, args.n2, verbose=True)
+    som, train_cfg = train_two_phase(X, xdim, ydim, args)
 
     # ── Extract results ───────────────────────────────────────────────────────
     weights = som.get_weights().reshape(xdim * ydim, -1)
@@ -242,6 +209,7 @@ def main():
         u_matrix=u_mat,
         hit_map=hit_map,
         coords=coords,
+        train_config=config_json(train_cfg),
     )
     print(f"Saved SOM arrays to {cache_dir}/som_results.npz")
 

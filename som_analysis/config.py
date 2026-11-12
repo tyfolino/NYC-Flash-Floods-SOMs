@@ -13,19 +13,57 @@ import scienceplots  # noqa: F401
 
 # ── Shared paths ──────────────────────────────────────────────────────────────
 
-SOM_INTERMEDIATE_PATH = "/mnt/drive2/SOM_intermediate_files/"
+# Preprocessed ERA5 intermediates (standardized anomalies etc.).
+#   v1 = as published (day-of-year climatology). NEVER overwrite.
+#   v2 = month-day climatology (leap years aligned; audit A20).
+# Select with the environment variable NYCFF_INTERMEDIATE = "v1" (default),
+# "v2", or an explicit directory.
+SOM_INTERMEDIATE_PATH_V1 = "/mnt/drive2/SOM_intermediate_files/"
+SOM_INTERMEDIATE_PATH_V2 = "/mnt/drive2/SOM_intermediate_files_v2/"
+_INTERMEDIATE = os.environ.get("NYCFF_INTERMEDIATE", "v1")
+SOM_INTERMEDIATE_PATH = {
+    "v1": SOM_INTERMEDIATE_PATH_V1,
+    "v2": SOM_INTERMEDIATE_PATH_V2,
+}.get(_INTERMEDIATE, os.path.join(_INTERMEDIATE, ""))
 STAGEIV_NC = "/mnt/drive2/StageIV/stageiv_tristate_hourly.nc"
 ERA5_TP_DIR = "/mnt/drive2/ERA5/NC_files/tp"
+ERA5_SLICED_DIR = "/mnt/drive2/ERA5/NC_files/hourly_sliced"
 
 # Relative to the project root (one level up from this file)
 _PROJECT_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+PROJECT_ROOT = _PROJECT_ROOT
 PRECIP_DATA_DIR = os.path.join(_PROJECT_ROOT, "precip_data_and_tc_association_code")
 IBTRACS_PATH = os.path.join(
     PRECIP_DATA_DIR, "ibtracs.NA.list.v04r01.processed_6hrly.statslp3.csv"
 )
-DATA_DIR = os.path.join(_PROJECT_ROOT, "data")
-FIGS_DIR = os.path.join(_PROJECT_ROOT, "figs")
-STORM_DATA_CSV = os.path.join(DATA_DIR, "storm_data_search_results.csv")
+# Inputs always come from the project tree.
+INPUT_DATA_DIR = os.path.join(_PROJECT_ROOT, "data")
+STORM_DATA_CSV = os.path.join(INPUT_DATA_DIR, "storm_data_search_results.csv")
+
+# Outputs (SOM caches, BMU/TC CSVs, figures, movies, results) go under
+# OUTPUT_ROOT. Default = the project tree (the published layout). Set
+# NYCFF_OUTPUT_ROOT to write a retrained configuration somewhere else, so the
+# published SOM caches (gitignored, so not recoverable from git) stay intact.
+OUTPUT_ROOT = os.path.abspath(os.environ.get("NYCFF_OUTPUT_ROOT", _PROJECT_ROOT))
+DATA_DIR = os.path.join(OUTPUT_ROOT, "data")
+FIGS_DIR = os.path.join(OUTPUT_ROOT, "figs")
+FIGURES_DIR = os.path.join(OUTPUT_ROOT, "figures")
+MOVIES_DIR = os.path.join(OUTPUT_ROOT, "movies")
+RESULTS_DIR = os.path.join(OUTPUT_ROOT, "results")
+
+
+def check_intermediate_writable(path):
+    """Refuse to write into the published (v1) intermediate directory."""
+    if (
+        os.path.realpath(path).rstrip("/")
+        == os.path.realpath(SOM_INTERMEDIATE_PATH_V1).rstrip("/")
+        and os.environ.get("NYCFF_ALLOW_V1_WRITE") != "1"
+    ):
+        raise SystemExit(
+            f"Refusing to write into the published intermediates ({path}). "
+            "Use NYCFF_INTERMEDIATE=v2 (or another directory)."
+        )
+
 
 # NYC county FIPS codes (Bronx, Kings, New York, Queens, Richmond). Storm Events
 # rows outside these counties (one Eastern Dutchess zone row in the NCEI export)
@@ -154,6 +192,11 @@ def get_paths(moisture_var, moisture_weight=1, daily=False):
         "bmu_csv_path": bmu_csv,
         "file_label": file_label,
     }
+
+
+def evsom_suffix(n_hours=24):
+    """File suffix of the evSOM window intermediates (24 h = published name)."""
+    return "_ffe_evsom.nc" if n_hours == 24 else f"_ffe_evsom{n_hours}h.nc"
 
 
 def get_evsom_paths(moisture_var, moisture_weight=1, n_hours=24):

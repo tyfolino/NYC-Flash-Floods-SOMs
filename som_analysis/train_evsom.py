@@ -20,13 +20,17 @@ import os
 import numpy as np
 import pandas as pd
 import xarray as xr
-from minisom import MiniSom
-from sklearn.decomposition import PCA
 from sklearn.manifold import MDS
 from sklearn.metrics import pairwise_distances
 
-from .config import MOISTURE_CONFIGS, SOM_INTERMEDIATE_PATH, get_evsom_paths
-from .helpers import load_moist_var, node_label, sammon_map, u_matrix
+from .config import (
+    MOISTURE_CONFIGS,
+    SOM_INTERMEDIATE_PATH,
+    evsom_suffix,
+    get_evsom_paths,
+)
+from .helpers import assert_same_times, load_moist_var, node_label, sammon_map, u_matrix
+from .training import add_training_args, config_json, train_two_phase
 
 
 def parse_args():
@@ -80,6 +84,7 @@ def parse_args():
         default="random",
         help="Weight initialization method: 'random' or 'pca' (default: random).",
     )
+    add_training_args(parser, n1=1000, n2=1000, lr1=0.5, lr2=0.1)
     return parser.parse_args()
 
 
@@ -97,17 +102,17 @@ def main():
     print(f"Loading evolution data for {args.moisture_var} (n_hours={n_hours})...")
 
     # Moisture: use load_moist_var then grab the DataArray
-    moist_nw_path = f"{SOM_INTERMEDIATE_PATH}{pfx}_norm_weighted_ffe_evsom.nc"
+    sfx = evsom_suffix(n_hours)
+    moist_nw_path = f"{SOM_INTERMEDIATE_PATH}{pfx}_norm_weighted{sfx}"
 
     moist_nw = load_moist_var(moist_nw_path, var_name)
 
-    z500_nw = xr.load_dataarray(
-        f"{SOM_INTERMEDIATE_PATH}era5_Z500_norm_weighted_ffe_evsom.nc"
-    )
-    # Verify shapes agree
+    z500_nw = xr.load_dataarray(f"{SOM_INTERMEDIATE_PATH}era5_Z500_norm_weighted{sfx}")
+    # Verify the events (and window length) agree
+    assert_same_times(z500_nw, moist_nw)
     assert (
-        z500_nw.sizes["event_time"] == moist_nw.sizes["event_time"]
-    ), "Z500 and moisture event counts differ!"
+        z500_nw.sizes["hour_offset"] == moist_nw.sizes["hour_offset"] == n_hours
+    ), "Window length differs from --n-hours"
     N = z500_nw.sizes["event_time"]
     _z500_spatial = [d for d in z500_nw.dims if d not in ("event_time", "hour_offset")]
     _z500_lat_dim, _z500_lon_dim = _z500_spatial[0], _z500_spatial[1]
@@ -125,41 +130,7 @@ def main():
     print(f"Training matrix shape: {X.shape}")
 
     # ── SOM training ──────────────────────────────────────────────────────────
-    sig1 = np.sqrt(xdim**2 + ydim**2)
-    sig2 = 1.0
-    lr1, lr2 = 0.5, 0.1
-
-    som = MiniSom(
-        xdim,
-        ydim,
-        input_len=X.shape[1],
-        sigma=sig1,
-        learning_rate=lr1,
-        decay_function="linear_decay_to_zero",
-        sigma_decay_function="linear_decay_to_one",
-        neighborhood_function="gaussian",
-        random_seed=args.seed,
-    )
-
-    if args.init == "pca":
-        pca = PCA(n_components=2, random_state=args.seed)
-        pca.fit(X)
-        w = np.zeros((xdim, ydim, X.shape[1]))
-        for i, c1 in enumerate(np.linspace(-1, 1, xdim)):
-            for j, c2 in enumerate(np.linspace(-1, 1, ydim)):
-                w[i, j] = pca.mean_ + c1 * pca.components_[0] + c2 * pca.components_[1]
-        som._weights = w
-        print("Initialized weights via PCA.")
-    else:
-        som.random_weights_init(X)
-
-    print(f"\nPhase 1: {args.n1} iterations (sigma={sig1:.2f}, lr={lr1})")
-    som.train_random(X, args.n1, verbose=True)
-
-    som._sigma = sig2  # type: ignore
-    som._learning_rate = lr2
-    print(f"\nPhase 2: {args.n2} iterations (sigma={sig2:.2f}, lr={lr2})")
-    som.train_random(X, args.n2, verbose=True)
+    som, train_cfg = train_two_phase(X, xdim, ydim, args)
 
     # ── Extract results ───────────────────────────────────────────────────────
     weights = som.get_weights().reshape(xdim * ydim, -1)
@@ -248,6 +219,7 @@ def main():
         u_matrix=u_mat,
         hit_map=hit_map,
         coords=coords,
+        train_config=config_json(train_cfg),
         n_hours=np.array(n_hours),
         lat_z=lat_z,
         lon_z=lon_z,

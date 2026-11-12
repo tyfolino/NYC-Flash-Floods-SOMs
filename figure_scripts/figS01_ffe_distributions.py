@@ -16,13 +16,18 @@ import matplotlib.pyplot as plt
 import pandas as pd
 from scipy import stats
 
-from som_analysis.config import DATA_DIR, filter_nyc_counties, setup_plotting
+from som_analysis.config import (
+    FIGURES_DIR,
+    STORM_DATA_CSV,
+    filter_nyc_counties,
+    setup_plotting,
+)
 
 # ── Paths ─────────────────────────────────────────────────────────────────────
-OUT_DIR = os.path.join(os.path.dirname(os.path.dirname(__file__)), "figures", "figS01")
+OUT_DIR = os.path.join(FIGURES_DIR, "figS01")
 os.makedirs(OUT_DIR, exist_ok=True)
 
-STORM_CSV = os.path.join(DATA_DIR, "storm_data_search_results.csv")
+STORM_CSV = STORM_DATA_CSV
 
 # ── Figure parameters ─────────────────────────────────────────────────────────
 FIG_WIDTH = 7.0  # GRL double column

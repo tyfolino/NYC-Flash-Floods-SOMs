@@ -3,8 +3,13 @@ SOM Data Preprocessing
 By: Ty Janoski
 
 Preprocesses ERA5 variables for the NYC flash flood SOM analysis.
-Usage: python som_preprocessing.py VARIABLE [--no-plots]
+Usage (from the project root):
+    NYCFF_INTERMEDIATE=v2 python -m preprocessing.som_preprocessing VARIABLE \
+        [--climatology monthday|doy] [--no-plots] [--no-snapshots]
 Variables: Z500, mslp, tcwv, ivt, tp, theta_e
+
+Writes to som_analysis.config.SOM_INTERMEDIATE_PATH (select with
+NYCFF_INTERMEDIATE); refuses to write into the published v1 directory.
 """
 
 import argparse
@@ -12,12 +17,27 @@ import os
 
 import cartopy.crs as ccrs
 import cmweather  # noqa: F401
+import dask
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 import scienceplots  # noqa: F401
 import xarray as xr
 from dask.diagnostics.progress import ProgressBar
+
+from preprocessing.climatology import climatology, lat_weight, standardize
+from som_analysis.config import (
+    ERA5_SLICED_DIR,
+    FIGS_DIR,
+    SOM_INTERMEDIATE_PATH,
+    check_intermediate_writable,
+)
+from som_analysis.timeutils import ff_event_hours_utc
+
+# Cap dask's threaded scheduler (default = all cores) on the shared server.
+dask.config.set(
+    scheduler="threads", num_workers=int(os.environ.get("NYCFF_DASK_WORKERS", "4"))
+)
 
 plt.style.use(["science", "nature", "grid"])
 plt.rcParams["text.usetex"] = True
@@ -26,7 +46,7 @@ plt.rcParams["text.usetex"] = True
 
 CONFIGS = {
     "Z500": {
-        "file_path": "/mnt/drive2/ERA5/NC_files/hourly_sliced/era5_z500_NWHem_*.nc",
+        "file_path": f"{ERA5_SLICED_DIR}/era5_z500_NWHem_*.nc",
         "load_func": "mfdataset",
         "load_kwargs": {
             "combine": "by_coords",
@@ -49,11 +69,11 @@ CONFIGS = {
             "raw_unit": "dam",
             "std_levels": np.arange(-3, 3.1, 0.5),
             "extend": "neither",
-            "fig_dir": "../figs/Z500-SOM",
+            "fig_dir": os.path.join(FIGS_DIR, "Z500-SOM"),
         },
     },
     "mslp": {
-        "file_path": "/mnt/drive2/ERA5/NC_files/hourly_sliced/era5_mslp_NWHem_*.nc",
+        "file_path": f"{ERA5_SLICED_DIR}/era5_mslp_NWHem_*.nc",
         "load_func": "mfdataset",
         "load_kwargs": {
             "combine": "by_coords",
@@ -75,11 +95,11 @@ CONFIGS = {
             "raw_unit": "mb",
             "std_levels": np.arange(-3, 3.1, 0.5),
             "extend": "both",
-            "fig_dir": "../figs/mslp-SOM",
+            "fig_dir": os.path.join(FIGS_DIR, "mslp-SOM"),
         },
     },
     "tcwv": {
-        "file_path": "/mnt/drive2/ERA5/NC_files/hourly_sliced/era5_tcwv_NWHem_*.nc",
+        "file_path": f"{ERA5_SLICED_DIR}/era5_tcwv_NWHem_*.nc",
         "load_func": "mfdataset",
         "load_kwargs": {
             "combine": "by_coords",
@@ -101,11 +121,11 @@ CONFIGS = {
             "raw_unit": "kg m$^{-2}$",
             "std_levels": np.arange(-3, 3.1, 0.5),
             "extend": "max",
-            "fig_dir": "../figs/tcwv-SOM",
+            "fig_dir": os.path.join(FIGS_DIR, "tcwv-SOM"),
         },
     },
     "ivt": {
-        "file_path": "/mnt/drive2/ERA5/NC_files/hourly_sliced/era5_viwv_NWHem_*.nc",
+        "file_path": f"{ERA5_SLICED_DIR}/era5_viwv_NWHem_*.nc",
         "load_func": "mfdataset",
         "load_kwargs": {
             "combine": "by_coords",
@@ -126,7 +146,7 @@ CONFIGS = {
             "raw_unit": "kg m$^{-1}$ s$^{-1}$",
             "std_levels": np.arange(-6, 6.1, 1.0),
             "extend": "both",
-            "fig_dir": "../figs/Z500-and-ivtxy-SOM",
+            "fig_dir": os.path.join(FIGS_DIR, "Z500-and-ivtxy-SOM"),
             "components": [
                 ("ivt", "IVT$_{mag}$", np.arange(0, 701, 50), "max"),
                 ("viwve", "IVT$_{x}$", np.arange(-700, 701, 100), "both"),
@@ -135,7 +155,7 @@ CONFIGS = {
         },
     },
     "tp": {
-        "file_path": "/mnt/drive2/ERA5/NC_files/hourly_sliced/era5_tp_*.nc",
+        "file_path": f"{ERA5_SLICED_DIR}/era5_tp_*.nc",
         "load_func": "mfdataset",
         "load_kwargs": {
             "combine": "by_coords",
@@ -152,7 +172,7 @@ CONFIGS = {
         "plot_config": None,
     },
     "theta_e": {
-        "file_path": "/mnt/drive2/ERA5/NC_files/hourly_sliced/*thetae*.nc",
+        "file_path": f"{ERA5_SLICED_DIR}/*thetae*.nc",
         "load_func": "mfdataset",
         "load_kwargs": {
             "combine": "by_coords",
@@ -174,19 +194,34 @@ CONFIGS = {
             "raw_unit": "K",
             "std_levels": np.arange(-3, 3.1, 0.5),
             "extend": "both",
-            "fig_dir": "../figs/thetae-SOM",
+            "fig_dir": os.path.join(FIGS_DIR, "thetae-SOM"),
         },
     },
 }
 
-OUT_DIR = "/mnt/drive2/SOM_intermediate_files"
+OUT_DIR = SOM_INTERMEDIATE_PATH.rstrip("/")
 
 # ── CLI ───────────────────────────────────────────────────────────────────────
 
 parser = argparse.ArgumentParser(description=__doc__)
 parser.add_argument("variable", choices=CONFIGS)
 parser.add_argument("--no-plots", action="store_true")
+parser.add_argument(
+    "--climatology",
+    choices=["monthday", "doy"],
+    default="monthday",
+    help="Calendar grouping of the climatology: monthday (v2, leap years "
+    "aligned; default) or doy (as published).",
+)
+parser.add_argument(
+    "--no-snapshots",
+    action="store_true",
+    help="Skip the 20 UTC warm-season snapshot files (only used by "
+    "train_alldays_som --snapshot-hour).",
+)
 args = parser.parse_args()
+check_intermediate_writable(OUT_DIR)
+os.makedirs(OUT_DIR, exist_ok=True)
 
 cfg = CONFIGS[args.variable]
 time_dim = cfg["time_dim"]
@@ -215,45 +250,20 @@ if cfg["compute_magnitude"] is not None:
 
 # ── Flash flood event times ───────────────────────────────────────────────────
 
-# NWS Storm Events Database uses EST (not EDT), so we hardwire EST here.
-df = pd.read_csv("../data/storm_data_search_results.csv")
-df = df[df["EVENT_ID"].astype(str).str.isdigit()]
-# Keep only the five NYC counties (the NCEI search export also returned one
-# Eastern Dutchess forecast-zone row, CZ_TYPE "Z", FIPS 66).
-df = df[(df["CZ_TYPE"] == "C") & (df["CZ_FIPS"].isin([5, 47, 61, 81, 85]))]
-df["BEGIN_TIME"] = df["BEGIN_TIME"].fillna(0).astype(int).astype(str).str.zfill(4)
-df["BEGIN_DATETIME"] = pd.to_datetime(
-    df["BEGIN_DATE"] + " " + df["BEGIN_TIME"], format="%m/%d/%Y %H%M", errors="coerce"
-)
-event_hours = (
-    df.drop_duplicates(subset=["EPISODE_ID"], keep="first")["BEGIN_DATETIME"]
-    .dt.floor("h")
-    .tolist()
-)
-
-times_utc = (
-    pd.to_datetime(event_hours).tz_localize("EST").tz_convert("UTC").tz_convert(None)
-)
-# Keep only the first episode per UTC calendar day (one sample per FF day).
-# NB: this does not guarantee non-overlapping windows; episodes on consecutive
-# UTC days can still overlap (e.g., 2019-07-22/23 overlap by 11 h).
-times_utc = times_utc[~times_utc.normalize().duplicated(keep="first")]
+# SED onsets -> UTC (CZ_TIMEZONE), first episode per UTC day; see timeutils.
+times_utc = ff_event_hours_utc()
 intersect = pd.Index(times_utc).intersection(data.indexes[time_dim])
 print(f"Found {len(intersect)} matching events out of {len(times_utc)} total.")
 
 # ── Standardized anomalies ────────────────────────────────────────────────────
 
 if cfg["compute_anomalies"]:
-    mean_doy = data.groupby(f"{time_dim}.dayofyear").mean(dim=time_dim)
-    std_doy = data.groupby(f"{time_dim}.dayofyear").std(dim=time_dim)
-    std_doy_smooth = (
-        std_doy.sortby("dayofyear")
-        .rolling(dayofyear=14, center=True, min_periods=7)
-        .mean()
-    )
-    anoms = data.groupby(f"{time_dim}.dayofyear") - mean_doy
-    norm = anoms.groupby(f"{time_dim}.dayofyear") / std_doy_smooth
-    norm_weighted = norm * np.sqrt(np.cos(np.deg2rad(norm[lat_dim])))
+    clim_mean, clim_std = climatology(data, time_dim, mode=args.climatology)
+    norm = standardize(data, clim_mean, clim_std, time_dim, mode=args.climatology)
+    norm_weighted = norm * lat_weight(norm[lat_dim])
+    # Saved so som_preprocessing_evolution.py uses the identical climatology.
+    clim_mean.to_netcdf(f"{OUT_DIR}/{prefix}_clim_mean_{args.climatology}.nc")
+    clim_std.to_netcdf(f"{OUT_DIR}/{prefix}_clim_std_smooth_{args.climatology}.nc")
 else:
     norm = norm_weighted = None
 
@@ -406,7 +416,7 @@ if cfg["compute_anomalies"]:
 # ── Save warm-season hourly snapshots ─────────────────────────────────────────
 # Select one hour per day from the warm season (May–Oct) for all-days SOM use.
 # Controlled by the SNAPSHOT_HOURS list; extend as needed.
-SNAPSHOT_HOURS = [20]  # 2000 UTC
+SNAPSHOT_HOURS = [] if args.no_snapshots else [20]  # 2000 UTC
 
 warm_mask = data[time_dim].dt.month.isin([5, 6, 7, 8, 9, 10])
 for hr in SNAPSHOT_HOURS:

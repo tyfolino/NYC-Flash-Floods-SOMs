@@ -1,0 +1,1425 @@
+{
+ "output_root": "/home/janoski/NYC_flash_flood_SOMs",
+ "intermediate_path": "/mnt/drive2/SOM_intermediate_files/",
+ "generated": "2026-11-11T00:40:58+00:00",
+ "events": {
+  "sed_rows": 396,
+  "sed_episodes": 129,
+  "ff_days_all_seasons": 126,
+  "ff_days_warm_season": 118,
+  "warm_season_share": 0.9365,
+  "cold_season_episodes": 8,
+  "cold_season_deaths_direct": 0,
+  "cold_season_deaths_indirect": 0,
+  "cold_season_injuries_direct": 0,
+  "cold_season_episodes_with_damage": 1
+ },
+ "alldays_som": {
+  "grid": "5x4",
+  "n_days": 5520,
+  "n_ff_days": 118,
+  "base_rate": 0.0214,
+  "nodes": {
+   "A1": {
+    "days": 460,
+    "ff_days": 13,
+    "risk": 0.0283,
+    "risk_ratio": 1.322
+   },
+   "B1": {
+    "days": 312,
+    "ff_days": 4,
+    "risk": 0.0128,
+    "risk_ratio": 0.6
+   },
+   "C1": {
+    "days": 291,
+    "ff_days": 6,
+    "risk": 0.0206,
+    "risk_ratio": 0.965
+   },
+   "D1": {
+    "days": 400,
+    "ff_days": 1,
+    "risk": 0.0025,
+    "risk_ratio": 0.117
+   },
+   "A2": {
+    "days": 243,
+    "ff_days": 6,
+    "risk": 0.0247,
+    "risk_ratio": 1.155
+   },
+   "B2": {
+    "days": 203,
+    "ff_days": 4,
+    "risk": 0.0197,
+    "risk_ratio": 0.922
+   },
+   "C2": {
+    "days": 173,
+    "ff_days": 1,
+    "risk": 0.0058,
+    "risk_ratio": 0.27
+   },
+   "D2": {
+    "days": 260,
+    "ff_days": 4,
+    "risk": 0.0154,
+    "risk_ratio": 0.72
+   },
+   "A3": {
+    "days": 344,
+    "ff_days": 8,
+    "risk": 0.0233,
+    "risk_ratio": 1.088
+   },
+   "B3": {
+    "days": 216,
+    "ff_days": 5,
+    "risk": 0.0231,
+    "risk_ratio": 1.083
+   },
+   "C3": {
+    "days": 193,
+    "ff_days": 2,
+    "risk": 0.0104,
+    "risk_ratio": 0.485
+   },
+   "D3": {
+    "days": 286,
+    "ff_days": 1,
+    "risk": 0.0035,
+    "risk_ratio": 0.164
+   },
+   "A4": {
+    "days": 276,
+    "ff_days": 14,
+    "risk": 0.0507,
+    "risk_ratio": 2.373
+   },
+   "B4": {
+    "days": 184,
+    "ff_days": 2,
+    "risk": 0.0109,
+    "risk_ratio": 0.508
+   },
+   "C4": {
+    "days": 174,
+    "ff_days": 4,
+    "risk": 0.023,
+    "risk_ratio": 1.075
+   },
+   "D4": {
+    "days": 264,
+    "ff_days": 4,
+    "risk": 0.0152,
+    "risk_ratio": 0.709
+   },
+   "A5": {
+    "days": 428,
+    "ff_days": 23,
+    "risk": 0.0537,
+    "risk_ratio": 2.514
+   },
+   "B5": {
+    "days": 262,
+    "ff_days": 7,
+    "risk": 0.0267,
+    "risk_ratio": 1.25
+   },
+   "C5": {
+    "days": 229,
+    "ff_days": 5,
+    "risk": 0.0218,
+    "risk_ratio": 1.021
+   },
+   "D5": {
+    "days": 322,
+    "ff_days": 4,
+    "risk": 0.0124,
+    "risk_ratio": 0.581
+   }
+  },
+  "top_nodes": [
+   "A5",
+   "A4",
+   "A1"
+  ],
+  "max_risk_ratio": 2.514,
+  "n_nodes_without_ff": 0,
+  "every_node_has_ff": true
+ },
+ "ff_soms_2x2": {
+  "evsom": {
+   "n": 118,
+   "node_counts": {
+    "A1": 42,
+    "A2": 14,
+    "B1": 22,
+    "B2": 40
+   },
+   "node_shares": {
+    "A1": 0.356,
+    "A2": 0.119,
+    "B1": 0.186,
+    "B2": 0.339
+   },
+   "a1_plus_b2_share": 0.695,
+   "most_populated": [
+    "A1",
+    "B2"
+   ]
+  },
+  "static": {
+   "n": 118,
+   "node_counts": {
+    "A1": 37,
+    "A2": 21,
+    "B1": 21,
+    "B2": 39
+   },
+   "node_shares": {
+    "A1": 0.314,
+    "A2": 0.178,
+    "B1": 0.178,
+    "B2": 0.331
+   },
+   "a1_plus_b2_share": 0.644,
+   "most_populated": [
+    "B2",
+    "A1"
+   ]
+  },
+  "static_vs_evsom": {
+   "n_matched": 118,
+   "agreement": 0.805,
+   "ari": 0.594,
+   "contingency": {
+    "A1": {
+     "A1": 32,
+     "A2": 7,
+     "B1": 3,
+     "B2": 0
+    },
+    "A2": {
+     "A1": 0,
+     "A2": 13,
+     "B1": 0,
+     "B2": 1
+    },
+    "B1": {
+     "A1": 5,
+     "A2": 1,
+     "B1": 14,
+     "B2": 2
+    },
+    "B2": {
+     "A1": 0,
+     "A2": 0,
+     "B1": 4,
+     "B2": 36
+    }
+   }
+  }
+ },
+ "tc_association_evsom": {
+  "n": 118,
+  "n_tc": 19,
+  "frac": 0.161,
+  "per_node": {
+   "A1": {
+    "tc": 5,
+    "n": 42,
+    "frac": 0.119
+   },
+   "A2": {
+    "tc": 1,
+    "n": 14,
+    "frac": 0.071
+   },
+   "B1": {
+    "tc": 4,
+    "n": 22,
+    "frac": 0.182
+   },
+   "B2": {
+    "tc": 9,
+    "n": 40,
+    "frac": 0.225
+   }
+  },
+  "highest_node": "B2",
+  "chi2_p": 0.447,
+  "fisher_top_vs_rest_p": 0.194,
+  "n_tc_subtropical_only": 1,
+  "max_status_counts": {
+   "HU": 14,
+   "TS": 6,
+   "SD": 1
+  }
+ },
+ "figS8_precip": {
+  "stageiv": {
+   "n": 101,
+   "median_in": 1.339,
+   "node_n": {
+    "A1": 35,
+    "A2": 11,
+    "B1": 20,
+    "B2": 35
+   },
+   "node_median_in": {
+    "A1": 1.255,
+    "A2": 1.521,
+    "B1": 1.299,
+    "B2": 1.344
+   },
+   "frac_below_1in": 0.218,
+   "frac_at_or_above_1p75in": 0.198,
+   "kruskal_p": 0.525,
+   "mw_b1b2_vs_a1a2_p": 0.6043
+  },
+  "asos": {
+   "n": 117,
+   "median_in": 0.91,
+   "node_n": {
+    "A1": 42,
+    "A2": 14,
+    "B1": 22,
+    "B2": 39
+   },
+   "node_median_in": {
+    "A1": 0.795,
+    "A2": 0.69,
+    "B1": 1.07,
+    "B2": 0.95
+   },
+   "frac_below_1in": 0.564,
+   "frac_at_or_above_1p75in": 0.094,
+   "kruskal_p": 0.05,
+   "mw_b1b2_vs_a1a2_p": 0.0081
+  }
+ },
+ "fig4_stageiv_pmm": {
+  "A1": {
+   "n_with_data": 35,
+   "n_with_nyc_data": 35,
+   "nyc_mean_in": 0.37,
+   "nyc_max_in": 3.86,
+   "nyc_cells_ge_1in": 35,
+   "nyc_mean_in_regional_pool": 0.888,
+   "nyc_max_in_regional_pool": 5.0,
+   "regional_max_in": 5.0,
+   "regional_cells_ge_0p5in": 1138,
+   "regional_cells_ge_1in": 175
+  },
+  "A2": {
+   "n_with_data": 11,
+   "n_with_nyc_data": 11,
+   "nyc_mean_in": 0.309,
+   "nyc_max_in": 2.61,
+   "nyc_cells_ge_1in": 29,
+   "nyc_mean_in_regional_pool": 0.691,
+   "nyc_max_in_regional_pool": 3.83,
+   "regional_max_in": 3.83,
+   "regional_cells_ge_0p5in": 841,
+   "regional_cells_ge_1in": 148
+  },
+  "B1": {
+   "n_with_data": 20,
+   "n_with_nyc_data": 20,
+   "nyc_mean_in": 0.452,
+   "nyc_max_in": 2.64,
+   "nyc_cells_ge_1in": 54,
+   "nyc_mean_in_regional_pool": 0.86,
+   "nyc_max_in_regional_pool": 3.04,
+   "regional_max_in": 3.04,
+   "regional_cells_ge_0p5in": 2129,
+   "regional_cells_ge_1in": 340
+  },
+  "B2": {
+   "n_with_data": 35,
+   "n_with_nyc_data": 35,
+   "nyc_mean_in": 0.414,
+   "nyc_max_in": 3.49,
+   "nyc_cells_ge_1in": 47,
+   "nyc_mean_in_regional_pool": 0.955,
+   "nyc_max_in_regional_pool": 3.65,
+   "regional_max_in": 3.65,
+   "regional_cells_ge_0p5in": 1261,
+   "regional_cells_ge_1in": 226
+  }
+ },
+ "figS7_nyc_box": {
+  "ivt": {
+   "A1": 443.4,
+   "A2": 280.8,
+   "B1": 563.2,
+   "B2": 413.9
+  },
+  "tcwv": {
+   "A1": 41.8,
+   "A2": 37.6,
+   "B1": 51.0,
+   "B2": 49.8
+  }
+ },
+ "d3_moisture_forcing": {
+  "thetae850": {
+   "hourly_T0": {
+    "auc": 0.802,
+    "frac_ff_gt0": 0.907,
+    "frac_all_gt0": 0.489,
+    "frac_ff_gt1": 0.576,
+    "frac_all_gt1": 0.183,
+    "risk_ratio_gt1": 3.15,
+    "risk_ratio_gt1_ci95": [
+     2.48,
+     3.99
+    ]
+   },
+   "daily_utc": {
+    "auc": 0.74,
+    "frac_ff_gt0": 0.856,
+    "frac_all_gt0": 0.498,
+    "frac_ff_gt1": 0.407,
+    "frac_all_gt1": 0.155,
+    "risk_ratio_gt1": 2.63,
+    "risk_ratio_gt1_ci95": [
+     2.0,
+     3.45
+    ]
+   },
+   "daily_est": {
+    "auc": 0.757,
+    "frac_ff_gt0": 0.881,
+    "frac_all_gt0": 0.492,
+    "frac_ff_gt1": 0.424,
+    "frac_all_gt1": 0.157,
+    "risk_ratio_gt1": 2.69,
+    "risk_ratio_gt1_ci95": [
+     2.06,
+     3.51
+    ]
+   }
+  },
+  "tcwv": {
+   "hourly_T0": {
+    "auc": 0.853,
+    "frac_ff_gt0": 0.932,
+    "frac_all_gt0": 0.466,
+    "frac_ff_gt1": 0.737,
+    "frac_all_gt1": 0.189,
+    "risk_ratio_gt1": 3.9,
+    "risk_ratio_gt1_ci95": [
+     3.16,
+     4.81
+    ]
+   },
+   "daily_utc": {
+    "auc": 0.789,
+    "frac_ff_gt0": 0.873,
+    "frac_all_gt0": 0.479,
+    "frac_ff_gt1": 0.542,
+    "frac_all_gt1": 0.16,
+    "risk_ratio_gt1": 3.4,
+    "risk_ratio_gt1_ci95": [
+     2.68,
+     4.29
+    ]
+   },
+   "daily_est": {
+    "auc": 0.807,
+    "frac_ff_gt0": 0.924,
+    "frac_all_gt0": 0.473,
+    "frac_ff_gt1": 0.542,
+    "frac_all_gt1": 0.164,
+    "risk_ratio_gt1": 3.3,
+    "risk_ratio_gt1_ci95": [
+     2.6,
+     4.16
+    ]
+   }
+  },
+  "q850": {
+   "hourly_T0": {
+    "auc": 0.82,
+    "frac_ff_gt0": 0.932,
+    "frac_all_gt0": 0.486,
+    "frac_ff_gt1": 0.644,
+    "frac_all_gt1": 0.18,
+    "risk_ratio_gt1": 3.57,
+    "risk_ratio_gt1_ci95": [
+     2.86,
+     4.47
+    ]
+   },
+   "daily_utc": {
+    "auc": 0.752,
+    "frac_ff_gt0": 0.864,
+    "frac_all_gt0": 0.494,
+    "frac_ff_gt1": 0.373,
+    "frac_all_gt1": 0.142,
+    "risk_ratio_gt1": 2.63,
+    "risk_ratio_gt1_ci95": [
+     1.97,
+     3.49
+    ]
+   },
+   "daily_est": {
+    "auc": 0.771,
+    "frac_ff_gt0": 0.89,
+    "frac_all_gt0": 0.489,
+    "frac_ff_gt1": 0.39,
+    "frac_all_gt1": 0.147,
+    "risk_ratio_gt1": 2.66,
+    "risk_ratio_gt1_ci95": [
+     2.0,
+     3.5
+    ]
+   }
+  },
+  "z500_trough_T0": {
+   "hourly_T0": {
+    "auc": 0.662,
+    "frac_ff_gt0": 0.686,
+    "frac_all_gt0": 0.456,
+    "frac_ff_gt1": 0.339,
+    "frac_all_gt1": 0.15,
+    "risk_ratio_gt1": 2.25,
+    "risk_ratio_gt1_ci95": [
+     1.65,
+     3.07
+    ]
+   },
+   "daily_utc": {
+    "auc": 0.649,
+    "frac_ff_gt0": 0.653,
+    "frac_all_gt0": 0.458,
+    "frac_ff_gt1": 0.322,
+    "frac_all_gt1": 0.147,
+    "risk_ratio_gt1": 2.2,
+    "risk_ratio_gt1_ci95": [
+     1.61,
+     2.99
+    ]
+   },
+   "daily_est": {
+    "auc": 0.653,
+    "frac_ff_gt0": 0.661,
+    "frac_all_gt0": 0.458,
+    "frac_ff_gt1": 0.331,
+    "frac_all_gt1": 0.145,
+    "risk_ratio_gt1": 2.28,
+    "risk_ratio_gt1_ci95": [
+     1.67,
+     3.08
+    ]
+   }
+  },
+  "z500_trough_Tm12": {
+   "hourly_T0": {
+    "auc": 0.634,
+    "frac_ff_gt0": 0.653,
+    "frac_all_gt0": 0.452,
+    "frac_ff_gt1": 0.314,
+    "frac_all_gt1": 0.151,
+    "risk_ratio_gt1": 2.08,
+    "risk_ratio_gt1_ci95": [
+     1.51,
+     2.87
+    ]
+   },
+   "daily_utc": {
+    "auc": 0.639,
+    "frac_ff_gt0": 0.61,
+    "frac_all_gt0": 0.452,
+    "frac_ff_gt1": 0.331,
+    "frac_all_gt1": 0.149,
+    "risk_ratio_gt1": 2.22,
+    "risk_ratio_gt1_ci95": [
+     1.63,
+     3.01
+    ]
+   },
+   "daily_est": {
+    "auc": 0.643,
+    "frac_ff_gt0": 0.644,
+    "frac_all_gt0": 0.454,
+    "frac_ff_gt1": 0.331,
+    "frac_all_gt1": 0.147,
+    "risk_ratio_gt1": 2.25,
+    "risk_ratio_gt1_ci95": [
+     1.66,
+     3.05
+    ]
+   }
+  },
+  "z500_trough_T0_west5": {
+   "hourly_T0": {
+    "auc": 0.635,
+    "frac_ff_gt0": 0.636,
+    "frac_all_gt0": 0.453,
+    "frac_ff_gt1": 0.305,
+    "frac_all_gt1": 0.151,
+    "risk_ratio_gt1": 2.02,
+    "risk_ratio_gt1_ci95": [
+     1.46,
+     2.8
+    ]
+   },
+   "daily_utc": {
+    "auc": 0.638,
+    "frac_ff_gt0": 0.636,
+    "frac_all_gt0": 0.455,
+    "frac_ff_gt1": 0.347,
+    "frac_all_gt1": 0.147,
+    "risk_ratio_gt1": 2.37,
+    "risk_ratio_gt1_ci95": [
+     1.76,
+     3.18
+    ]
+   },
+   "daily_est": {
+    "auc": 0.641,
+    "frac_ff_gt0": 0.644,
+    "frac_all_gt0": 0.455,
+    "frac_ff_gt1": 0.347,
+    "frac_all_gt1": 0.148,
+    "risk_ratio_gt1": 2.35,
+    "risk_ratio_gt1_ci95": [
+     1.74,
+     3.15
+    ]
+   }
+  },
+  "z500_trough_T0_north4": {
+   "hourly_T0": {
+    "auc": 0.642,
+    "frac_ff_gt0": 0.636,
+    "frac_all_gt0": 0.46,
+    "frac_ff_gt1": 0.314,
+    "frac_all_gt1": 0.154,
+    "risk_ratio_gt1": 2.04,
+    "risk_ratio_gt1_ci95": [
+     1.48,
+     2.81
+    ]
+   },
+   "daily_utc": {
+    "auc": 0.636,
+    "frac_ff_gt0": 0.627,
+    "frac_all_gt0": 0.461,
+    "frac_ff_gt1": 0.288,
+    "frac_all_gt1": 0.149,
+    "risk_ratio_gt1": 1.93,
+    "risk_ratio_gt1_ci95": [
+     1.39,
+     2.68
+    ]
+   },
+   "daily_est": {
+    "auc": 0.644,
+    "frac_ff_gt0": 0.644,
+    "frac_all_gt0": 0.466,
+    "frac_ff_gt1": 0.314,
+    "frac_all_gt1": 0.149,
+    "risk_ratio_gt1": 2.1,
+    "risk_ratio_gt1_ci95": [
+     1.53,
+     2.86
+    ]
+   }
+  },
+  "z500_trough_T0_small": {
+   "hourly_T0": {
+    "auc": 0.664,
+    "frac_ff_gt0": 0.678,
+    "frac_all_gt0": 0.452,
+    "frac_ff_gt1": 0.339,
+    "frac_all_gt1": 0.156,
+    "risk_ratio_gt1": 2.17,
+    "risk_ratio_gt1_ci95": [
+     1.6,
+     2.96
+    ]
+   },
+   "daily_utc": {
+    "auc": 0.65,
+    "frac_ff_gt0": 0.653,
+    "frac_all_gt0": 0.454,
+    "frac_ff_gt1": 0.331,
+    "frac_all_gt1": 0.153,
+    "risk_ratio_gt1": 2.16,
+    "risk_ratio_gt1_ci95": [
+     1.59,
+     2.92
+    ]
+   },
+   "daily_est": {
+    "auc": 0.655,
+    "frac_ff_gt0": 0.653,
+    "frac_all_gt0": 0.456,
+    "frac_ff_gt1": 0.339,
+    "frac_all_gt1": 0.152,
+    "risk_ratio_gt1": 2.23,
+    "risk_ratio_gt1_ci95": [
+     1.65,
+     3.0
+    ]
+   }
+  },
+  "z500_trough_T0_large": {
+   "hourly_T0": {
+    "auc": 0.647,
+    "frac_ff_gt0": 0.686,
+    "frac_all_gt0": 0.464,
+    "frac_ff_gt1": 0.271,
+    "frac_all_gt1": 0.125,
+    "risk_ratio_gt1": 2.17,
+    "risk_ratio_gt1_ci95": [
+     1.54,
+     3.07
+    ]
+   },
+   "daily_utc": {
+    "auc": 0.641,
+    "frac_ff_gt0": 0.636,
+    "frac_all_gt0": 0.464,
+    "frac_ff_gt1": 0.254,
+    "frac_all_gt1": 0.119,
+    "risk_ratio_gt1": 2.14,
+    "risk_ratio_gt1_ci95": [
+     1.5,
+     3.01
+    ]
+   },
+   "daily_est": {
+    "auc": 0.643,
+    "frac_ff_gt0": 0.653,
+    "frac_all_gt0": 0.466,
+    "frac_ff_gt1": 0.288,
+    "frac_all_gt1": 0.12,
+    "risk_ratio_gt1": 2.4,
+    "risk_ratio_gt1_ci95": [
+     1.73,
+     3.31
+    ]
+   }
+  },
+  "z500_prelim": {
+   "hourly_T0": {
+    "auc": 0.652,
+    "frac_ff_gt0": 0.653,
+    "frac_all_gt0": 0.46,
+    "frac_ff_gt1": 0.331,
+    "frac_all_gt1": 0.15,
+    "risk_ratio_gt1": 2.2,
+    "risk_ratio_gt1_ci95": [
+     1.61,
+     3.01
+    ]
+   },
+   "daily_utc": {
+    "auc": 0.633,
+    "frac_ff_gt0": 0.619,
+    "frac_all_gt0": 0.46,
+    "frac_ff_gt1": 0.28,
+    "frac_all_gt1": 0.147,
+    "risk_ratio_gt1": 1.91,
+    "risk_ratio_gt1_ci95": [
+     1.36,
+     2.65
+    ]
+   },
+   "daily_est": {
+    "auc": 0.643,
+    "frac_ff_gt0": 0.627,
+    "frac_all_gt0": 0.461,
+    "frac_ff_gt1": 0.331,
+    "frac_all_gt1": 0.146,
+    "risk_ratio_gt1": 2.27,
+    "risk_ratio_gt1_ci95": [
+     1.67,
+     3.06
+    ]
+   }
+  },
+  "joint_thetae_vs_trough": {
+   "moist_and_trough": {
+    "frac_ff": 0.525,
+    "frac_all": 0.188,
+    "risk_ratio": 2.789
+   },
+   "moist_no_trough": {
+    "frac_ff": 0.331,
+    "frac_all": 0.31,
+    "risk_ratio": 1.068
+   },
+   "dry_and_trough": {
+    "frac_ff": 0.127,
+    "frac_all": 0.27,
+    "risk_ratio": 0.471
+   },
+   "dry_no_trough": {
+    "frac_ff": 0.017,
+    "frac_all": 0.232,
+    "risk_ratio": 0.073
+   }
+  }
+ },
+ "d4_extreme_days": {
+  "definition": {
+   "wet_mm": 0.254,
+   "percentile": 99.0,
+   "window_h": 6,
+   "nyc_box_stageiv": {
+    "lat_min": 40.5,
+    "lat_max": 40.9,
+    "lon_min": -74.3,
+    "lon_max": -73.7
+   },
+   "asos_stations": "JFK, LGA, Central Park, EWR",
+   "stageiv_min_valid_hours_per_day": 22
+  },
+  "asos_utc_day_year_round": {
+   "pct_daily_extreme": [
+    25.423728813559322,
+    18.42811574287123,
+    33.969095061977015
+   ],
+   "pct_hourly_extreme": [
+    76.27118644067797,
+    67.84359988333908,
+    83.04214029078862
+   ],
+   "pct_hourly_not_daily": [
+    52.54237288135594,
+    43.59506697056783,
+    61.32935949789615
+   ],
+   "pct_neither": [
+    22.033898305084744,
+    15.503376394311625,
+    30.327932452584665
+   ],
+   "hit_rate_daily": [
+    58.82352941176471,
+    45.16509274741746,
+    71.24580700751311
+   ],
+   "hit_rate_hourly": [
+    25.519287833827892,
+    21.15853696903562,
+    30.431879224292896
+   ],
+   "pct_below_25p4": [
+    56.779661016949156,
+    47.76703089507045,
+    65.36477302083348
+   ],
+   "pct_at_or_above_44p45": [
+    9.322033898305085,
+    5.2851055573988575,
+    15.92407094717757
+   ],
+   "q_max_rate_mm_h": {
+    "Q10": 8.559800000000001,
+    "Q50": 22.987000000000002,
+    "Q75": 31.368999999999996,
+    "Q95": 49.225199999999965,
+    "Q99": 72.07249999999998,
+    "n": 118
+   },
+   "q_daily_total_mm": {
+    "Q10": 12.573,
+    "Q50": 38.989000000000004,
+    "Q75": 61.467999999999996,
+    "Q95": 100.31729999999997,
+    "Q99": 193.19493999999997,
+    "n": 118
+   },
+   "threshold_daily_mm": {
+    "median": 60.39103999999999,
+    "min": 59.61379999999972,
+    "max": 63.06820000000004
+   },
+   "threshold_hourly_mm": {
+    "median": 14.350999999999999,
+    "min": 13.716,
+    "max": 14.477999999999998
+   },
+   "n_events": 118
+  },
+  "asos_utc_day_may_oct": {
+   "pct_daily_extreme": [
+    21.1864406779661,
+    14.782423635341962,
+    29.407409722066337
+   ],
+   "pct_hourly_extreme": [
+    62.71186440677966,
+    53.715171836931844,
+    70.90696050538803
+   ],
+   "pct_hourly_not_daily": [
+    44.91525423728814,
+    36.241878244216366,
+    53.90926881885568
+   ],
+   "pct_neither": [
+    33.89830508474576,
+    25.98535833447239,
+    42.82660736525577
+   ],
+   "hit_rate_daily": [
+    64.1025641025641,
+    48.4178631846895,
+    77.2581153035089
+   ],
+   "hit_rate_hourly": [
+    37.055837563451774,
+    30.61947333334552,
+    43.98738102352078
+   ],
+   "pct_below_25p4": [
+    56.779661016949156,
+    47.76703089507045,
+    65.36477302083348
+   ],
+   "pct_at_or_above_44p45": [
+    9.322033898305085,
+    5.2851055573988575,
+    15.92407094717757
+   ],
+   "q_max_rate_mm_h": {
+    "Q10": 8.559800000000001,
+    "Q50": 22.987000000000002,
+    "Q75": 31.368999999999996,
+    "Q95": 49.225199999999965,
+    "Q99": 72.07249999999998,
+    "n": 118
+   },
+   "q_daily_total_mm": {
+    "Q10": 12.573,
+    "Q50": 38.989000000000004,
+    "Q75": 61.467999999999996,
+    "Q95": 100.31729999999997,
+    "Q99": 193.19493999999997,
+    "n": 118
+   },
+   "threshold_daily_mm": {
+    "median": 67.10044999999995,
+    "min": 64.38645999999989,
+    "max": 68.92543999999991
+   },
+   "threshold_hourly_mm": {
+    "median": 19.477989999999984,
+    "min": 18.287999999999997,
+    "max": 19.822159999999993
+   },
+   "n_events": 118
+  },
+  "asos_utc_day_year_round_PRE_TZ_FIX": {
+   "pct_daily_extreme": [
+    23.728813559322035,
+    16.957859709211366,
+    32.15640011666092
+   ],
+   "pct_hourly_extreme": [
+    67.79661016949152,
+    58.91969346280296,
+    75.55129181644486
+   ],
+   "pct_hourly_not_daily": [
+    46.61016949152542,
+    37.85856310359922,
+    55.5755349384488
+   ],
+   "pct_neither": [
+    29.66101694915254,
+    22.166449745305883,
+    38.43813850698232
+   ],
+   "hit_rate_daily": [
+    52.83018867924528,
+    39.65985230075645,
+    65.61797239101857
+   ],
+   "hit_rate_hourly": [
+    25.076452599388375,
+    20.686130401291543,
+    30.04557927487978
+   ],
+   "pct_below_25p4": [
+    57.6271186440678,
+    48.60897932482683,
+    66.16430008056511
+   ],
+   "pct_at_or_above_44p45": [
+    9.322033898305085,
+    5.2851055573988575,
+    15.92407094717757
+   ],
+   "q_max_rate_mm_h": {
+    "Q10": 5.334,
+    "Q50": 22.479,
+    "Q75": 30.797499999999996,
+    "Q95": 49.225199999999965,
+    "Q99": 72.07249999999998,
+    "n": 118
+   },
+   "q_daily_total_mm": {
+    "Q10": 5.8420000000000005,
+    "Q50": 38.354,
+    "Q75": 58.039,
+    "Q95": 104.48289999999997,
+    "Q99": 203.39049999999997,
+    "n": 118
+   },
+   "threshold_daily_mm": {
+    "median": 63.930529999999976,
+    "min": 59.42329999999995,
+    "max": 66.88073999999999
+   },
+   "threshold_hourly_mm": {
+    "median": 14.350999999999999,
+    "min": 13.716,
+    "max": 14.477999999999998
+   },
+   "n_events": 118
+  },
+  "asos_est_day_year_round": {
+   "pct_daily_extreme": [
+    23.728813559322035,
+    16.957859709211366,
+    32.15640011666092
+   ],
+   "pct_hourly_extreme": [
+    76.27118644067797,
+    67.84359988333908,
+    83.04214029078862
+   ],
+   "pct_hourly_not_daily": [
+    53.38983050847458,
+    44.42446506155119,
+    62.14143689640078
+   ],
+   "pct_neither": [
+    22.88135593220339,
+    16.228575133845904,
+    31.244209202538375
+   ],
+   "hit_rate_daily": [
+    52.83018867924528,
+    39.65985230075645,
+    65.61797239101857
+   ],
+   "hit_rate_hourly": [
+    28.134556574923547,
+    23.53644137244081,
+    33.24045730051931
+   ],
+   "pct_below_25p4": [
+    56.779661016949156,
+    47.76703089507045,
+    65.36477302083348
+   ],
+   "pct_at_or_above_44p45": [
+    9.322033898305085,
+    5.2851055573988575,
+    15.92407094717757
+   ],
+   "q_max_rate_mm_h": {
+    "Q10": 8.559800000000001,
+    "Q50": 22.987000000000002,
+    "Q75": 31.368999999999996,
+    "Q95": 49.225199999999965,
+    "Q99": 72.07249999999998,
+    "n": 118
+   },
+   "q_daily_total_mm": {
+    "Q10": 16.002,
+    "Q50": 40.004999999999995,
+    "Q75": 59.4995,
+    "Q95": 107.41659999999995,
+    "Q99": 203.39049999999997,
+    "n": 118
+   },
+   "threshold_daily_mm": {
+    "median": 63.921639999999954,
+    "min": 59.42837999999994,
+    "max": 67.056
+   },
+   "threshold_hourly_mm": {
+    "median": 14.350999999999999,
+    "min": 13.716,
+    "max": 14.477999999999998
+   },
+   "n_events": 118
+  },
+  "asos_est_day_may_oct": {
+   "pct_daily_extreme": [
+    14.40677966101695,
+    9.193471746292616,
+    21.86455769521176
+   ],
+   "pct_hourly_extreme": [
+    62.71186440677966,
+    53.715171836931844,
+    70.90696050538803
+   ],
+   "pct_hourly_not_daily": [
+    50.847457627118644,
+    41.943704288165534,
+    59.69777120132246
+   ],
+   "pct_neither": [
+    34.74576271186441,
+    26.758053177522008,
+    43.695388011694156
+   ],
+   "hit_rate_daily": [
+    51.515151515151516,
+    35.218104586210245,
+    67.49621835307578
+   ],
+   "hit_rate_hourly": [
+    40.0,
+    33.3810710052438,
+    47.0053270120725
+   ],
+   "pct_below_25p4": [
+    56.779661016949156,
+    47.76703089507045,
+    65.36477302083348
+   ],
+   "pct_at_or_above_44p45": [
+    9.322033898305085,
+    5.2851055573988575,
+    15.92407094717757
+   ],
+   "q_max_rate_mm_h": {
+    "Q10": 8.559800000000001,
+    "Q50": 22.987000000000002,
+    "Q75": 31.368999999999996,
+    "Q95": 49.225199999999965,
+    "Q99": 72.07249999999998,
+    "n": 118
+   },
+   "q_daily_total_mm": {
+    "Q10": 16.002,
+    "Q50": 40.004999999999995,
+    "Q75": 59.4995,
+    "Q95": 107.41659999999995,
+    "Q99": 203.39049999999997,
+    "n": 118
+   },
+   "threshold_daily_mm": {
+    "median": 74.43215999999998,
+    "min": 67.5767000000001,
+    "max": 77.50302000000002
+   },
+   "threshold_hourly_mm": {
+    "median": 19.477989999999984,
+    "min": 18.287999999999997,
+    "max": 19.822159999999993
+   },
+   "n_events": 118
+  },
+  "asos_est_day_year_round_PRE_TZ_FIX": {
+   "pct_daily_extreme": [
+    21.1864406779661,
+    14.782423635341962,
+    29.407409722066337
+   ],
+   "pct_hourly_extreme": [
+    67.79661016949152,
+    58.91969346280296,
+    75.55129181644486
+   ],
+   "pct_hourly_not_daily": [
+    48.30508474576271,
+    39.48519746023298,
+    57.23185156079103
+   ],
+   "pct_neither": [
+    30.508474576271187,
+    22.924088369362032,
+    39.32197537241417
+   ],
+   "hit_rate_daily": [
+    48.07692307692308,
+    35.10389470288445,
+    61.31454602947278
+   ],
+   "hit_rate_hourly": [
+    26.911314984709477,
+    22.392880802691508,
+    31.965942271553093
+   ],
+   "pct_below_25p4": [
+    57.6271186440678,
+    48.60897932482683,
+    66.16430008056511
+   ],
+   "pct_at_or_above_44p45": [
+    9.322033898305085,
+    5.2851055573988575,
+    15.92407094717757
+   ],
+   "q_max_rate_mm_h": {
+    "Q10": 5.334,
+    "Q50": 22.479,
+    "Q75": 30.797499999999996,
+    "Q95": 49.225199999999965,
+    "Q99": 72.07249999999998,
+    "n": 118
+   },
+   "q_daily_total_mm": {
+    "Q10": 15.925799999999999,
+    "Q50": 38.861999999999995,
+    "Q75": 56.5785,
+    "Q95": 105.51159999999992,
+    "Q99": 146.66722,
+    "n": 118
+   },
+   "threshold_daily_mm": {
+    "median": 61.34607999999999,
+    "min": 59.72047999999974,
+    "max": 66.294
+   },
+   "threshold_hourly_mm": {
+    "median": 14.350999999999999,
+    "min": 13.716,
+    "max": 14.477999999999998
+   },
+   "n_events": 118
+  },
+  "stageiv_utc_day_may_oct": {
+   "pct_daily_extreme": [
+    46.0,
+    36.56064385333187,
+    55.73531460647615
+   ],
+   "pct_hourly_extreme": [
+    94.0,
+    87.52303146877748,
+    97.22142547333434
+   ],
+   "pct_hourly_not_daily": [
+    51.0,
+    41.34784047743415,
+    60.578169907613855
+   ],
+   "pct_neither": [
+    3.0,
+    1.0254338223414816,
+    8.452078080402698
+   ],
+   "hit_rate_daily": [
+    41.07142857142857,
+    32.40369028320017,
+    50.33135481286204
+   ],
+   "hit_rate_hourly": [
+    19.43844492440605,
+    16.091370232300903,
+    23.288496514792765
+   ],
+   "pct_below_25p4": [
+    22.0,
+    15.001174503655804,
+    31.07053471500031
+   ],
+   "pct_at_or_above_44p45": [
+    20.0,
+    13.33659225590988,
+    28.883096192650235
+   ],
+   "q_max_rate_mm_h": {
+    "Q10": 20.066999244689942,
+    "Q50": 34.0,
+    "Q75": 42.891249656677246,
+    "Q95": 59.76750106811522,
+    "Q99": 78.2012500000001,
+    "n": 100
+   },
+   "q_daily_total_mm": {
+    "Q10": 31.1375,
+    "Q50": 58.95250129699707,
+    "Q75": 84.07999992370605,
+    "Q95": 142.30850372314453,
+    "Q99": 216.5317921447759,
+    "n": 100
+   },
+   "threshold_daily_mm": {
+    "median": 60.47679901123047,
+    "min": 54.03960037231445,
+    "max": 73.789794921875
+   },
+   "threshold_hourly_mm": {
+    "median": 17.25,
+    "min": 14.5,
+    "max": 22.945999145507812
+   },
+   "n_events": 100
+  },
+  "stageiv_utc_day_may_oct_BOXMEAN": {
+   "pct_daily_extreme": [
+    9.0,
+    4.807199516388487,
+    16.226374696643667
+   ],
+   "pct_hourly_extreme": [
+    23.0,
+    15.843154746876406,
+    32.1545648568277
+   ],
+   "pct_hourly_not_daily": [
+    16.0,
+    10.095202349473716,
+    24.420444558894413
+   ],
+   "pct_neither": [
+    75.0,
+    65.69535362992417,
+    82.45490599627573
+   ],
+   "hit_rate_daily": [
+    45.0,
+    25.819502085709296,
+    65.79179916924002
+   ],
+   "hit_rate_hourly": [
+    42.857142857142854,
+    30.768762413092922,
+    55.86261107959444
+   ],
+   "threshold_daily_mm": {
+    "median": 53.609169006347656,
+    "min": 53.609169006347656,
+    "max": 53.609169006347656
+   },
+   "threshold_hourly_mm": {
+    "median": 10.728964805603027,
+    "min": 10.728964805603027,
+    "max": 10.728964805603027
+   },
+   "n_events": 100
+  },
+  "stageiv_est_day_may_oct": {
+   "pct_daily_extreme": [
+    37.0,
+    28.18221256950916,
+    46.77965242486689
+   ],
+   "pct_hourly_extreme": [
+    94.0,
+    87.52303146877748,
+    97.22142547333434
+   ],
+   "pct_hourly_not_daily": [
+    59.0,
+    49.20125056109662,
+    68.13284290433533
+   ],
+   "pct_neither": [
+    4.0,
+    1.5663050551848017,
+    9.837217232607372
+   ],
+   "hit_rate_daily": [
+    42.04545454545455,
+    32.27692599918905,
+    52.47943713037317
+   ],
+   "hit_rate_hourly": [
+    20.92511013215859,
+    17.435015031591657,
+    24.90312112728949
+   ],
+   "pct_below_25p4": [
+    22.0,
+    15.001174503655804,
+    31.07053471500031
+   ],
+   "pct_at_or_above_44p45": [
+    20.0,
+    13.33659225590988,
+    28.883096192650235
+   ],
+   "q_max_rate_mm_h": {
+    "Q10": 20.066999244689942,
+    "Q50": 34.0,
+    "Q75": 42.891249656677246,
+    "Q95": 59.76750106811522,
+    "Q99": 78.2012500000001,
+    "n": 100
+   },
+   "q_daily_total_mm": {
+    "Q10": 33.13600196838379,
+    "Q50": 59.790000915527344,
+    "Q75": 82.91749954223633,
+    "Q95": 127.74449653625483,
+    "Q99": 265.5281250000001,
+    "n": 100
+   },
+   "threshold_daily_mm": {
+    "median": 66.48719787597656,
+    "min": 56.369197845458984,
+    "max": 81.25270080566406
+   },
+   "threshold_hourly_mm": {
+    "median": 17.25,
+    "min": 14.5,
+    "max": 22.945999145507812
+   },
+   "n_events": 100
+  },
+  "stageiv_est_day_may_oct_BOXMEAN": {
+   "pct_daily_extreme": [
+    7.000000000000001,
+    3.4318824364064096,
+    13.749671006529757
+   ],
+   "pct_hourly_extreme": [
+    23.0,
+    15.843154746876406,
+    32.1545648568277
+   ],
+   "pct_hourly_not_daily": [
+    18.0,
+    11.700131654251038,
+    26.667536024213085
+   ],
+   "pct_neither": [
+    75.0,
+    65.69535362992417,
+    82.45490599627573
+   ],
+   "hit_rate_daily": [
+    36.84210526315789,
+    19.149272376273842,
+    58.96084250184328
+   ],
+   "hit_rate_hourly": [
+    42.857142857142854,
+    30.768762413092922,
+    55.86261107959444
+   ],
+   "threshold_daily_mm": {
+    "median": 56.32386016845703,
+    "min": 56.32386016845703,
+    "max": 56.32386016845703
+   },
+   "threshold_hourly_mm": {
+    "median": 10.728964805603027,
+    "min": 10.728964805603027,
+    "max": 10.728964805603027
+   },
+   "n_events": 100
+  }
+ }
+}

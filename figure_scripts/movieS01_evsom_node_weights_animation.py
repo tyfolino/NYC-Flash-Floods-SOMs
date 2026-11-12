@@ -22,16 +22,15 @@ import matplotlib.pyplot as plt
 import numpy as np
 from PIL import Image
 
-from som_analysis.config import setup_plotting
+from som_analysis.config import FIGS_DIR, MOVIES_DIR, setup_plotting
 from som_analysis.helpers import add_map_features, node_label
 
 # ── Paths ─────────────────────────────────────────────────────────────────────
-OUT_DIR = os.path.join(os.path.dirname(os.path.dirname(__file__)), "movies", "movieS01")
+OUT_DIR = os.path.join(MOVIES_DIR, "movieS01")
 os.makedirs(OUT_DIR, exist_ok=True)
 
 CACHE_PATH = os.path.join(
-    os.path.dirname(os.path.dirname(__file__)),
-    "figs",
+    FIGS_DIR,
     "Z500-and-thetae-evSOM-24h",
     ".cache",
     "som_results.npz",
