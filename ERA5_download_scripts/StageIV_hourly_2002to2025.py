@@ -7,7 +7,7 @@ import requests
 years = list(range(2002, 2026))
 # months = ["05", "06", "07", "08", "09", "10"]
 months = ["01", "02", "03", "04", "11", "12"]
-base_outdir = "/mnt/drive2/janoski/StageIV"
+base_outdir = "/mnt/drive2/StageIV"
 tmp_dir = os.path.join(base_outdir, "tmp")
 # NOTE: the old host data.rda.ucar.edu now serves an expired self-signed cert
 # (gridftp04.ucar.edu) after the RDA->GDEX migration, causing SSL verify errors.
