@@ -1,0 +1,13 @@
+Draft caption (pathways figure, 48-h evSOM; results/phase2/h48/pathways_h48.png/.pdf)
+
+Day-to-day evolution of flash-flood events through the all-days 5×3 SOM over the
+48-h evSOM window, by evSOM node (A1, B1, A2, B2). Each panel is the all-days SOM
+grid (row A moist → row C dry; column 1 ridge → column 5 Midwest trough), shaded by
+node flash-flood risk relative to climatology; black outlines mark nodes with risk
+≥ 2× (A4, A5). Arrows show moves between all-days nodes on consecutive UTC days made
+by ≥ 2 events (light blue d−2 → d−1, dark blue d−1 → d0; width ∝ number of events);
+gray lines show moves made by a single event. Red rings give the number of events in
+each node on the UTC day of onset (d0). Because both SOMs are trained on Z500 and
+850-hPa θe, the paths within the window differ partly by construction; the figure
+illustrates how each evSOM archetype evolves rather than providing independent
+evidence for the grouping.

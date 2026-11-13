@@ -72,14 +72,14 @@ _X_CACHE: dict = {}
 # ── Data ──────────────────────────────────────────────────────────────────────
 
 
-def load_X(kind, inter="v1"):
+def load_X(kind, inter="v1", hours=24):
     """Training matrix for a SOM kind, exactly as the training scripts build it.
 
     inter: "v1" (published intermediates) or "v2" (month-day, smoothed-mean
-    climatology).
+    climatology). hours: evSOM window length (24 = the published files).
     """
-    if (kind, inter) in _X_CACHE:
-        return _X_CACHE[(kind, inter)]
+    if (kind, inter, hours) in _X_CACHE:
+        return _X_CACHE[(kind, inter, hours)]
     P = INTER[inter]
     if kind == "static":
         m = load_moist_var(f"{P}era5_thetae_norm_weighted_ffe.nc", CFG["var_name"])
@@ -92,10 +92,11 @@ def load_X(kind, inter="v1"):
             axis=1,
         )
     elif kind == "evsom":
+        suf = "" if hours == 24 else f"{hours}h"
         m = load_moist_var(
-            f"{P}era5_thetae_norm_weighted_ffe_evsom.nc", CFG["var_name"]
+            f"{P}era5_thetae_norm_weighted_ffe_evsom{suf}.nc", CFG["var_name"]
         )
-        z = xr.load_dataarray(f"{P}era5_Z500_norm_weighted_ffe_evsom.nc")
+        z = xr.load_dataarray(f"{P}era5_Z500_norm_weighted_ffe_evsom{suf}.nc")
         n = z.sizes["event_time"]
         X = np.concatenate((z.values.reshape(n, -1), m.values.reshape(n, -1)), axis=1)
     elif kind == "alldays":
@@ -110,7 +111,7 @@ def load_X(kind, inter="v1"):
         )
     else:
         raise ValueError(kind)
-    _X_CACHE[(kind, inter)] = X
+    _X_CACHE[(kind, inter, hours)] = X
     return X
 
 
@@ -153,6 +154,7 @@ DEFAULTS = dict(
     inter="v1",
     xdim=None,
     ydim=None,
+    hours=24,
 )
 
 
@@ -180,7 +182,7 @@ def train_one(c):
     t0 = time.time()
     c = full(c)
     kind = c["kind"]
-    X = load_X(kind, c["inter"])
+    X = load_X(kind, c["inter"], c["hours"])
     p = PUBLISHED[kind]
     xdim = p["xdim"] if c["xdim"] is None else c["xdim"]
     ydim = p["ydim"] if c["ydim"] is None else c["ydim"]
@@ -408,6 +410,27 @@ def stage4_configs(grid=(5, 4), n_seeds=30, length_alldays=5):
     return cfgs
 
 
+def stage5_configs(n_seeds=30, windows=(48, 72)):
+    """Phase 2 (D1): evSOM window length. 2x2 evSOMs on 48- and 72-h windows
+    with the stage-3b evSOM settings (lr 0.5 -> 0.02, 5x length, Gaussian
+    sigma2=1, rectangular, random init, v2); the 24-h ensemble is stage 3b's."""
+    cfgs = [
+        {
+            **FINAL,
+            "kind": "evsom",
+            "length": 5,
+            "lr1": 0.5,
+            "lr2": 0.02,
+            "hours": h,
+            "seed": seed,
+        }
+        for h in windows
+        for seed in range(n_seeds)
+    ]
+    cfgs.sort(key=lambda c: -c["hours"])
+    return cfgs
+
+
 def grid_edges(xdim, ydim):
     """Rook-neighbour edges of a rectangular grid (flat index i * ydim + j)."""
     e = []
@@ -564,7 +587,7 @@ def main():
     ap.add_argument("--workers", type=int, default=16)
     ap.add_argument("--summarize", action="store_true")
     ap.add_argument("--grid", default="5x4", help="stage 4: all-days grid, e.g. 6x4")
-    ap.add_argument("--seeds", type=int, default=30, help="stage 4: ensemble size")
+    ap.add_argument("--seeds", type=int, default=30, help="stages 4-5: ensemble size")
     args = ap.parse_args()
 
     if args.summarize:
@@ -580,6 +603,8 @@ def main():
         cfgs = stage2_configs()
     elif args.stage == 3:
         cfgs = stage3_configs()
+    elif args.stage == 5:
+        cfgs = stage5_configs(n_seeds=args.seeds)
     else:
         grid = tuple(int(v) for v in args.grid.lower().split("x"))
         cfgs = stage4_configs(grid=grid, n_seeds=args.seeds)

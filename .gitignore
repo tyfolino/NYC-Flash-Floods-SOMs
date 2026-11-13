@@ -26,3 +26,7 @@ fetch_asos_update.py
 
 # Manuscript, reviews and revision notes (confidential)
 docs/
+
+# Exploratory figure drafts and run logs
+results/**/drafts/
+results/**/*.log
