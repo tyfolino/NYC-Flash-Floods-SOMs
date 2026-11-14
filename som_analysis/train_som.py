@@ -22,7 +22,13 @@ from sklearn.metrics import pairwise_distances
 
 from .config import MOISTURE_CONFIGS, SOM_INTERMEDIATE_PATH, get_paths
 from .helpers import assert_same_times, load_moist_var, node_label, sammon_map, u_matrix
-from .training import add_training_args, config_json, train_two_phase
+from .training import (
+    add_orient_args,
+    add_training_args,
+    apply_orientation,
+    config_json,
+    train_two_phase,
+)
 
 
 def parse_args():
@@ -82,6 +88,7 @@ def parse_args():
         help="SOM grid topology (default: rectangular).",
     )
     add_training_args(parser, n1=1000, n2=1000, lr1=0.5, lr2=0.1, topology=False)
+    add_orient_args(parser)
     return parser.parse_args()
 
 
@@ -131,6 +138,7 @@ def main():
     # ── Extract results ───────────────────────────────────────────────────────
     weights = som.get_weights().reshape(xdim * ydim, -1)
     bmus = np.array([som.winner(x) for x in X])
+    weights, bmus, orientation = apply_orientation(args, weights, bmus, xdim, ydim)
 
     # Spatial dimensions
     lat = moist_norm_ffe[cfg["lat_dim"]]
@@ -209,7 +217,7 @@ def main():
         u_matrix=u_mat,
         hit_map=hit_map,
         coords=coords,
-        train_config=config_json(train_cfg),
+        train_config=config_json(train_cfg, orientation=orientation),
     )
     print(f"Saved SOM arrays to {cache_dir}/som_results.npz")
 

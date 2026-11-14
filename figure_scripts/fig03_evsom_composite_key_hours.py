@@ -3,8 +3,9 @@ Figure 3 — evSOM Raw Mean Composites at Key Hours
 
 4-row × 4-column layout.
 Rows  : SOM nodes A1, A2, B1, B2.
-Cols  : T−18h, T−12h, T−6h, T=0 (6-hourly, equally spaced within 24h window).
-Style : mean Z500 in dam (contoured) + mean 850-hPa θe in K (shaded),
+Cols  : four equally spaced hours ending at T=0 (24-h window: T−18h, T−12h,
+        T−6h, T=0; 48-h window: T−36h, T−24h, T−12h, T=0).
+Style : mean Z500 in m (contoured) + mean 850-hPa θe in K (shaded),
         composited over events assigned to each node.
 
 Node labels appear outside upper-left of the leftmost panel in each row.
@@ -23,9 +24,11 @@ import numpy as np
 import xarray as xr
 
 from som_analysis.config import (
+    EVSOM_HOURS,
     FIGS_DIR,
     FIGURES_DIR,
     SOM_INTERMEDIATE_PATH,
+    evsom_suffix,
     setup_plotting,
 )
 from som_analysis.helpers import add_map_features, node_label
@@ -36,12 +39,12 @@ os.makedirs(OUT_DIR, exist_ok=True)
 
 CACHE_PATH = os.path.join(
     FIGS_DIR,
-    "Z500-and-thetae-evSOM-24h",
+    f"Z500-and-thetae-evSOM-{EVSOM_HOURS}h",
     ".cache",
     "som_results.npz",
 )
-Z500_PATH = f"{SOM_INTERMEDIATE_PATH}era5_Z500_ffe_evsom.nc"
-THETAE_PATH = f"{SOM_INTERMEDIATE_PATH}era5_thetae_ffe_evsom.nc"
+Z500_PATH = f"{SOM_INTERMEDIATE_PATH}era5_Z500{evsom_suffix(EVSOM_HOURS)}"
+THETAE_PATH = f"{SOM_INTERMEDIATE_PATH}era5_thetae{evsom_suffix(EVSOM_HOURS)}"
 
 # ── Figure / SOM parameters ───────────────────────────────────────────────────
 XDIM, YDIM = 2, 2
@@ -49,13 +52,17 @@ FIG_WIDTH = 7.0
 FIG_HEIGHT = 4.2
 DPI_RASTER = 300
 
-# Key hours and their hour_offset coordinate values
-KEY_OFFSETS = [-18, -12, -6, 0]
-KEY_LABELS = [r"T$-$18h", r"T$-$12h", r"T$-$6h", r"T$=$0"]
+# Four equally spaced key hours ending at T=0 (24 h: T-18, -12, -6, 0;
+# 48 h: T-36, -24, -12, 0).
+_STEP = EVSOM_HOURS // 4
+KEY_HOURS = [-3 * _STEP, -2 * _STEP, -_STEP, 0]
+KEY_LABELS = [rf"T$-${-h}h" for h in KEY_HOURS[:-1]] + [r"T$=$0"]
+KEY_OFFSETS = KEY_HOURS
 
 # Contour levels for raw fields
 LEVELS_THETAE = np.arange(295, 341, 5)  # K
-LEVELS_Z = range(549, 598, 2)  # dam
+LEVELS_Z = range(5490, 5980, 20)  # m
+G0 = 9.80665  # standard gravity (m s⁻²): geopotential → height
 
 # Node traversal order: A1, A2, B1, B2
 NODE_ORDER = [(i, j) for j in range(YDIM) for i in range(XDIM)]
@@ -114,7 +121,7 @@ def main():
                 .sel(hour_offset=hr)
                 .mean("event_time")
                 .values
-                / 98.1
+                / G0
             )
 
             # θe shaded

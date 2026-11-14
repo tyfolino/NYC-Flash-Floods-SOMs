@@ -69,6 +69,7 @@ from som_analysis.robustness_experiment import (  # noqa: E402
     ROOT,
     load_X,
 )
+from som_analysis.timeutils import ff_day  # noqa: E402
 
 RUNS = os.path.join(OUT_DIR, "runs")
 ENSEMBLE = {
@@ -283,7 +284,8 @@ def main():
     ra, ra_ari = representative(A)
     daily = xr.open_dataarray(f"{P}era5_Z500_norm_weighted_daily.nc")
     days = pd.DatetimeIndex(daily[daily.dims[0]].values).normalize()
-    is_ff = np.isin(days, t_ev.normalize())
+    ev_day = ff_day(t_ev)  # all-days flash-flood day of each event (d0)
+    is_ff = np.isin(days, ev_day)
     a_lab, flips = orient_alldays(ra["labels"], is_ff, xd, yd)
     nn = xd * yd
     tot = np.bincount(a_lab, minlength=nn)
@@ -302,9 +304,9 @@ def main():
     day_idx = {d: i for i, d in enumerate(days)}
     lags = [-3, -2, -1, 0]
     path = np.full((n_ev, len(lags)), -1)
-    for e, t in enumerate(t_ev):
+    for e, t in enumerate(ev_day):
         for c, lag in enumerate(lags):
-            i = day_idx.get(t.normalize() + pd.Timedelta(days=lag))
+            i = day_idx.get(t + pd.Timedelta(days=lag))
             if i is not None:
                 path[e, c] = a_lab[i]
     hi = risk >= 2.0
@@ -449,11 +451,14 @@ PATH_BG = mcolors.LinearSegmentedColormap.from_list(
 )  # light, so arrows read on every node
 
 
-def plot_pathways(path, e_lab, risk, xd, yd, lags, out, H):
+def plot_pathways(
+    path, e_lab, risk, xd, yd, lags, out, H, suptitle=True, exts=("png", "pdf")
+):
     """Day-to-day moves through the all-days SOM over the evSOM window.
 
     path: (event, len(lags)) all-days node per event and day (-1 = missing).
-    Only the days the H-hour window spans are drawn. Writes out.png / out.pdf.
+    Only the days the H-hour window spans are drawn. Writes out.<ext> for each
+    ext in exts; suptitle=False leaves the title to the caption (manuscript).
     """
     win = [c for c, lag in enumerate(lags) if lag >= -(H // 24)]
     pw, wl = path[:, win], [lags[c] for c in win]
@@ -470,10 +475,27 @@ def plot_pathways(path, e_lab, risk, xd, yd, lags, out, H):
         return float(i), float(j)
 
     with plt.rc_context({"font.size": 7}):
-        _draw_pathways(pw, wl, e_lab, risk, xd, yd, out, H, step_c, step_lbl, xy, day)
+        _draw_pathways(
+            pw,
+            wl,
+            e_lab,
+            risk,
+            xd,
+            yd,
+            out,
+            H,
+            step_c,
+            step_lbl,
+            xy,
+            day,
+            suptitle,
+            exts,
+        )
 
 
-def _draw_pathways(pw, wl, e_lab, risk, xd, yd, out, H, step_c, step_lbl, xy, day):
+def _draw_pathways(
+    pw, wl, e_lab, risk, xd, yd, out, H, step_c, step_lbl, xy, day, suptitle, exts
+):
     n_step = len(wl) - 1
     fig, axes = plt.subplots(2, 2, figsize=(7.0, 4.9), layout="constrained")
     g = np.zeros((yd, xd))
@@ -588,11 +610,13 @@ def _draw_pathways(pw, wl, e_lab, risk, xd, yd, out, H, step_c, step_lbl, xy, da
     )
     cb = fig.colorbar(im, ax=axes, shrink=0.6, pad=0.01)
     cb.set_label("all-days node FF risk / climatology")
-    fig.suptitle(
-        f"All-days 5×3 SOM node on UTC days {day(wl[0])}…d0 of the {H}-h evSOM window",
-        fontsize=8,
-    )
-    for ext in ("png", "pdf"):
+    if suptitle:
+        fig.suptitle(
+            f"All-days {xd}×{yd} SOM node on UTC days {day(wl[0])}…d0 of the "
+            f"{H}-h evSOM window",
+            fontsize=8,
+        )
+    for ext in exts:
         fig.savefig(f"{out}.{ext}", dpi=300)
     plt.close(fig)
 

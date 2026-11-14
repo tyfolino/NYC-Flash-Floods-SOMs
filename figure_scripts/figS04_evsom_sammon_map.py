@@ -17,7 +17,7 @@ import matplotlib.patheffects as pe
 import matplotlib.pyplot as plt
 import numpy as np
 
-from som_analysis.config import FIGS_DIR, FIGURES_DIR, setup_plotting
+from som_analysis.config import EVSOM_HOURS, FIGS_DIR, FIGURES_DIR, setup_plotting
 from som_analysis.helpers import node_label, sammon_map, u_matrix
 
 # ── Paths ─────────────────────────────────────────────────────────────────────
@@ -26,7 +26,7 @@ os.makedirs(OUT_DIR, exist_ok=True)
 
 CACHE_PATH = os.path.join(
     FIGS_DIR,
-    "Z500-and-thetae-evSOM-24h",
+    f"Z500-and-thetae-evSOM-{EVSOM_HOURS}h",
     ".cache",
     "som_results.npz",
 )
@@ -34,7 +34,7 @@ CACHE_PATH = os.path.join(
 # ── Figure parameters ──────────────────────────────────────────────────────────
 XDIM, YDIM = 2, 2
 FIG_WIDTH = 3.5
-FIG_HEIGHT = 3.2
+FIG_HEIGHT = 3.6  # room for the hit-frequency legend below the map
 DPI_RASTER = 300
 
 # Marker size range (points²)
@@ -126,16 +126,18 @@ def main():
             [], [], s=s, c="0.55", edgecolors="k", linewidths=0.4, label=f"{hv:d} FFEs"
         )
         legend_handles.append(h)
-    ax.legend(
+    # Below the map, outside the axes, so it never covers a node.
+    fig.legend(
         handles=legend_handles,
         title="Hit frequency",
-        title_fontsize=5,
-        fontsize=4.5,
-        loc="upper left",
-        framealpha=0.8,
-        handletextpad=0.8,
-        borderpad=1.8,
-        labelspacing=2.8,
+        title_fontsize=6,
+        fontsize=5.5,
+        loc="outside lower center",
+        ncol=len(hit_vals),
+        frameon=False,
+        handletextpad=1.2,
+        columnspacing=1.8,
+        borderpad=0.6,
     )
 
     # ── Save ─────────────────────────────────────────────────────────────────

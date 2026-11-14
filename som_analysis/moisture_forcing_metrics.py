@@ -46,8 +46,11 @@ import numpy as np  # noqa: E402
 import pandas as pd  # noqa: E402
 import xarray as xr  # noqa: E402
 
+from .config import RESULTS_DIR  # noqa: E402
+from .timeutils import ff_day  # noqa: E402
+
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-OUT_DIR = os.path.join(ROOT, "results", "d3")
+OUT_DIR = os.path.join(RESULTS_DIR, "d3")
 CACHE_DIR = "/mnt/drive2/SOM_d3_cache"
 INTERMEDIATE = "/mnt/drive2/SOM_intermediate_files"
 SLICED = "/mnt/drive2/ERA5/NC_files/hourly_sliced"
@@ -321,7 +324,10 @@ def main():
     assert len(missing) == 0, f"events missing from ERA5 hours: {missing}"
     is_ff_hour = t_idx.isin(events)
 
-    ff_day_utc = events.normalize().unique()
+    # UTC daily means use the all-days SOM flash-flood day (timeutils.ff_day:
+    # UTC date of onset - 12 h), so an evening (00-04 UTC) onset is not scored
+    # on a mostly post-onset day. The EST variant keeps the local day of onset.
+    ff_day_utc = ff_day(events).unique()
     ff_day_est = (events - pd.Timedelta(hours=5)).normalize().unique()
 
     out = {}
@@ -449,7 +455,14 @@ def plot(time, series, is_ff_hour, ff_day_utc):
         hi = np.array([x["rr_ci95"][1] for x in b])
         xs = centers + (k - 2) * 0.05
         ax.errorbar(
-            xs, rr, yerr=[rr - lo, hi - rr], marker="o", ms=3, capsize=2, label=name
+            xs,
+            rr,
+            # clip: Wilson bounds can sit a round-off above rr when k = 0
+            yerr=[np.clip(rr - lo, 0, None), np.clip(hi - rr, 0, None)],
+            marker="o",
+            ms=3,
+            capsize=2,
+            label=name,
         )
     ax.axhline(1, color="k", lw=0.5)
     ax.set_xticks(

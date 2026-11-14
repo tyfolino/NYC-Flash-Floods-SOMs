@@ -29,8 +29,14 @@ from .config import (
     get_alldays_paths,
 )
 from .helpers import assert_same_times, load_moist_var, node_label, sammon_map, u_matrix
-from .timeutils import ff_days_utc
-from .training import add_training_args, config_json, train_two_phase
+from .timeutils import FF_DAY_RULE, FF_DAY_RULES, ff_days_utc
+from .training import (
+    add_orient_args,
+    add_training_args,
+    apply_orientation,
+    config_json,
+    train_two_phase,
+)
 
 
 def parse_args():
@@ -105,13 +111,21 @@ def parse_args():
         "clustering by giving each interior node 6 neighbors instead of 4.",
     )
     add_training_args(parser, n1=5000, n2=5000, lr1=0.3, lr2=0.1, topology=False)
+    add_orient_args(parser)
+    parser.add_argument(
+        "--ff-day",
+        choices=FF_DAY_RULES,
+        default=FF_DAY_RULE,
+        help="Flash-flood day of each event: 'preonset' = UTC date of onset - 12 h "
+        "(revision default), 'onset' = UTC date of onset (as submitted).",
+    )
     return parser.parse_args()
 
 
-def load_flash_flood_days(storm_csv):
-    """Sorted unique UTC flash-flood dates (first row per SED episode, local
-    standard time from CZ_TIMEZONE converted to UTC, floored to the day)."""
-    return ff_days_utc(storm_csv)
+def load_flash_flood_days(storm_csv, rule=FF_DAY_RULE):
+    """Sorted unique UTC flash-flood days of the SOM events (see
+    timeutils.ff_day for the rules)."""
+    return ff_days_utc(storm_csv, rule=rule)
 
 
 def main():
@@ -146,7 +160,7 @@ def main():
 
     # ── Flash-flood day mask ───────────────────────────────────────────────────
     print(f"Loading flash-flood events from {STORM_DATA_CSV} ...")
-    event_days = load_flash_flood_days(STORM_DATA_CSV)
+    event_days = load_flash_flood_days(STORM_DATA_CSV, args.ff_day)
     print(f"  Found {len(event_days)} unique flash-flood days.")
 
     z500_time_dim = (
@@ -183,6 +197,9 @@ def main():
     # ── Extract results ───────────────────────────────────────────────────────
     weights = som.get_weights().reshape(xdim * ydim, -1)
     bmus = np.array([som.winner(x) for x in X])
+    weights, bmus, orientation = apply_orientation(
+        args, weights, bmus, xdim, ydim, is_ff=is_ff
+    )
 
     # Spatial dimensions (use Z500 coordinates as the shared plotting grid)
     lat = z500_daily[z500_lat_dim].values
@@ -274,7 +291,9 @@ def main():
         u_matrix=u_mat,
         hit_map=hit_map,
         coords=coords,
-        train_config=config_json(train_cfg),
+        train_config=config_json(
+            train_cfg, orientation=orientation, ff_day=args.ff_day
+        ),
         event_indices=event_indices,
         counts=counts,
         totals=totals,

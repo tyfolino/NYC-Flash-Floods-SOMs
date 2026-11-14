@@ -59,6 +59,7 @@ from scipy.stats import mannwhitneyu, spearmanr  # noqa: E402
 from som_analysis.config import (  # noqa: E402
     RESULTS_DIR,
     STAGEIV_NC,
+    alldays_grid,
     get_alldays_paths,
     get_evsom_paths,
     get_paths,
@@ -81,7 +82,11 @@ from som_analysis.node_statistics import (  # noqa: E402
     coastal_land_mask,
     compute_asos_max_precip,
 )
-from som_analysis.timeutils import hour_ending_window, load_asos_precip  # noqa: E402
+from som_analysis.timeutils import (  # noqa: E402
+    ff_day,
+    hour_ending_window,
+    load_asos_precip,
+)
 
 OUT_DIR = os.path.join(RESULTS_DIR, "d2")
 D4_CACHE = "/mnt/drive2/SOM_d4_cache/stageiv_nyc_box.npz"
@@ -112,9 +117,10 @@ def load_events():
         how="left",
         validate="one_to_one",
     )
-    ad = pd.read_csv(get_alldays_paths("thetae")["bmu_csv_path"])
+    ad = pd.read_csv(get_alldays_paths("thetae", *alldays_grid())["bmu_csv_path"])
     ad["day"] = pd.to_datetime(ad["timestamp"]).dt.normalize()
-    ev["day"] = ev["timestamp"].dt.normalize()
+    # the all-days BMU CSV lists flash-flood days (timeutils.ff_day rule)
+    ev["day"] = ff_day(ev["timestamp"])
     ev = ev.merge(
         ad.rename(columns={"node": "alldays"})[["day", "alldays"]],
         on="day",

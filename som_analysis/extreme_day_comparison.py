@@ -42,6 +42,8 @@ import xarray as xr  # noqa: E402
 
 from .config import (  # noqa: E402
     DATA_DIR,
+    EVSOM_HOURS,
+    RESULTS_DIR,
     STAGEIV_NC,
     STORM_DATA_CSV,
     filter_nyc_counties,
@@ -49,9 +51,10 @@ from .config import (  # noqa: E402
 from .node_statistics import load_asos_precip  # noqa: E402
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-OUT_DIR = os.path.join(ROOT, "results", "d4")
+OUT_DIR = os.path.join(RESULTS_DIR, "d4")
 CACHE = "/mnt/drive2/SOM_d4_cache/stageiv_nyc_box.npz"
-EVENTS_CSV = os.path.join(DATA_DIR, "som_2x2_evsom_24h_bmus_thetae.csv")
+# Only the event timestamps are used (identical for every evSOM window).
+EVENTS_CSV = os.path.join(DATA_DIR, f"som_2x2_evsom_{EVSOM_HOURS}h_bmus_thetae.csv")
 
 MM_PER_IN = 25.4
 WET_MM = 0.254

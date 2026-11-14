@@ -3,7 +3,7 @@ Movie S1 — evSOM Combined Animation (T−23h → T=0)
 
 Default (4-row × 2-column) layout, one frame per hour offset.
 Left column  : standardized Z500 anomaly (contours) + standardized 850-hPa θe anomaly (shaded)
-Right column : mean Z500 in dam (contours) + mean 850-hPa θe in K (shaded)
+Right column : mean Z500 in m (contours) + mean 850-hPa θe in K (shaded)
 Row order    : A1, A2, B1, B2
 
 Wide layout (--wide flag): 2-row × 4-column per frame.
@@ -40,9 +40,11 @@ import xarray as xr
 from PIL import Image
 
 from som_analysis.config import (
+    EVSOM_HOURS,
     FIGS_DIR,
     MOVIES_DIR,
     SOM_INTERMEDIATE_PATH,
+    evsom_suffix,
     setup_plotting,
 )
 from som_analysis.helpers import add_map_features, node_label
@@ -53,12 +55,12 @@ os.makedirs(OUT_DIR, exist_ok=True)
 
 CACHE_PATH = os.path.join(
     FIGS_DIR,
-    "Z500-and-thetae-evSOM-24h",
+    f"Z500-and-thetae-evSOM-{EVSOM_HOURS}h",
     ".cache",
     "som_results.npz",
 )
-Z500_PATH = f"{SOM_INTERMEDIATE_PATH}era5_Z500_ffe_evsom.nc"
-THETAE_PATH = f"{SOM_INTERMEDIATE_PATH}era5_thetae_ffe_evsom.nc"
+Z500_PATH = f"{SOM_INTERMEDIATE_PATH}era5_Z500{evsom_suffix(EVSOM_HOURS)}"
+THETAE_PATH = f"{SOM_INTERMEDIATE_PATH}era5_thetae{evsom_suffix(EVSOM_HOURS)}"
 
 # ── Figure / animation parameters ─────────────────────────────────────────────
 XDIM, YDIM = 2, 2
@@ -78,7 +80,8 @@ LEVELS_Z_ANOM = np.round(np.arange(-1.4, 1.41, 0.2), 2) + 0.0
 
 # Right column: raw composite levels
 LEVELS_THETAE = np.arange(295, 341, 5)  # K
-LEVELS_Z_RAW = range(549, 598, 2)  # dam
+LEVELS_Z_RAW = range(5490, 5980, 20)  # m
+G0 = 9.80665  # standard gravity (m s⁻²): geopotential → height
 
 # Node order: A1, A2, B1, B2
 NODE_ORDER = [(i, j) for j in range(YDIM) for i in range(XDIM)]
@@ -106,7 +109,7 @@ def _precompute_composites(z500_da, thetae_da, bmus):
         for j in range(YDIM):
             idx = np.where((bmus[:, 0] == i) & (bmus[:, 1] == j))[0]
             n = len(idx)
-            z500_node = z500_da.isel(event_time=idx).mean("event_time").values / 98.1
+            z500_node = z500_da.isel(event_time=idx).mean("event_time").values / G0
             thetae_node = thetae_da.isel(event_time=idx).mean("event_time").values
             composites[(i, j)] = {"z500": z500_node, "thetae": thetae_node, "n": n}
     return composites

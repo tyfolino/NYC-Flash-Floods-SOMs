@@ -21,7 +21,13 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 
-from som_analysis.config import DATA_DIR, FIGURES_DIR, IBTRACS_PATH, setup_plotting
+from som_analysis.config import (
+    DATA_DIR,
+    EVSOM_HOURS,
+    FIGURES_DIR,
+    IBTRACS_PATH,
+    setup_plotting,
+)
 from som_analysis.helpers import node_label
 from som_analysis.node_statistics import TC_DOMAIN, TC_HOURS_AFTER, TC_HOURS_BEFORE
 
@@ -29,7 +35,7 @@ from som_analysis.node_statistics import TC_DOMAIN, TC_HOURS_AFTER, TC_HOURS_BEF
 OUT_DIR = os.path.join(FIGURES_DIR, "figS09")
 os.makedirs(OUT_DIR, exist_ok=True)
 
-TC_CSV = os.path.join(DATA_DIR, "som_2x2_evsom_24h_tc_associations.csv")
+TC_CSV = os.path.join(DATA_DIR, f"som_2x2_evsom_{EVSOM_HOURS}h_tc_associations.csv")
 
 # ── Figure / SOM parameters ───────────────────────────────────────────────────
 XDIM, YDIM = 2, 2

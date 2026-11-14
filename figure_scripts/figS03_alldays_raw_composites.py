@@ -2,7 +2,7 @@
 Supplementary Figure S3 — All-Days SOM Raw Composites (Z500 + 850-hPa theta-e)
 
 5-row × 4-column layout matching Fig. 1, but showing the raw composite mean
-Z500 (contoured, dam) and 850-hPa theta-e (shaded, K) for all days assigned
+Z500 (contoured, m) and 850-hPa theta-e (shaded, K) for all days assigned
 to each node.
 
 Usage:
@@ -20,6 +20,7 @@ from som_analysis.config import (
     FIGS_DIR,
     FIGURES_DIR,
     SOM_INTERMEDIATE_PATH,
+    alldays_grid,
     setup_plotting,
 )
 from som_analysis.helpers import add_map_features, compute_composites, node_label
@@ -36,13 +37,14 @@ CACHE_PATH = os.path.join(
 )
 
 # ── SOM / figure parameters ───────────────────────────────────────────────────
-XDIM, YDIM = 5, 4
+XDIM, YDIM = alldays_grid(CACHE_PATH)
 FIG_WIDTH = 7.0
-FIG_HEIGHT = 3.8
+FIG_HEIGHT = 0.6 + 0.8 * YDIM  # 3.8 in for the published 5x4
 DPI_RASTER = 300
 
 LEVELS_THETAE = np.arange(295, 341, 5)  # K — shared range with Fig. 2
-LEVELS_Z = range(549, 598, 2)  # dam — shared range with Fig. 2
+LEVELS_Z = range(5490, 5980, 20)  # m — shared range with Fig. 2
+G0 = 9.80665  # standard gravity (m s⁻²): geopotential → height
 
 
 def _ff_label(counts, totals, risk, i, j):
@@ -85,8 +87,8 @@ def main():
         thetae_daily, bmus, XDIM, YDIM, time_dim=thetae_time_dim
     )
 
-    # Z500: Pa → dam
-    z500_comp = z500_comp / 98.1
+    # Z500: geopotential (m² s⁻²) → geopotential height (m)
+    z500_comp = z500_comp / G0
 
     # ── Build figure ──────────────────────────────────────────────────────────
     proj = ccrs.PlateCarree()

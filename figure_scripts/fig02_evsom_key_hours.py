@@ -3,7 +3,8 @@ Figure 2 — Evolution SOM Node Weights at Key Hours
 
 4-row × 4-column layout.
 Rows  : SOM nodes A1, A2, B1, B2.
-Cols  : T−18h, T−12h, T−6h, T=0 (6-hourly, equally spaced within 24h window).
+Cols  : four equally spaced hours ending at T=0 (24-h window: T−18h, T−12h,
+        T−6h, T=0; 48-h window: T−36h, T−24h, T−12h, T=0).
 Style : standardized Z500 (contoured) + 850-hPa θe (shaded) — same as Fig. 1.
 
 Node labels appear outside upper-left of the leftmost panel in each row.
@@ -21,7 +22,7 @@ import cmweather  # noqa: F401
 import matplotlib.pyplot as plt
 import numpy as np
 
-from som_analysis.config import FIGS_DIR, FIGURES_DIR, setup_plotting
+from som_analysis.config import EVSOM_HOURS, FIGS_DIR, FIGURES_DIR, setup_plotting
 from som_analysis.helpers import add_map_features, node_label
 
 # ── Paths ─────────────────────────────────────────────────────────────────────
@@ -30,7 +31,7 @@ os.makedirs(OUT_DIR, exist_ok=True)
 
 CACHE_PATH = os.path.join(
     FIGS_DIR,
-    "Z500-and-thetae-evSOM-24h",
+    f"Z500-and-thetae-evSOM-{EVSOM_HOURS}h",
     ".cache",
     "som_results.npz",
 )
@@ -41,10 +42,13 @@ FIG_WIDTH = 7.0
 FIG_HEIGHT = 4.2
 DPI_RASTER = 300
 
-# Key hours (T−18 to T=0, 6-hourly) and their indices in the 24h window
-KEY_HOURS = [-18, -12, -6, 0]
-KEY_INDICES = [5, 11, 17, 23]  # index into hour_offset axis (T-23=0 … T=0=23)
-KEY_LABELS = [r"T$-$18h", r"T$-$12h", r"T$-$6h", r"T$=$0"]
+# Four equally spaced key hours ending at T=0 (24 h: T-18, -12, -6, 0;
+# 48 h: T-36, -24, -12, 0).
+_STEP = EVSOM_HOURS // 4
+KEY_HOURS = [-3 * _STEP, -2 * _STEP, -_STEP, 0]
+KEY_LABELS = [rf"T$-${-h}h" for h in KEY_HOURS[:-1]] + [r"T$=$0"]
+# index into the hour_offset axis (T-(H-1) = 0 ... T=0 = H-1)
+KEY_INDICES = [EVSOM_HOURS - 1 + h for h in KEY_HOURS]
 
 # Contour levels — identical to Fig. 1
 LEVELS_MOIST = np.round(np.arange(-1.2, 1.21, 0.2), 2) + 0.0

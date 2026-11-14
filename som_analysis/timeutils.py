@@ -66,16 +66,39 @@ def ff_event_hours_utc(storm_csv=STORM_DATA_CSV):
     hour, keeping only the first episode per UTC calendar day (file order).
 
     NB: this does not guarantee non-overlapping windows; episodes on
-    consecutive UTC days can still overlap (e.g., 2019-07-22/23 by 11 h).
+    consecutive UTC days can still overlap: of the 118 warm-season events,
+    1 pair is < 24 h apart and 5 pairs are < 48 h apart (2019-07-22/23 by 13 h).
+    See som_analysis/overlap_sensitivity.py.
     """
     t = sed_episode_onsets_utc(storm_csv, floor="h")
     return t[~t.normalize().duplicated(keep="first")]
 
 
-def ff_days_utc(storm_csv=STORM_DATA_CSV):
-    """Sorted unique UTC calendar days with at least one flash-flood episode."""
-    t = sed_episode_onsets_utc(storm_csv, floor=None)
-    return sorted(t.dropna().floor("D").unique())
+# The all-days SOM classifies UTC-day means, so each event needs one "flash-
+# flood day". Revision rule ("preonset"): the UTC day whose mean overlaps most
+# with the 24 h before onset, i.e. the UTC date of (onset - 12 h). The rule as
+# submitted ("onset") used the UTC date of onset, which for evening (00-04 UTC)
+# onsets is a mean of almost entirely post-onset hours. Same 118 events either
+# way; under "preonset" no two events share a day.
+FF_DAY_RULES = ("preonset", "onset")
+FF_DAY_RULE = "preonset"
+
+
+def ff_day(onsets_utc, rule=FF_DAY_RULE):
+    """All-days flash-flood day (UTC midnight) of each onset time."""
+    t = pd.DatetimeIndex(onsets_utc)
+    if rule == "preonset":
+        return (t - pd.Timedelta(hours=12)).floor("D")
+    if rule == "onset":
+        return t.floor("D")
+    raise ValueError(f"Unknown flash-flood day rule {rule!r}; use {FF_DAY_RULES}")
+
+
+def ff_days_utc(storm_csv=STORM_DATA_CSV, rule=FF_DAY_RULE):
+    """Sorted unique all-days flash-flood days (UTC dates) of the SOM events
+    (ff_event_hours_utc), by `rule` (see FF_DAY_RULE). rule="onset" gives the
+    days as submitted (identical to the UTC days with >= 1 episode)."""
+    return sorted(ff_day(ff_event_hours_utc(storm_csv).dropna(), rule).unique())
 
 
 def hour_ending_window(times, t0, hours_before, hours_after=None):

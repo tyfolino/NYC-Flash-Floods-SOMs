@@ -31,6 +31,7 @@ from sklearn.metrics import adjusted_rand_score  # noqa: E402
 
 from .config import (  # noqa: E402
     DATA_DIR,
+    EVSOM_HOURS,
     FIGS_DIR,
     OUTPUT_ROOT,
     RESULTS_DIR,
@@ -41,13 +42,14 @@ from .timeutils import ff_event_hours_utc, load_sed  # noqa: E402
 
 WARM_MONTHS = (5, 6, 7, 8, 9, 10)
 YEARS = (1996, 2025)
+MM_PER_IN = 25.4  # precipitation is reported in mm/h
 NYC_BOX_ERA5 = dict(lat=(40.5, 41.0), lon=(-74.25, -73.75))  # Fig. S7 / D3 box
 NYC_BOX_FIG4 = dict(lat=(40.3, 41.2), lon=(-74.8, -73.4))  # Fig. 4 NYC panel
 NODES_2X2 = [(0, 0), (1, 0), (0, 1), (1, 1)]  # A1, A2, B1, B2
 
-EVSOM_BMU = "som_2x2_evsom_24h_bmus_thetae.csv"
+EVSOM_BMU = f"som_2x2_evsom_{EVSOM_HOURS}h_bmus_thetae.csv"
 STATIC_BMU = "som_2x2_bmus_thetae.csv"
-EVSOM_TC = "som_2x2_evsom_24h_tc_associations.csv"
+EVSOM_TC = f"som_2x2_evsom_{EVSOM_HOURS}h_tc_associations.csv"
 ALLDAYS_CACHE = os.path.join("Z500-and-thetae-alldays-SOM", ".cache", "som_results.npz")
 
 
@@ -201,7 +203,8 @@ def tc_section():
 
 
 def precip_section():
-    """Fig. S8 numbers (Stage IV and ASOS max hourly rate within +/-6 h)."""
+    """Fig. S8 numbers (Stage IV and ASOS max hourly rate within +/-6 h), in
+    mm/h (node_statistics computes in inches)."""
     from .node_statistics import (
         compute_asos_max_precip,
         compute_stageiv_max_precip,
@@ -211,8 +214,13 @@ def precip_section():
     b = _read_bmu(EVSOM_BMU)
     b["node"] = _labels(b)
     s4, *_ = compute_stageiv_max_precip(b, window_hours=6)
-    b["stageiv"] = s4
-    b["asos"] = compute_asos_max_precip(b, load_asos_precip(), window_hours=6)
+    b["stageiv"] = np.asarray(s4, dtype=float) * MM_PER_IN
+    b["asos"] = (
+        np.asarray(
+            compute_asos_max_precip(b, load_asos_precip(), window_hours=6), dtype=float
+        )
+        * MM_PER_IN
+    )
     out = {}
     for col in ("stageiv", "asos"):
         groups = {
@@ -223,11 +231,12 @@ def precip_section():
         dry = pd.concat([groups["A1"], groups["A2"]])
         out[col] = dict(
             n=len(allv),
-            median_in=_r(allv.median(), 3),
+            median_mm=_r(allv.median(), 1),
             node_n={k: len(v) for k, v in groups.items()},
-            node_median_in={k: _r(v.median(), 3) for k, v in groups.items()},
-            frac_below_1in=_r((allv < 1).mean(), 3),
-            frac_at_or_above_1p75in=_r((allv >= 1.75).mean(), 3),
+            node_median_mm={k: _r(v.median(), 1) for k, v in groups.items()},
+            frac_below_25mm=_r((allv < 25).mean(), 3),
+            # NYC sewer design capacity, 1.75 in/h = 44.45 mm/h
+            frac_ge_sewer_design_44p45mm=_r((allv >= 1.75 * MM_PER_IN).mean(), 3),
             kruskal_p=_r(kruskal(*groups.values()).pvalue, 3),
             mw_b1b2_vs_a1a2_p=_r(mannwhitneyu(wet, dry).pvalue, 4),
         )
@@ -237,7 +246,8 @@ def precip_section():
 def fig4_section():
     """Fig. 4 numbers. Regional panel: PMM pooled over the region. NYC panel:
     PMM pooled over NYC-panel cells only (as plotted); the regional-pool NYC
-    values (as submitted) are kept for traceability."""
+    values (as submitted) are kept for traceability. In mm/h (max hourly
+    accumulation; node_statistics computes in inches)."""
     from .node_statistics import (
         compute_stageiv_node_composites,
         probability_matched_mean,
@@ -256,19 +266,19 @@ def fig4_section():
     )
     out = {}
     for key in NODES_2X2:
-        pm = probability_matched_mean(nf[key])
-        pm_nyc = probability_matched_mean(nf_nyc[key])
+        pm = probability_matched_mean(nf[key]) * MM_PER_IN
+        pm_nyc = probability_matched_mean(nf_nyc[key]) * MM_PER_IN
         out[node_label(*key)] = dict(
             n_with_data=int((~np.all(np.isnan(nf[key]), axis=(1, 2))).sum()),
             n_with_nyc_data=int((~np.all(np.isnan(nf_nyc[key]), axis=(1, 2))).sum()),
-            nyc_mean_in=_r(np.nanmean(pm_nyc[nyc]), 3),
-            nyc_max_in=_r(np.nanmax(pm_nyc[nyc]), 2),
-            nyc_cells_ge_1in=int((pm_nyc[nyc] >= 1).sum()),
-            nyc_mean_in_regional_pool=_r(np.nanmean(pm[nyc]), 3),
-            nyc_max_in_regional_pool=_r(np.nanmax(pm[nyc]), 2),
-            regional_max_in=_r(np.nanmax(pm), 2),
-            regional_cells_ge_0p5in=int((pm >= 0.5).sum()),
-            regional_cells_ge_1in=int((pm >= 1).sum()),
+            nyc_mean_mm=_r(np.nanmean(pm_nyc[nyc]), 1),
+            nyc_max_mm=_r(np.nanmax(pm_nyc[nyc]), 1),
+            nyc_cells_ge_25mm=int((pm_nyc[nyc] >= 25).sum()),
+            nyc_mean_mm_regional_pool=_r(np.nanmean(pm[nyc]), 1),
+            nyc_max_mm_regional_pool=_r(np.nanmax(pm[nyc]), 1),
+            regional_max_mm=_r(np.nanmax(pm), 1),
+            regional_cells_ge_12mm=int((pm >= 12).sum()),
+            regional_cells_ge_25mm=int((pm >= 25).sum()),
         )
     return out
 

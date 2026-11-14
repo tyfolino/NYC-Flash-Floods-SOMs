@@ -17,14 +17,14 @@ import os
 
 import pandas as pd
 
-from .config import DATA_DIR
+from .config import DATA_DIR, EVSOM_HOURS
 from .helpers import node_label
 from .node_statistics import compute_tc_associations
 
 TARGETS = {
     "evSOM": (
-        "som_2x2_evsom_24h_bmus_thetae.csv",
-        "som_2x2_evsom_24h_tc_associations.csv",
+        f"som_2x2_evsom_{EVSOM_HOURS}h_bmus_thetae.csv",
+        f"som_2x2_evsom_{EVSOM_HOURS}h_tc_associations.csv",
     ),
     "static SOM": ("som_2x2_bmus_thetae.csv", "som_2x2_tc_associations.csv"),
 }

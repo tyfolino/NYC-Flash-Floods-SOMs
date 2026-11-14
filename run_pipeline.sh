@@ -7,11 +7,15 @@
 #   # Re-make statistics, figures and numbers from the existing (published) SOMs:
 #   bash run_pipeline.sh --stages "stats figures numbers"
 #
-#   # Retrain with a robustness-chosen configuration on the v2 (month-day)
-#   # intermediates, writing everything to a separate tree:
+#   # Final (revision) configuration: v2 intermediates, 5x length, lr2 0.02,
+#   # all-days 5x3 (seed 25, highest-risk node -> A5), 2x2 SOMs at lr1 0.5 with
+#   # the representative ensemble seeds, node names matched to the published
+#   # SOMs, 48-h evSOM window. Reproduces the robustness-ensemble members exactly.
 #   bash run_pipeline.sh --intermediate v2 --output-root /mnt/drive2/SOM_runs/final \
-#       --train-args "--length 5" --alldays-args "--seed 3" \
-#       --static-args "--seed 3 --rotate" --evsom-args "--seed 3"
+#       --evsom-hours 48 --train-args "--length 5 --lr2 0.02" \
+#       --alldays-args "--xdim 5 --ydim 3 --seed 25 --orient-risk" \
+#       --static-args "--seed 8 --orient-to figs/Z500-and-thetae-SOM/.cache/som_results.npz" \
+#       --evsom-args "--seed 16 --orient-to figs/Z500-and-thetae-evSOM-24h/.cache/som_results.npz"
 #
 #   # Build the v2 intermediates first (slow; ~1 h, ~100 GB RAM peak for theta_e):
 #   bash run_pipeline.sh --preprocess --intermediate v2 --stages none
@@ -31,7 +35,11 @@
 #                          som_analysis/training.py: --length --lr1 --lr2 --sigma1
 #                          --sigma2 --neighborhood --mode --topology --init --seed).
 #   --alldays-args/--static-args/--evsom-args "ARGS"   per-SOM extras (appended).
-#   --evsom-hours N        evSOM window length (default 24).
+#                          --static-args defaults to "--rotate" (as published);
+#                          passing it replaces that default. --orient-to NPZ /
+#                          --orient-risk fix node names (see som_analysis/training.py).
+#   --evsom-hours N        evSOM window length (default 24); also selects the
+#                          evSOM read by the stats/figure stages (NYCFF_EVSOM_HOURS).
 #   --d3 / --d4            also run the SOM-independent D3 / D4 analyses.
 #   --movies               also render Movie S1 (slow).
 #   --workers N            cap for dask threads / process pools (default 4).
@@ -47,7 +55,7 @@ OUTPUT_ROOT="${NYCFF_OUTPUT_ROOT:-}"
 OVERWRITE=0
 TRAIN_ARGS=""
 ALLDAYS_ARGS=""
-STATIC_ARGS=""
+STATIC_ARGS="--rotate"
 EVSOM_ARGS=""
 EVSOM_HOURS=24
 RUN_D3=0
@@ -83,6 +91,7 @@ has_stage() { [[ " ${STAGES} " == *" $1 "* ]]; }
 export OMP_NUM_THREADS=1 OPENBLAS_NUM_THREADS=1 MKL_NUM_THREADS=1 NUMEXPR_NUM_THREADS=1
 export NYCFF_DASK_WORKERS="${WORKERS}"
 export NYCFF_INTERMEDIATE="${INTERMEDIATE}"
+export NYCFF_EVSOM_HOURS="${EVSOM_HOURS}"
 if [[ -n "${OUTPUT_ROOT}" ]]; then
     mkdir -p "${OUTPUT_ROOT}"
     export NYCFF_OUTPUT_ROOT
@@ -94,6 +103,7 @@ export SOURCE_DATE_EPOCH="${SOURCE_DATE_EPOCH:-1767225600}"
 ROOT_ABS="$(pwd)"
 OUT_ABS="${NYCFF_OUTPUT_ROOT:-${ROOT_ABS}}"
 echo "Intermediates : ${NYCFF_INTERMEDIATE}"
+echo "evSOM window  : ${EVSOM_HOURS} h"
 echo "Output root   : ${OUT_ABS}"
 echo "Stages        : ${STAGES}$( ((PREPROCESS)) && echo ' +preprocess')"
 
@@ -130,7 +140,7 @@ if has_stage train; then
     # shellcheck disable=SC2086
     run python -m som_analysis.train_alldays_som --moisture-var thetae ${TRAIN_ARGS} ${ALLDAYS_ARGS}
     # shellcheck disable=SC2086
-    run python -m som_analysis.train_som --moisture-var thetae --rotate ${TRAIN_ARGS} ${STATIC_ARGS}
+    run python -m som_analysis.train_som --moisture-var thetae ${TRAIN_ARGS} ${STATIC_ARGS}
     # shellcheck disable=SC2086
     run python -m som_analysis.train_evsom --moisture-var thetae --n-hours "${EVSOM_HOURS}" \
         ${TRAIN_ARGS} ${EVSOM_ARGS}
@@ -153,12 +163,12 @@ if has_stage figures; then
     echo; echo "=== Figures ==="
     for f in fig01_som_node_weights fig02_evsom_key_hours fig03_evsom_composite_key_hours \
              figS01_ffe_distributions figS02_sammon_map figS03_alldays_raw_composites \
-             figS04_evsom_sammon_map figS09_evsom_tc_tracks_and_histogram; do
+             figS04_evsom_sammon_map figS05_alldays_pathways \
+             figS09_evsom_tc_tracks_and_histogram; do
         run python -m "figure_scripts.${f}"
     done
-    for f in fig04_stageiv_pmm_composites figS05_evsom_to_alldays_mapping \
-             figS06_ffe_som_node_weights_and_composites figS07_evsom_ivt_tcwv_composites \
-             figS08_precip_histograms; do
+    for f in fig04_stageiv_pmm_composites figS06_ffe_som_node_weights_and_composites \
+             figS07_evsom_ivt_tcwv_composites figS08_precip_histograms; do
         run python -m "figure_scripts.${f}"
         run python -m "figure_scripts.${f}" --wide
     done

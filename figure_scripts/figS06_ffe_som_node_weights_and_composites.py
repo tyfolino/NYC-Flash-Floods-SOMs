@@ -3,7 +3,7 @@ Supplementary Figure S6 — FFE SOM Node Weights (left) and Raw Composites (righ
 
 Default (4-row × 2-column) layout. Each row is one SOM node (A1, A2, B1, B2).
 Left column : standardized Z500 (contoured) + theta-e (shaded) node weights.
-Right column : raw mean Z500 in dam (contoured) + theta-e in K (shaded)
+Right column : raw mean Z500 in m (contoured) + theta-e in K (shaded)
                composited over FF days assigned to that node.
 
 Wide layout (--wide flag): 2-row × 4-column.
@@ -56,7 +56,8 @@ DPI_RASTER = 300
 # Contour levels
 LEVELS_Z_WEIGHTS = np.round(np.arange(-1.4, 1.41, 0.2), 2) + 0.0  # standardized anomaly
 LEVELS_MOIST_WEIGHTS = np.round(np.arange(-1.2, 1.21, 0.2), 2) + 0.0
-LEVELS_Z_RAW = range(549, 598, 2)  # dam — shared range with Fig. S3
+LEVELS_Z_RAW = range(5490, 5980, 20)  # m — shared range with Fig. S3
+G0 = 9.80665  # standard gravity (m s⁻²): geopotential → height
 LEVELS_THETAE_RAW = np.arange(295, 341, 5)  # K — shared range with Fig. S3
 
 # Node traversal order for 4 rows: A1, A2, B1, B2
@@ -89,7 +90,7 @@ def main():
     ds_thetae = xr.load_dataset(THETAE_FFE_PATH)
     ds_z500 = xr.load_dataset(Z500_FFE_PATH)
     thetae_da = ds_thetae["theta_e"]  # (time, lat, lon) in K
-    z500_da = ds_z500["z"]  # (time, lat, lon) in m^2/s^2 → divide by 98.1 for dam
+    z500_da = ds_z500["z"]  # (time, lat, lon) in m^2/s^2 → divide by G0 for m
 
     lat = ds_thetae["latitude"].values
     lon = ds_thetae["longitude"].values
@@ -173,7 +174,7 @@ def main():
 
         # ── Right: raw composite ──────────────────────────────────────────────
         thetae_comp = thetae_da.isel(valid_time=idx).mean("valid_time").values
-        z500_comp = z500_da.isel(valid_time=idx).mean("valid_time").values / 98.1
+        z500_comp = z500_da.isel(valid_time=idx).mean("valid_time").values / G0
 
         im_comp = ax_comp.contourf(
             lon,

@@ -51,6 +51,20 @@ FIGURES_DIR = os.path.join(OUTPUT_ROOT, "figures")
 MOVIES_DIR = os.path.join(OUTPUT_ROOT, "movies")
 RESULTS_DIR = os.path.join(OUTPUT_ROOT, "results")
 
+# evSOM window length (hours) used by the statistics and figure scripts; set by
+# run_pipeline.sh --evsom-hours. 24 = as published.
+EVSOM_HOURS = int(os.environ.get("NYCFF_EVSOM_HOURS", "24"))
+
+ALLDAYS_CACHE = os.path.join(
+    FIGS_DIR, "Z500-and-thetae-alldays-SOM", ".cache", "som_results.npz"
+)
+
+
+def alldays_grid(cache=ALLDAYS_CACHE):
+    """(xdim, ydim) of the trained all-days SOM, read from its cache."""
+    ydim, xdim = np.load(cache)["hit_map"].shape  # hit_map is (ydim, xdim)
+    return int(xdim), int(ydim)
+
 
 def check_intermediate_writable(path):
     """Refuse to write into the published (v1) intermediate directory."""
@@ -199,11 +213,14 @@ def evsom_suffix(n_hours=24):
     return "_ffe_evsom.nc" if n_hours == 24 else f"_ffe_evsom{n_hours}h.nc"
 
 
-def get_evsom_paths(moisture_var, moisture_weight=1, n_hours=24):
-    """Build output paths for an evolution SOM run.
+def get_evsom_paths(moisture_var, moisture_weight=1, n_hours=None):
+    """Build output paths for an evolution SOM run (n_hours default:
+    EVSOM_HOURS, i.e. NYCFF_EVSOM_HOURS).
 
     Returns a dict with keys: fig_dir, bmu_csv_path, file_label.
     """
+    if n_hours is None:
+        n_hours = EVSOM_HOURS
     cfg = MOISTURE_CONFIGS[moisture_var]
     file_label = cfg["file_label"]
 

@@ -147,3 +147,100 @@ def train_two_phase(X, xdim, ydim, args):
 
 def config_json(cfg, **extra):
     return json.dumps({**cfg, **extra}, sort_keys=True)
+
+
+# ── Grid orientation ──────────────────────────────────────────────────────────
+# A trained SOM is only defined up to a symmetry of its grid, so node names
+# (A1, B1, ...) depend on the seed. These helpers reorder the node grid by a
+# symmetry (flip of the columns, flip of the rows and, for square grids, a
+# transpose), which keeps the topology, so retrained SOMs get stable names.
+
+
+def add_orient_args(parser):
+    g = parser.add_argument_group("grid orientation (node naming only)")
+    g.add_argument(
+        "--orient-to",
+        metavar="NPZ",
+        default=None,
+        help="Reorder the grid (by a symmetry) to best agree with the BMUs of a "
+        "reference SOM cache over the same samples, e.g. the published cache.",
+    )
+    g.add_argument(
+        "--orient-risk",
+        action="store_true",
+        help="Flip columns/rows so the highest flash-flood-risk node is in the "
+        "last column of the first row (all-days SOM).",
+    )
+    return parser
+
+
+def _symmetries(xdim, ydim):
+    for t in (False, True) if xdim == ydim else (False,):
+        for fi in (False, True):
+            for fj in (False, True):
+                yield dict(transpose=t, flip_i=fi, flip_j=fj)
+
+
+def orient_bmus(bmus, xdim, ydim, transpose=False, flip_i=False, flip_j=False):
+    i, j = bmus[:, 0], bmus[:, 1]
+    if transpose:
+        i, j = j, i
+    if flip_i:
+        i = xdim - 1 - i
+    if flip_j:
+        j = ydim - 1 - j
+    return np.column_stack([i, j])
+
+
+def orient_weights(weights, xdim, ydim, transpose=False, flip_i=False, flip_j=False):
+    """weights: (xdim * ydim, F), node = i * ydim + j."""
+    w = weights.reshape(xdim, ydim, -1)
+    if transpose:
+        w = w.swapaxes(0, 1)
+    if flip_i:
+        w = w[::-1]
+    if flip_j:
+        w = w[:, ::-1]
+    return np.ascontiguousarray(w).reshape(xdim * ydim, -1)
+
+
+def choose_orientation(bmus, xdim, ydim, *, ref_npz=None, is_ff=None):
+    """The grid symmetry for --orient-to (max agreement with the reference
+    BMUs) or --orient-risk (highest-risk node to i = xdim-1, j = 0)."""
+    if ref_npz is not None:
+        ref = np.load(ref_npz)["bmus"]
+        if len(ref) != len(bmus):
+            raise SystemExit(f"{ref_npz}: {len(ref)} BMUs, expected {len(bmus)}")
+        best = max(
+            _symmetries(xdim, ydim),
+            key=lambda s: (orient_bmus(bmus, xdim, ydim, **s) == ref).all(1).sum(),
+        )
+        agree = (orient_bmus(bmus, xdim, ydim, **best) == ref).all(1).mean()
+        print(f"Orientation vs {ref_npz}: {best} (agreement {agree:.0%})")
+        return best
+    flat = bmus[:, 0] * ydim + bmus[:, 1]
+    n = xdim * ydim
+    risk = np.bincount(flat[is_ff], minlength=n) / np.maximum(
+        np.bincount(flat, minlength=n), 1
+    )
+    i, j = divmod(int(risk.argmax()), ydim)
+    best = dict(transpose=False, flip_i=i != xdim - 1, flip_j=j != 0)
+    print(f"Orientation by flash-flood risk: {best}")
+    return best
+
+
+def apply_orientation(args, weights, bmus, xdim, ydim, is_ff=None):
+    """Apply --orient-to / --orient-risk to (weights, bmus); returns them and
+    the symmetry used (None when neither option is given)."""
+    if args.orient_to is None and not args.orient_risk:
+        return weights, bmus, None
+    if getattr(args, "rotate", False):
+        raise SystemExit("--rotate cannot be combined with --orient-to/--orient-risk")
+    if args.orient_risk and is_ff is None:
+        raise SystemExit("--orient-risk needs flash-flood days (all-days SOM only)")
+    s = choose_orientation(bmus, xdim, ydim, ref_npz=args.orient_to, is_ff=is_ff)
+    return (
+        orient_weights(weights, xdim, ydim, **s),
+        orient_bmus(bmus, xdim, ydim, **s),
+        s,
+    )

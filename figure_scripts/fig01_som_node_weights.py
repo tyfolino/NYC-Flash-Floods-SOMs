@@ -15,7 +15,7 @@ import cmweather  # noqa: F401 — registers 'balance' and other cmweather color
 import matplotlib.pyplot as plt
 import numpy as np
 
-from som_analysis.config import FIGS_DIR, FIGURES_DIR, setup_plotting
+from som_analysis.config import FIGS_DIR, FIGURES_DIR, alldays_grid, setup_plotting
 from som_analysis.helpers import add_map_features, node_label
 
 # ── Output directory ──────────────────────────────────────────────────────────
@@ -23,7 +23,7 @@ OUT_DIR = os.path.join(FIGURES_DIR, "fig01")
 os.makedirs(OUT_DIR, exist_ok=True)
 
 # ── SOM / figure parameters ───────────────────────────────────────────────────
-XDIM, YDIM = 5, 4
+XDIM, YDIM = alldays_grid()
 MOISTURE_VAR = "thetae"
 
 # Cache produced by train_alldays_som.py in the original analysis repo
@@ -34,9 +34,9 @@ CACHE_PATH = os.path.join(
     "som_results.npz",
 )
 
-# GRL double-column width = 7 in; height tuned to 5x4 map grid
+# GRL double-column width = 7 in; height scales with the number of map rows
 FIG_WIDTH = 7.0  # inches
-FIG_HEIGHT = 3.8  # inches
+FIG_HEIGHT = 0.6 + 0.8 * YDIM  # inches (3.8 for the published 5x4)
 DPI_RASTER = 300
 
 # Z500 contour levels (standardized anomaly weights)

@@ -22,7 +22,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 
-from som_analysis.config import DATA_DIR, FIGURES_DIR, setup_plotting
+from som_analysis.config import DATA_DIR, EVSOM_HOURS, FIGURES_DIR, setup_plotting
 from som_analysis.helpers import node_label
 from som_analysis.node_statistics import (
     compute_asos_max_precip,
@@ -34,7 +34,7 @@ from som_analysis.node_statistics import (
 OUT_DIR = os.path.join(FIGURES_DIR, "figS08")
 os.makedirs(OUT_DIR, exist_ok=True)
 
-BMU_CSV = os.path.join(DATA_DIR, "som_2x2_evsom_24h_bmus_thetae.csv")
+BMU_CSV = os.path.join(DATA_DIR, f"som_2x2_evsom_{EVSOM_HOURS}h_bmus_thetae.csv")
 
 # ── Figure parameters ──────────────────────────────────────────────────────────
 XDIM, YDIM = 2, 2
@@ -44,8 +44,10 @@ FIG_WIDTH_WIDE = 12.0
 FIG_HEIGHT_WIDE = 3.5
 DPI_RASTER = 300
 
-BINS = np.arange(0, 4.26, 0.25)
-XLIM = (0, 4.25)
+# Values are computed in inches (node_statistics) and plotted in mm/h.
+MM_PER_IN = 25.4
+BINS = np.arange(0, 110, 5)
+XLIM = (0, 105)
 YLIM_MAX = 15
 
 NODE_ORDER = [(i, j) for j in range(YDIM) for i in range(XDIM)]
@@ -85,7 +87,7 @@ def _plot_node_hist(ax, data, color, label):
             color="red",
             linestyle="--",
             linewidth=1.0,
-            label=f'Median: {median:.2f}"',
+            label=f"Median: {median:.0f} mm/h",
         )
         ax.legend(fontsize=6, loc="upper right", framealpha=0.7)
 
@@ -107,13 +109,13 @@ def main():
     # ── Compute precip values ─────────────────────────────────────────────────
     print("Computing Stage IV max precip ...")
     s4_vals, *_ = compute_stageiv_max_precip(bmu_df, window_hours=6)
-    bmu_df["s4_max"] = s4_vals
+    bmu_df["s4_max"] = np.asarray(s4_vals, dtype=float) * MM_PER_IN
 
     print("Loading ASOS data ...")
     precip_dfs = load_asos_precip()
     print("Computing ASOS max precip ...")
     asos_vals = compute_asos_max_precip(bmu_df, precip_dfs, window_hours=6)
-    bmu_df["asos_max"] = asos_vals
+    bmu_df["asos_max"] = np.asarray(asos_vals, dtype=float) * MM_PER_IN
 
     # ── Build figure ──────────────────────────────────────────────────────────
     if args.wide:
@@ -190,7 +192,7 @@ def main():
 
     # x-axis label on bottom row only
     for ax in axes[-1, :]:
-        ax.set_xlabel("Max Hourly Precip (in)", fontsize=7.5)
+        ax.set_xlabel(r"Max hourly precipitation (mm h$^{-1}$)", fontsize=7.5)
 
     # ── Save ─────────────────────────────────────────────────────────────────
     suffix = "_wide" if args.wide else ""

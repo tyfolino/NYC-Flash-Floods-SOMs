@@ -42,10 +42,10 @@ Reclassifications:
 
 High-risk nodes (≥2×): ['A4', 'A5']
 
-- **A1**: d-3 9% high-risk (top {'C5': 13, 'C1': 4, 'C3': 4}); d-2 9% high-risk (top {'C5': 9, 'C4': 6, 'B5': 4}); d-1 20% high-risk (top {'B5': 7, 'C4': 7, 'B4': 6}); d+0 37% high-risk (top {'A5': 11, 'C5': 9, 'C4': 3})
-- **B1**: d-3 37% high-risk (top {'A1': 7, 'A5': 7, 'A4': 4}); d-2 50% high-risk (top {'A5': 14, 'A3': 7, 'A1': 4}); d-1 80% high-risk (top {'A5': 16, 'A4': 8, 'A3': 5}); d+0 87% high-risk (top {'A5': 19, 'A4': 7, 'A1': 1})
-- **A2**: d-3 0% high-risk (top {'C1': 7, 'A1': 4, 'C3': 4}); d-2 0% high-risk (top {'C2': 9, 'C1': 8, 'B2': 3}); d-1 0% high-risk (top {'B1': 6, 'C1': 5, 'B2': 4}); d+0 12% high-risk (top {'B1': 5, 'C2': 4, 'A1': 3})
-- **B2**: d-3 3% high-risk (top {'A1': 17, 'B1': 2, 'C1': 2}); d-2 3% high-risk (top {'A1': 15, 'B1': 4, 'A3': 3}); d-1 3% high-risk (top {'A1': 17, 'A2': 5, 'A3': 4}); d+0 14% high-risk (top {'A1': 8, 'A3': 8, 'A2': 6})
+- **A1**: d-3 9% high-risk (top {'C5': 15, 'C1': 4, 'C3': 4}); d-2 6% high-risk (top {'C5': 10, 'C4': 5, 'C3': 4}); d-1 23% high-risk (top {'B5': 8, 'C4': 7, 'C5': 5}); d+0 37% high-risk (top {'A5': 11, 'C5': 8, 'B5': 4})
+- **B1**: d-3 33% high-risk (top {'A5': 7, 'A1': 6, 'A4': 3}); d-2 43% high-risk (top {'A5': 12, 'A3': 6, 'A1': 5}); d-1 70% high-risk (top {'A5': 14, 'A4': 7, 'A3': 6}); d+0 87% high-risk (top {'A5': 19, 'A4': 7, 'A1': 1})
+- **A2**: d-3 0% high-risk (top {'C1': 7, 'A1': 4, 'A2': 3}); d-2 0% high-risk (top {'C1': 8, 'C2': 6, 'B2': 4}); d-1 0% high-risk (top {'C1': 6, 'C2': 5, 'B1': 4}); d+0 12% high-risk (top {'B1': 6, 'C2': 4, 'A1': 3})
+- **B2**: d-3 3% high-risk (top {'A1': 16, 'B1': 3, 'A2': 2}); d-2 3% high-risk (top {'A1': 14, 'B1': 3, 'A3': 3}); d-1 0% high-risk (top {'A1': 18, 'A2': 4, 'A3': 4}); d+0 14% high-risk (top {'A1': 10, 'A3': 7, 'A2': 6})
 
 ## Independent variables: static vs evSOM grouping
 

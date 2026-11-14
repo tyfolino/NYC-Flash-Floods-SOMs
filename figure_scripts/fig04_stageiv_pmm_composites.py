@@ -30,7 +30,7 @@ import pandas as pd
 from matplotlib.cm import ScalarMappable
 from matplotlib.colors import BoundaryNorm, ListedColormap
 
-from som_analysis.config import DATA_DIR, FIGURES_DIR, setup_plotting
+from som_analysis.config import DATA_DIR, EVSOM_HOURS, FIGURES_DIR, setup_plotting
 from som_analysis.helpers import node_label
 from som_analysis.node_statistics import (
     bootstrap_pmm,
@@ -43,7 +43,7 @@ from som_analysis.node_statistics import (
 OUT_DIR = os.path.join(FIGURES_DIR, "fig04")
 os.makedirs(OUT_DIR, exist_ok=True)
 
-BMU_CSV = os.path.join(DATA_DIR, "som_2x2_evsom_24h_bmus_thetae.csv")
+BMU_CSV = os.path.join(DATA_DIR, f"som_2x2_evsom_{EVSOM_HOURS}h_bmus_thetae.csv")
 
 # ── Figure / SOM parameters ───────────────────────────────────────────────────
 XDIM, YDIM = 2, 2
@@ -57,9 +57,13 @@ EXTENT_REG = [-78.0, -70.0, 38.5, 44.0]
 EXTENT_NYC = [-74.8, -73.4, 40.3, 41.2]
 
 # ChaseSpectral precipitation colormap sampled across our bins
-# "over" (> 4 in) color is cyan — not in the palette (the lowest bin is near-black;
-# white, used previously, read as missing data)
-NWS_LEVELS = [0.10, 0.25, 0.50, 0.75, 1.00, 1.25, 1.50, 2.00, 2.50, 3.00, 4.00]
+# "over" (> 100 mm/h) color is cyan — not in the palette (the lowest bin is
+# near-black; white, used previously, read as missing data)
+# The composites are computed in inches (node_statistics) and plotted in mm/h.
+# Levels: rounded mm equivalents of the NWS inch thresholds
+# (0.1, 0.25, 0.5, 0.75, 1, 1.25, 1.5, 2, 2.5, 3, 4 in).
+MM_PER_IN = 25.4
+NWS_LEVELS = [2.5, 6, 12, 20, 25, 30, 40, 50, 60, 75, 100]
 _N_BINS = len(NWS_LEVELS) - 1  # 10
 _chase = plt.get_cmap("ChaseSpectral")
 _colors = [_chase(i / (_N_BINS - 1)) for i in range(_N_BINS)]
@@ -100,6 +104,44 @@ def _add_map_features(ax, scale):
     ax.add_feature(cfeature.COASTLINE.with_scale(scale), linewidth=0.4, zorder=4)
 
 
+# Gridline/label positions and the NYC-panel outline drawn on the regional maps
+# (reviewer request: lat/lon labels and the NYC domain on the regional panels).
+LOCS_REG = dict(xlocs=[-77, -75, -73, -71], ylocs=[39, 41, 43])
+LOCS_NYC = dict(xlocs=[-74.5, -74.0, -73.5], ylocs=[40.5, 41.0])
+
+
+def _add_gridlines(ax, locs, left, bottom):
+    """Faint lat/lon gridlines; labels only on the outer edges of the layout."""
+    gl = ax.gridlines(
+        crs=ccrs.PlateCarree(),
+        draw_labels=True,
+        linewidth=0.3,
+        color="0.5",
+        alpha=0.5,
+        linestyle=":",
+        zorder=3,
+        **locs,
+    )
+    gl.top_labels = gl.right_labels = False
+    gl.left_labels, gl.bottom_labels = left, bottom
+    gl.xlabel_style = gl.ylabel_style = {"size": 5.5}
+    gl.xpadding = gl.ypadding = 2
+
+
+def _outline_nyc(ax):
+    """Dashed box marking the NYC-panel extent (EXTENT_NYC)."""
+    x0, x1, y0, y1 = EXTENT_NYC
+    ax.plot(
+        [x0, x1, x1, x0, x0],
+        [y0, y0, y1, y1, y0],
+        color="black",
+        linewidth=0.7,
+        linestyle="--",
+        zorder=6,
+        transform=ccrs.PlateCarree(),
+    )
+
+
 def _plot_pmm(
     ax,
     node_fields,
@@ -120,6 +162,7 @@ def _plot_pmm(
         if precomputed is not None
         else probability_matched_mean(fields, winsorize_pct=winsorize_pct)
     )
+    pmm = pmm * MM_PER_IN  # inches -> mm (per hour: max hourly accumulation)
     pmm_plot = np.where(pmm >= NWS_LEVELS[0], pmm, np.nan)
 
     lon_span = extent[1] - extent[0]
@@ -235,6 +278,12 @@ def main():
             precomputed=boot_nyc,
         )
 
+        _outline_nyc(ax_reg)
+        last_row = (j == 1) if args.wide else (j * XDIM + i == len(NODE_ORDER) - 1)
+        first_col = (i == 0) if args.wide else True
+        _add_gridlines(ax_reg, LOCS_REG, left=first_col, bottom=last_row)
+        _add_gridlines(ax_nyc, LOCS_NYC, left=first_col, bottom=last_row)
+
         # Node label outside upper-left; N outside upper-right
         for ax, n in [(ax_reg, n_reg), (ax_nyc, n_nyc)]:
             ax.text(
@@ -269,8 +318,8 @@ def main():
         extend="max",
         aspect=25,
     )
-    cbar.set_label("PMM Precipitation (in)", fontsize=8)
-    cbar.set_ticks(NWS_LEVELS)
+    cbar.set_label(r"PMM max hourly precipitation (mm h$^{-1}$)", fontsize=8)
+    cbar.set_ticks(NWS_LEVELS, labels=[f"{v:g}" for v in NWS_LEVELS])
     cbar.ax.tick_params(labelsize=7)
 
     # ── Save ──────────────────────────────────────────────────────────────────

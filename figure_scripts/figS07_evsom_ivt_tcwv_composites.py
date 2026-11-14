@@ -2,8 +2,8 @@
 Supplementary Figure S7 — evSOM Moisture Composites: IVT (left) and TCWV (right)
 
 Default (4-row × 2-column) layout. Each row is one evSOM node (A1, A2, B1, B2).
-Left column  : IVT composite mean (shaded, kg m⁻¹ s⁻¹) + Z500 (contoured, dam)
-Right column : TCWV composite mean (shaded, kg m⁻²) + Z500 (contoured, dam)
+Left column  : IVT composite mean (shaded, kg m⁻¹ s⁻¹) + Z500 (contoured, m)
+Right column : TCWV composite mean (shaded, kg m⁻²) + Z500 (contoured, m)
 
 Wide layout (--wide flag): 2-row × 4-column.
 Left 2×2  : IVT (A1/A2 top, B1/B2 bottom)
@@ -28,6 +28,7 @@ import xarray as xr
 
 from som_analysis.config import (
     DATA_DIR,
+    EVSOM_HOURS,
     FIGS_DIR,
     FIGURES_DIR,
     SOM_INTERMEDIATE_PATH,
@@ -41,14 +42,14 @@ os.makedirs(OUT_DIR, exist_ok=True)
 
 CACHE_PATH = os.path.join(
     FIGS_DIR,
-    "Z500-and-thetae-evSOM-24h",
+    f"Z500-and-thetae-evSOM-{EVSOM_HOURS}h",
     ".cache",
     "som_results.npz",
 )
 IVT_PATH = f"{SOM_INTERMEDIATE_PATH}era5_ivt_ffe.nc"
 TCWV_PATH = f"{SOM_INTERMEDIATE_PATH}era5_tcwv_ffe.nc"
 Z500_PATH = f"{SOM_INTERMEDIATE_PATH}era5_Z500_ffe.nc"
-BMU_CSV = os.path.join(DATA_DIR, "som_2x2_evsom_24h_bmus_thetae.csv")
+BMU_CSV = os.path.join(DATA_DIR, f"som_2x2_evsom_{EVSOM_HOURS}h_bmus_thetae.csv")
 
 # ── Figure / SOM parameters ───────────────────────────────────────────────────
 XDIM, YDIM = 2, 2
@@ -60,7 +61,8 @@ DPI_RASTER = 300
 
 LEVELS_IVT = np.arange(0, 701, 100)  # kg m⁻¹ s⁻¹
 LEVELS_TCWV = np.arange(20, 56, 5)  # kg m⁻²
-LEVELS_Z = range(549, 598, 2)  # dam
+LEVELS_Z = range(5490, 5980, 20)  # m
+G0 = 9.80665  # standard gravity (m s⁻²): geopotential → height
 TIME_DIM = "valid_time"
 
 # Node traversal order: A1, A2, B1, B2
@@ -150,7 +152,7 @@ def main():
         # Composite means for this node
         ivt_comp = ivt_da.isel(valid_time=idx).mean("valid_time").values
         tcwv_comp = tcwv_da.isel(valid_time=idx).mean("valid_time").values
-        z500_comp = z500_da.isel(valid_time=idx).mean("valid_time").values / 98.1
+        z500_comp = z500_da.isel(valid_time=idx).mean("valid_time").values / G0
 
         # ── Left: IVT ────────────────────────────────────────────────────────
         im_ivt = ax_ivt.contourf(
